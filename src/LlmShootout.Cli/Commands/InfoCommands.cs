@@ -38,7 +38,7 @@ public static class InfoCommands
         var from = new Option<string?>("--from") { Description = "Read a saved response of the models endpoint instead of calling OpenRouter." };
         var command = new Command("models", "Lists OpenRouter models with prices and JSON schema support. Needs no API key.") { filter, schemaOnly, limit, from };
 
-        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Console, async () =>
+        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, async () =>
         {
             var models = parse.GetValue(from) is { } path
                 ? ModelCatalog.Parse(await File.ReadAllTextAsync(path, ct))

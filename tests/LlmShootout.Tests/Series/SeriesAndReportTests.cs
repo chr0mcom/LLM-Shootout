@@ -231,7 +231,7 @@ public sealed class SeriesAndReportTests : IDisposable
         var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, record, judge, TestContext.Current.CancellationToken);
 
         Assert.Equal(before, await File.ReadAllBytesAsync(Path.Combine(outcome.Directory, "events.jsonl"), TestContext.Current.CancellationToken));
-        Assert.Contains("derived assessment", await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("derived assessment", await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), StringComparison.OrdinalIgnoreCase);
         var annotated = MatchRecord.Load(outcome.Directory);
         var report = MatchReportWriter.BuildReport(_definition, annotated);
         File.WriteAllText("/tmp/claude-1000/-srv-docker/033e6862-94ac-4195-917d-1241fe1e3f38/scratchpad/judge-report.md", report);
@@ -256,7 +256,7 @@ public sealed class SeriesAndReportTests : IDisposable
 
         var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), judge, TestContext.Current.CancellationToken);
 
-        var file = JsonSerializer.Deserialize(await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken), AnnotationJson.Default.AnnotationFile)!;
+        var file = JsonSerializer.Deserialize(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), AnnotationJson.Default.AnnotationFile)!;
         Assert.All(file.Entries, e => Assert.NotNull(e.Error));
     }
 
@@ -267,7 +267,7 @@ public sealed class SeriesAndReportTests : IDisposable
 
         var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), new RandomPlayer(3), TestContext.Current.CancellationToken);
 
-        var file = JsonSerializer.Deserialize(await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken), AnnotationJson.Default.AnnotationFile)!;
+        var file = JsonSerializer.Deserialize(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), AnnotationJson.Default.AnnotationFile)!;
         Assert.All(file.Entries, e => Assert.Equal("unclear", e.Result!["announced"]!.ToString()));
     }
 }

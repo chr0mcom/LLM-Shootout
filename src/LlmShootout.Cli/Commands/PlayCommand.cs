@@ -35,7 +35,7 @@ public static class PlayCommand
             command.Options.Add(option);
         }
 
-        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Console, async () =>
+        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, async () =>
         {
             var settings = run.Read(parse, env.BaseOptions);
             var definition = CliEnvironment.RequireGame(parse.GetRequiredValue(game));

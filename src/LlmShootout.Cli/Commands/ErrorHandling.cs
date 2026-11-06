@@ -22,7 +22,7 @@ public static class ErrorHandling
         {
             return await body();
         }
-        catch (Exception ex) when (ex is UsageException or PlayerSpecException or SeriesFileException or GameOptionsException or FileNotFoundException or DirectoryNotFoundException or InvalidDataException or JsonException)
+        catch (Exception ex) when (ex is UsageException or Microsoft.Extensions.Options.OptionsValidationException or PlayerSpecException or SeriesFileException or GameOptionsException or FileNotFoundException or DirectoryNotFoundException or InvalidDataException or JsonException)
         {
             console.MarkupLine($"[red]Error:[/] {Markup.Escape(ex.Message)}");
             return UsageError;

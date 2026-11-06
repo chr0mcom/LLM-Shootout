@@ -14,15 +14,21 @@ namespace LlmShootout.Arena.Annotation;
 /// </summary>
 public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
 {
-    /// <summary>Asks the judge all questions of the task and writes the annotation file. Returns its path.</summary>
-    public async Task<string> RunAsync(IAnnotationTask task, MatchRecord match, IPlayer judge, CancellationToken cancellationToken)
+    /// <summary>Asks the judge all questions of the task and writes the annotation file. Returns its path, or null if the match gave nothing to ask.</summary>
+    public async Task<string?> RunAsync(IAnnotationTask task, MatchRecord match, IPlayer judge, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(task);
         ArgumentNullException.ThrowIfNull(match);
         ArgumentNullException.ThrowIfNull(judge);
 
+        var requests = task.Build(match);
+        if (requests.Count == 0)
+        {
+            return null;
+        }
+
         var entries = new List<AnnotationEntry>();
-        foreach (var request in task.Build(match))
+        foreach (var request in requests)
         {
             entries.Add(await AskAsync(task, request, judge, cancellationToken));
         }

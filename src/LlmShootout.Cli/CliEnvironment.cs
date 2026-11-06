@@ -3,6 +3,7 @@ using LlmShootout.Arena;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.OpenRouter;
 using LlmShootout.Arena.Players;
+using LlmShootout.Cli.Output;
 using LlmShootout.Games;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,8 +14,13 @@ namespace LlmShootout.Cli;
 /// <summary>Everything the commands share: console, clock, the validated base options, and helpers that create players and catalogs.</summary>
 public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOptions<OpenRouterOptions> openRouter, ILoggerFactory loggerFactory)
 {
+    private readonly Lazy<IAnsiConsole> _error = new(() => ConsoleFactory.Create(System.Console.Error));
+
     /// <summary>Output for people.</summary>
     public IAnsiConsole Console => console;
+
+    /// <summary>Output for errors, on standard error.</summary>
+    public IAnsiConsole Error => _error.Value;
 
     /// <summary>The clock.</summary>
     public TimeProvider Time => time;

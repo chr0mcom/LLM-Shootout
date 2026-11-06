@@ -15,6 +15,23 @@ public static class SeriesReportWriter
     /// <summary>Name of the series report file.</summary>
     public const string ReportFile = "series-report.md";
 
+    /// <summary>Collects the numbers of a series from its matches.</summary>
+    public static SeriesSummary Summarize(string gameId, string playerA, string playerB, IReadOnlyList<MatchRecord> matches)
+    {
+        ArgumentNullException.ThrowIfNull(matches);
+        return new SeriesSummary(
+            gameId,
+            playerA,
+            playerB,
+            matches.Count,
+            matches.Count(r => r.Result is not null),
+            matches.Count(r => r.Aborted is not null),
+            matches.Sum(r => r.CostUsd),
+            matches.Sum(r => r.CostUnknownCalls),
+            Seat.All.ToDictionary(seat => seat, seat => matches.Sum(r => r.Result?.Seats[seat].Score ?? 0)),
+            [.. matches.Select(r => new SeriesEntry(Path.GetFileName(r.Directory), r.Communication, r.Result?.Outcome, r.CostUsd))]);
+    }
+
     /// <summary>Writes both files into the series directory.</summary>
     public static async Task WriteAsync(
         IGameDefinition definition,

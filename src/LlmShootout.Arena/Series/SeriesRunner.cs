@@ -36,7 +36,6 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
         ArgumentNullException.ThrowIfNull(plan);
         PlanMatches(plan);
         var records = new List<MatchRecord>();
-        var entries = new List<SeriesEntry>();
         var number = 0;
         foreach (var match in plan.File.Matches)
         {
@@ -52,7 +51,6 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             var record = MatchRecord.Load(outcome.Directory);
             await MatchReportWriter.WriteAsync(plan.Definition, record, cancellationToken);
             records.Add(record);
-            entries.Add(new SeriesEntry(Path.GetFileName(outcome.Directory), match.Communication, record.Result?.Outcome, record.CostUsd));
             OnMatchFinished?.Invoke(number, outcome);
             if (outcome.AbortReason == "cost_limit")
             {
@@ -60,7 +58,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             }
         }
 
-        var summary = Summarize(plan, records, entries);
+        var summary = SeriesReportWriter.Summarize(plan.Definition.Id, plan.PlayerA.Name, plan.PlayerB.Name, records);
         await SeriesReportWriter.WriteAsync(plan.Definition, plan.Directory, summary, records, plan.Language, cancellationToken);
         return summary;
     }
@@ -93,17 +91,4 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             }
         }
     }
-
-    private static SeriesSummary Summarize(SeriesPlan plan, List<MatchRecord> records, List<SeriesEntry> entries) =>
-        new(
-            plan.Definition.Id,
-            plan.PlayerA.Name,
-            plan.PlayerB.Name,
-            entries.Count,
-            records.Count(r => r.Result is not null),
-            records.Count(r => r.Aborted is not null),
-            records.Sum(r => r.CostUsd),
-            records.Sum(r => r.CostUnknownCalls),
-            Seat.All.ToDictionary(seat => seat, seat => records.Sum(r => r.Result?.Seats[seat].Score ?? 0)),
-            entries);
 }

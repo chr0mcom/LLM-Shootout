@@ -17,7 +17,7 @@ public static class ReplayCommand
         var thoughts = new Option<bool>("--show-thoughts") { Description = "Also print the private thoughts." };
         var command = new Command("replay", "Replays a stored match in the console. Prints everything at once unless --delay or --step is given.") { directory, delay, step, thoughts };
 
-        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Console, () =>
+        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, () =>
         {
             var record = MatchRecord.Load(parse.GetRequiredValue(directory));
             var view = new LiveView(env.Console, parse.GetValue(thoughts));
