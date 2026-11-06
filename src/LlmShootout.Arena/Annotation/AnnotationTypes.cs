@@ -30,7 +30,20 @@ public interface IAnnotationTask
 /// <param name="Result">The parsed JSON answer, or null if none could be read.</param>
 /// <param name="Raw">The unchanged text of the answer.</param>
 /// <param name="Error">What went wrong, or null.</param>
-public sealed record AnnotationEntry(string Key, Seat? Seat, JsonObject? Result, string? Raw, string? Error);
+/// <param name="Prompt">The prompt as sent to the judge.</param>
+/// <param name="Reasoning">The reasoning channel of the judge, if delivered.</param>
+/// <param name="Call">Model, provider, generation id, tokens, cost and latency of the judge call, if it is a model.</param>
+/// <param name="RawExchange">The raw HTTP exchange without credentials, if the judge is a model.</param>
+public sealed record AnnotationEntry(
+    string Key,
+    Seat? Seat,
+    JsonObject? Result,
+    string? Raw,
+    string? Error,
+    string? Prompt = null,
+    string? Reasoning = null,
+    Players.ModelCallInfo? Call = null,
+    string? RawExchange = null);
 
 /// <summary>The file an annotation run writes: clearly marked as a derived assessment, not as data of the match.</summary>
 public sealed record AnnotationFile(

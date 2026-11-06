@@ -199,3 +199,75 @@ public class StrictnessTests
         await Task.CompletedTask;
     }
 }
+
+public sealed class FinalReviewTests : IDisposable
+{
+    private readonly MatchHarness _harness = new();
+
+    public void Dispose() => _harness.Dispose();
+
+    [Fact]
+    public async Task Facts_of_a_simultaneous_round_are_filed_under_the_turn_of_their_seat()
+    {
+        var a = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "9"));
+        var b = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "3"));
+
+        var (_, events) = await _harness.RunAsync(new SealedBidDefinition(), a, b);
+
+        var facts = events.OfType<FactEvent>().ToDictionary(f => f.Seat!.Value, f => f.TurnId);
+        Assert.Equal("bid-A", facts[Seat.A]);
+        Assert.Equal("bid-B", facts[Seat.B]);
+    }
+
+    [Fact]
+    public async Task The_cost_of_a_failed_call_is_booked_when_the_error_response_reports_it()
+    {
+        var cost = new CostMeter(10m);
+        var player = new ScriptedPlayer("m", new LlmShootout.Arena.Identity.ModelIdentity("x/y")).Fail("HTTP 500", MatchHarness.Info(0.5m), "raw");
+
+        await Assert.ThrowsAsync<PlayerFailureException>(() => new PlayerGateway(cost).CallAsync(player, new PlayerCall(CallPurpose.Turn, [], null, 1, _ => "{}"), TestContext.Current.CancellationToken));
+
+        Assert.Equal(0.5m, cost.TotalUsd);
+        Assert.Equal(0, cost.UnknownCalls);
+    }
+
+    [Fact]
+    public async Task Judge_entries_keep_prompt_reasoning_call_details_and_raw_exchange()
+    {
+        var definition = new LlmShootout.Games.SplitOrSteal.SplitOrStealDefinition();
+        var (outcome, _) = await _harness.RunAsync(definition, new RandomPlayer(1), new RandomPlayer(2), true);
+        var judge = new ScriptedPlayer("judge")
+            .Reply(_ => new PlayerReply(null, "hmm {\"announced\":\"split\",\"quote\":null,\"confidence\":0.4}", MatchHarness.Info(0.002m), "RAW"))
+            .Reply(_ => new PlayerReply("{\"announced\":\"none\",\"quote\":null,\"confidence\":0.1}", null, MatchHarness.Info(0.002m), "RAW2"));
+
+        var path = await new LlmShootout.Arena.Annotation.Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), judge, TestContext.Current.CancellationToken);
+
+        var entries = LlmShootout.Arena.Annotation.AnnotationJson.Read(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken))!.Entries;
+        Assert.All(entries, e =>
+        {
+            Assert.NotNull(e.Prompt);
+            Assert.Equal(0.002m, e.Call!.CostUsd);
+            Assert.NotNull(e.RawExchange);
+        });
+        Assert.Contains("hmm", entries[0].Reasoning, StringComparison.Ordinal);
+        Assert.Equal("split", entries[0].Result!["announced"]!.ToString());
+    }
+
+    [Fact]
+    public async Task Estimated_cost_appears_in_the_record_the_summary_and_the_report()
+    {
+        var definition = new LlmShootout.Games.SplitOrSteal.SplitOrStealDefinition();
+        var estimated = MatchHarness.Info(null) with { EstimatedCostUsd = 0.2m };
+        var a = new ScriptedPlayer("a", new LlmShootout.Arena.Identity.ModelIdentity("x/a")).Reply(MatchHarness.Answer(move: "split"), info: estimated);
+        var b = new ScriptedPlayer("b", new LlmShootout.Arena.Identity.ModelIdentity("x/b")).Reply(MatchHarness.Answer(move: "split"), info: estimated);
+
+        var (outcome, _) = await _harness.RunAsync(definition, a, b, false);
+
+        var record = MatchRecord.Load(outcome.Directory);
+        Assert.Equal(0.4m, record.CostUsd);
+        Assert.Equal(2, record.CostEstimatedCalls);
+        Assert.Equal(0, record.CostUnknownCalls);
+        Assert.Equal(2, LlmShootout.Arena.Reports.MatchReportWriter.Summarize(record).CostEstimatedCalls);
+        Assert.Contains("estimated from tokens and model price", LlmShootout.Arena.Reports.MatchReportWriter.BuildReport(definition, record), StringComparison.Ordinal);
+    }
+}

@@ -40,6 +40,7 @@ public sealed record MatchSummary(
     string? Outcome,
     IReadOnlyDictionary<Seat, SeatSummary> Seats,
     decimal CostUsd,
+    int CostEstimatedCalls,
     int CostUnknownCalls,
     int ModelCalls,
     string AppVersion,
@@ -55,6 +56,7 @@ public sealed record SeriesSummary(
     int Completed,
     int Aborted,
     decimal CostUsd,
+    int CostEstimatedCalls,
     int CostUnknownCalls,
     IReadOnlyDictionary<Seat, double> PointsTotal,
     IReadOnlyList<SeriesEntry> Entries);

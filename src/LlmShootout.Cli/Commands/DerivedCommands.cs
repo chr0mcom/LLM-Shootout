@@ -5,6 +5,7 @@ using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
+using LlmShootout.Arena.OpenRouter;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Reports;
@@ -51,8 +52,8 @@ public static class DerivedCommands
             var definition = CliEnvironment.RequireGame(record.GameId);
             var players = new Dictionary<Seat, IPlayer>
             {
-                [Seat.A] = await env.CreatePlayerAsync(SpecFor(settings.PlayerA, record, Seat.A), record.Started.Seed + 1, settings.OpenRouter, ct),
-                [Seat.B] = await env.CreatePlayerAsync(SpecFor(settings.PlayerB, record, Seat.B), record.Started.Seed + 2, settings.OpenRouter, ct),
+                [Seat.A] = await env.CreatePlayerAsync(SpecFor(settings.PlayerA, record, Seat.A), record.Started.Seed + 1, WithRecorded(settings.OpenRouter, record, Seat.A, parse, run), ct),
+                [Seat.B] = await env.CreatePlayerAsync(SpecFor(settings.PlayerB, record, Seat.B), record.Started.Seed + 2, WithRecorded(settings.OpenRouter, record, Seat.B, parse, run), ct),
             };
 
             var file = $"debrief.{env.Time.GetUtcNow():yyyyMMdd-HHmmss}.jsonl";
@@ -101,6 +102,24 @@ public static class DerivedCommands
             return 0;
         }, ct));
         return command;
+    }
+
+    /// <summary>Uses the settings of the original match for every setting that was not given on the command line.</summary>
+    private static OpenRouterOptions WithRecorded(OpenRouterOptions options, MatchRecord record, Seat seat, ParseResult parse, RunOptionSet run)
+    {
+        var recorded = record.Started.Players[seat].Settings;
+        if (recorded is null)
+        {
+            return options;
+        }
+
+        return CliEnvironment.Validate(options with
+        {
+            Temperature = parse.GetValue(run.Temperature) is null && recorded.TryGetValue("temperature", out var t) ? float.Parse(t, CultureInfo.InvariantCulture) : options.Temperature,
+            ReasoningEffort = parse.GetValue(run.ReasoningEffort) is null && recorded.TryGetValue("reasoningEffort", out var e) ? e : options.ReasoningEffort,
+            MaxOutputTokens = parse.GetValue(run.MaxOutputTokens) is null && recorded.TryGetValue("maxOutputTokens", out var m) ? int.Parse(m, CultureInfo.InvariantCulture) : options.MaxOutputTokens,
+            CallTimeout = parse.GetValue(run.Timeout) is null && recorded.TryGetValue("callTimeoutSeconds", out var c) ? TimeSpan.FromSeconds(double.Parse(c, CultureInfo.InvariantCulture)) : options.CallTimeout,
+        });
     }
 
     private static string SpecFor(string? given, MatchRecord record, Seat seat)

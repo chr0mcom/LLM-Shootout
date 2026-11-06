@@ -402,6 +402,9 @@ Die Nachbefragung von Sitz {seat} ist fehlgeschlagen: {problems}
 ## report.aborted
 **Abgebrochen:** {reason}. {detail} Das Protokoll ist bis zum Abbruch gültig.
 
+## report.cost_estimated
+Bei {n} Aufrufen hat OpenRouter keine Kosten gemeldet; die Kosten sind aus Tokens und Modellpreis geschätzt.
+
 ## report.cost_unknown
 Bei {n} Aufrufen sind die Kosten unbekannt (zum Beispiel nach einem Timeout). Die Summe ist deshalb eine Untergrenze.
 

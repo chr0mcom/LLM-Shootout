@@ -27,6 +27,7 @@ public static class SeriesReportWriter
             matches.Count(r => r.Result is not null),
             matches.Count(r => r.Aborted is not null),
             matches.Sum(r => r.CostUsd),
+            matches.Sum(r => r.CostEstimatedCalls),
             matches.Sum(r => r.CostUnknownCalls),
             Seat.All.ToDictionary(seat => seat, seat => matches.Sum(r => r.Result?.Seats[seat].Score ?? 0)),
             [.. matches.Select(r => new SeriesEntry(Path.GetFileName(r.Directory), r.Communication, r.Result?.Outcome, r.CostUsd))]);

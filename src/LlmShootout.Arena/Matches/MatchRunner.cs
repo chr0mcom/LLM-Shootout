@@ -38,6 +38,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         try
         {
             var executor = new TurnExecutor(context, _logger);
+            await RecordFactsAsync(context, "start", game.Start().Facts, null, cancellationToken);
             while (game.PendingTurns.Count > 0)
             {
                 await PlayRoundAsync(context, executor, cancellationToken);
@@ -67,6 +68,11 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             await AbortAsync(context, "cancelled", "The run was cancelled.", finished);
             throw;
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await AbortAsync(context, "internal_error", $"{ex.GetType().Name}: {ex.Message}", finished);
+            throw;
+        }
     }
 
     private async Task PlayRoundAsync(MatchContext context, TurnExecutor executor, CancellationToken cancellationToken)
@@ -84,9 +90,14 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         }
 
         var resolution = context.Game.Apply([.. results.Select(r => r.Submission)]);
-        foreach (var fact in resolution.Facts)
+        await RecordFactsAsync(context, turns[0].TurnId, resolution.Facts, turns, cancellationToken);
+    }
+
+    private async Task RecordFactsAsync(MatchContext context, string defaultTurnId, IReadOnlyList<GameFact> facts, TurnRequest[]? turns, CancellationToken cancellationToken)
+    {
+        foreach (var fact in facts)
         {
-            var turnId = turns[0].TurnId;
+            var turnId = turns?.FirstOrDefault(t => t.Seat == fact.Seat)?.TurnId ?? defaultTurnId;
             context.Timeline.AddFact(turnId, fact);
             await context.Writer.AppendAsync(
                 new FactEvent(time.GetUtcNow(), turnId, fact.Kind, fact.Audience, fact.Seat, context.Prompts.RenderFact(fact, null), fact.Description, fact.Data),
@@ -133,7 +144,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
     {
         var players = Seat.All.ToDictionary(
             seat => seat,
-            seat => new PlayerDescription(plan.Players[seat].Name, plan.Players[seat].Model?.Slug));
+            seat => new PlayerDescription(plan.Players[seat].Name, plan.Players[seat].Model?.Slug, plan.Players[seat].Settings.Count == 0 ? null : plan.Players[seat].Settings));
         var language = plan.Setup.Language;
         var hashes = new Dictionary<string, string>(StringComparer.Ordinal)
         {

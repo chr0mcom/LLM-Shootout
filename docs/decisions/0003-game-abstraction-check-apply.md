@@ -24,6 +24,10 @@ Game options come as JSON from series files; `IGameDefinition.Create` validates 
 (`GameOptionsException`), including role assignment. A rematch with swapped roles is therefore configuration.
 Game specific report sections come from an optional `IGameAnalyzer` that reads only protocol events.
 
+**Addendum (final review):** `IGame.Start()` returns the hidden starting state as facts before the first round, because facts
+otherwise exist only after `Apply`; without it the first round's dice of Liar's dice or a drawn Mastermind code would be missing from the
+protocol and from the debriefing. The default reports nothing.
+
 ## Advisor input
 Codex (Sol) and the Opus advisor both confirmed Check-then-Apply, and both asked for `TurnId`/`Kind`, structured
 error codes and a normalized move from `Check`. Opus added fact visibility, game options with validation, an

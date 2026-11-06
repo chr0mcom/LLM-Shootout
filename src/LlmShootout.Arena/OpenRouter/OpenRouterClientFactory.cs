@@ -40,7 +40,7 @@ public static class OpenRouterClientFactory
             Endpoint = options.BaseAddress,
             Transport = new HttpClientPipelineTransport(httpClient),
             RetryPolicy = new ClientRetryPolicy(maxRetries: 0),
-            NetworkTimeout = options.CallTimeout + TimeSpan.FromSeconds(30),
+            NetworkTimeout = WholeCallBudget(options),
         };
         var openAi = new OpenAIClient(new ApiKeyCredential(options.ApiKey ?? "missing"), clientOptions);
         var builder = new ChatClientBuilder(openAi.GetChatClient(modelSlug).AsIChatClient());
@@ -66,6 +66,13 @@ public static class OpenRouterClientFactory
             })
             .AddTimeout(options.CallTimeout)
             .Build();
+
+    /// <summary>
+    /// The client-level timeout spans all HTTP attempts of a call, so it must be larger than every attempt plus the backoff
+    /// between them; the timeout of one attempt is the job of the resilience pipeline.
+    /// </summary>
+    internal static TimeSpan WholeCallBudget(OpenRouterOptions options) =>
+        (options.CallTimeout * (options.MaxHttpRetries + 1)) + (options.RetryDelay * Math.Pow(2, options.MaxHttpRetries + 1)) + TimeSpan.FromSeconds(30);
 
     private static bool IsRetryable(Outcome<HttpResponseMessage> outcome) => outcome switch
     {

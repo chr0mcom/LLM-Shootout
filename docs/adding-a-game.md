@@ -175,7 +175,7 @@ sequenceDiagram
 | Turn order (alternate, phases) | return one `TurnRequest` at a time, advance your own phase counter in `Apply` |
 | Both decide at once | return one `TurnRequest` per seat |
 | Several rounds, role swap | state in your game; vary `TurnRequest.Kind` (`offer`, `respond`) and the seat per round |
-| Hidden information per seat | keep it in the game, show it in `ViewFor(seat)` or as a `FactAudience.Seat` fact |
+| Hidden information per seat | keep it in the game, show it in `ViewFor(seat)` or as a `FactAudience.Seat` fact. **Hidden starting state** (dice, a drawn code, a random layout) is returned from `IGame.Start()` as private facts, so it is in the protocol, in later prompts and in the debriefing |
 | Reveal | a `FactAudience.Everyone` fact in `Apply` |
 | A referee or oracle (Nim) | rate the move inside `Apply` and return a `FactAudience.Analysis` fact; it reaches the protocol but never a prompt |
 | Messages together with moves | `Message = Optional` or `Required` and `Move = Required` in the same turn |

@@ -70,10 +70,13 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
         return new MatchPlan(
             plan.Definition,
             new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
-            new Dictionary<Seat, IPlayer> { [Seat.A] = plan.PlayerA, [Seat.B] = plan.PlayerB },
+            new Dictionary<Seat, IPlayer> { [Seat.A] = Fresh(plan.PlayerA, seed + 1), [Seat.B] = Fresh(plan.PlayerB, seed + 2) },
             plan.Options with { RevealIdentity = match.RevealIdentity },
             MatchPaths.SeriesMatch(plan.Directory, number, match.Communication, first));
     }
+
+    /// <summary>Random players are created anew for every match from the match seed, so a match does not depend on the matches before it.</summary>
+    private static IPlayer Fresh(IPlayer player, long seed) => player is RandomPlayer ? new RandomPlayer(seed) : player;
 
     private static void PlanMatches(SeriesPlan plan)
     {

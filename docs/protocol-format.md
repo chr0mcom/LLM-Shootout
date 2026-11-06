@@ -46,7 +46,7 @@ First line. Everything needed to understand and repeat the match.
 |---|---|
 | `gameId`, `seed`, `language`, `communication`, `firstSeat` | the game and its setup |
 | `gameOptions` | game specific options from the series file, or absent |
-| `players` | per seat: `name` (for example `openrouter:openai/gpt-oss-20b` or `random`) and `requestedModel` |
+| `players` | per seat: `name` (for example `openrouter:openai/gpt-oss-20b` or `random`), `requestedModel`, and `settings` (temperature, reasoning effort, output limit, call timeout, only those that are sent; a repeated debriefing uses them again) |
 | `templateHashes` | hash of the template file of the arena and of the game, for the language used |
 | `options` | the `MatchOptions`: attempts, word limits, thought memory, identity settings, cost limit, refusal keywords |
 | `appVersion`, `gitCommit` | version and short commit of the application |
@@ -91,7 +91,7 @@ counters: `attempts`, `invalidAnswers`, `refusals`, `tokenLimitHits`.
 
 Something the game reports. `audience` is `Everyone`, `Seat` (only the named seat sees it in a prompt) or
 `Analysis` (never in a prompt, for example a Nim oracle verdict). `text` is the neutral wording ("Seat A"),
-`template` the key and values so that it can be reworded for a viewer, `data` machine readable details.
+`template` the key and values so that it can be reworded for a viewer, `data` machine readable details. Facts of a round are filed under the `turnId` of the turn of their seat; hidden starting state (dice, a drawn code) comes from `IGame.Start()` and has `turnId` `start`.
 
 ```json
 {"type":"fact","turnId":"decide","kind":"decision","audience":"Everyone","seat":"A","text":"Decision (Seat A): split","template":{"key":"fact.decision","values":{"decision":"split"}},"data":{"decision":"split"},"at":"...","schemaVersion":1}
@@ -104,13 +104,17 @@ The game ended: `result` with `outcome`, per-seat `score` and `label`, and `metr
 
 ### `match_aborted`
 
-The match stopped before the game ended: `reason` (`cost_limit`, `timeout`, `player_failure`, `cancelled`) and `detail`.
-It can also appear after `match_finished` if the run is cancelled during the debriefing; the result stays valid.
+The match stopped before the game ended: `reason` (`cost_limit`, `timeout`, `player_failure`, `cancelled`, `internal_error` for an unexpected exception) and `detail`.
+It can also appear after `match_finished` if the cost limit is reached or the run is cancelled during the debriefing; the result stays valid and the match directory still counts as a finished match with an aborted debriefing.
 
 ### `debrief`
 
 The debriefing of one seat: `valid`, `answers` (all values as text: `3`, `true`, free text), `problems`, `attempts`.
 The model calls of the debriefing are `model_call` events with `purpose: Debrief`.
+
+## Cost figures
+
+`model_call.call.costUsd` is the cost OpenRouter reported. If it reported none, `estimatedCostUsd` holds an estimate from tokens and the model price; the spending limit uses it, and `match.json` and the report add it to the cost and list how many calls were estimated. Calls with neither are `costUnknown` and are held back with a fixed reserve against the limit. `match_finished.costUsd` is the cost of the turns up to the end of the game; `match.json` totals all calls including the debriefing.
 
 ## match.json
 

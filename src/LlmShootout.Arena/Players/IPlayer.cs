@@ -80,6 +80,9 @@ public interface IPlayer
     /// <summary>The model behind the player, or null if it is not a model.</summary>
     ModelIdentity? Model { get; }
 
+    /// <summary>The settings sent with every call (temperature, reasoning effort, output limit, timeout), recorded in the protocol so that a repeated debriefing can use them. Empty by default.</summary>
+    IReadOnlyDictionary<string, string> Settings => new Dictionary<string, string>();
+
     /// <summary>Answers a request. Throws <see cref="PlayerFailureException"/> on technical failure.</summary>
     Task<PlayerReply> RespondAsync(PlayerCall request, CancellationToken cancellationToken);
 }

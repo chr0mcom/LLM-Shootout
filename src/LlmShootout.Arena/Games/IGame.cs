@@ -14,6 +14,13 @@ namespace LlmShootout.Arena.Games;
 /// </remarks>
 public interface IGame
 {
+    /// <summary>
+    /// Called once before the first round. Return the hidden starting state of the seats as private facts
+    /// (the dice of the first round, a drawn code, a random ship layout), so that it is in the protocol, in later
+    /// prompts and in the debriefing. The default reports nothing.
+    /// </summary>
+    TurnResolution Start() => new([]);
+
     /// <summary>The turns that must be answered before the game advances. Empty when the game is over.</summary>
     IReadOnlyList<TurnRequest> PendingTurns { get; }
 

@@ -58,21 +58,22 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         for (var attempt = 1; attempt <= max; attempt++)
         {
             MatchLog.Attempt(logger, turn.TurnId, turn.Seat, attempt);
-            var evaluation = await TryAttemptAsync(turn, attempt, attempt == max, state, cancellationToken);
-            if (evaluation?.IsValid == true)
+            var answer = await TryAttemptAsync(turn, attempt, attempt == max, state, cancellationToken);
+            if (answer is { IsValid: true })
             {
-                return Finish(turn, state, evaluation, SubmissionStatus.Played, attempt);
+                return Finish(turn, state, answer, SubmissionStatus.Played, attempt);
             }
         }
 
-        if (state.LastEvaluation is null)
+        if (state.NeverAnswered)
         {
             throw new PlayerFailureException($"All {max} attempts of turn '{turn.TurnId}' timed out.", isTimeout: true);
         }
 
-        return Finish(turn, state, state.LastEvaluation, SubmissionStatus.Exhausted, max);
+        return Finish(turn, state, state.LastEvaluation!, SubmissionStatus.Exhausted, max);
     }
 
+    /// <summary>One model call. Returns the evaluation of the answer, or null if the call timed out.</summary>
     private async Task<Evaluation?> TryAttemptAsync(TurnRequest turn, int attempt, bool isLast, TurnState state, CancellationToken cancellationToken)
     {
         var messages = context.Prompts.BuildTurn(new TurnPromptInput(
@@ -189,6 +190,8 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
     private sealed class TurnState
     {
         public Evaluation? LastEvaluation { get; set; }
+
+        public bool NeverAnswered => LastEvaluation is null;
 
         public string? PreviousAnswer { get; private set; }
 

@@ -24,14 +24,22 @@ public sealed class PlayerGateway(CostMeter cost)
 
             return reply;
         }
-        catch (PlayerFailureException)
+        catch (PlayerFailureException ex)
         {
-            if (player.Model is not null)
-            {
-                cost.Record(null);
-            }
-
+            BookFailure(player, ex);
             throw;
+        }
+    }
+
+    private void BookFailure(IPlayer player, PlayerFailureException failure)
+    {
+        if (failure.Call is { } call)
+        {
+            cost.Record(call.CostUsd, call.EstimatedCostUsd);
+        }
+        else if (player.Model is not null)
+        {
+            cost.Record(null);
         }
     }
 }

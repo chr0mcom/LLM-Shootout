@@ -38,6 +38,7 @@ public static class MatchReportWriter
             match.Result?.Outcome,
             seats,
             match.CostUsd,
+            match.CostEstimatedCalls,
             match.CostUnknownCalls,
             match.Calls.Count(),
             started.AppVersion,
@@ -68,7 +69,7 @@ public static class MatchReportWriter
             infos.Sum(i => i.PromptTokens ?? 0),
             infos.Sum(i => i.CompletionTokens ?? 0),
             infos.Sum(i => i.ReasoningTokens ?? 0),
-            infos.Sum(i => i.CostUsd ?? 0m),
+            infos.Sum(i => i.CostUsd ?? i.EstimatedCostUsd ?? 0m),
             match.Debriefs.LastOrDefault(d => d.Seat == seat)?.Valid);
     }
 
@@ -276,6 +277,11 @@ public static class MatchReportWriter
 
     private static void AppendFooter(StringBuilder sb, MatchSummary s, Func<string, (string, string)[], string> t)
     {
+        if (s.CostEstimatedCalls > 0)
+        {
+            sb.AppendLine(t("report.cost_estimated", [("n", s.CostEstimatedCalls.ToString(CultureInfo.InvariantCulture))])).AppendLine();
+        }
+
         if (s.CostUnknownCalls > 0)
         {
             sb.AppendLine(t("report.cost_unknown", [("n", s.CostUnknownCalls.ToString(CultureInfo.InvariantCulture))])).AppendLine();

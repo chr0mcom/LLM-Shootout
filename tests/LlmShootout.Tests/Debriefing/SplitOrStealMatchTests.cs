@@ -195,7 +195,7 @@ public sealed class SplitOrStealMatchTests : IDisposable
     }
 
     [Fact]
-    public async Task Budget_exhaustion_during_the_debriefing_marks_it_failed_without_aborting_the_match()
+    public async Task Budget_exhaustion_during_the_debriefing_aborts_with_cost_limit_but_keeps_the_result()
     {
         using var harness = new MatchHarness(maxCostUsd: 0.05m);
         var a = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a")).Reply(MatchHarness.Answer(move: "split"), info: MatchHarness.Info(0.03m)).Reply(DebriefJson(false));
@@ -204,11 +204,13 @@ public sealed class SplitOrStealMatchTests : IDisposable
         var (outcome, events) = await harness.RunAsync(_definition, a, b, false, new MatchOptions(), debrief: true);
 
         Assert.NotNull(outcome.Result);
-        Assert.Null(outcome.AbortReason);
-        var debriefs = events.OfType<DebriefEvent>().ToArray();
-        Assert.Equal(2, debriefs.Length);
-        Assert.All(debriefs, d => Assert.False(d.Valid));
-        Assert.All(debriefs, d => Assert.Contains("Cost limit", d.Problems[0], StringComparison.Ordinal));
+        Assert.Equal("cost_limit", outcome.AbortReason);
+        Assert.IsType<MatchFinishedEvent>(events.OfType<MatchFinishedEvent>().Single());
+        Assert.IsType<MatchAbortedEvent>(events[^1]);
+        var debrief = Assert.Single(events.OfType<DebriefEvent>());
+        Assert.False(debrief.Valid);
+        Assert.Contains("Cost limit", debrief.Problems[0], StringComparison.Ordinal);
         Assert.Single(a.Calls);
+        Assert.Equal(MatchRecord.Load(outcome.Directory).Result!.Outcome, outcome.Result!.Outcome);
     }
 }

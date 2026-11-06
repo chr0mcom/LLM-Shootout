@@ -67,6 +67,26 @@ public sealed class SeriesAndReportTests : IDisposable
     }
 
     [Fact]
+    public async Task A_match_of_a_series_does_not_depend_on_the_matches_before_it()
+    {
+        var (summary, directory) = await RunSeriesAsync("en");
+        var file = SeriesFile.Load(StandardSeries);
+        var second = file.Matches[1];
+        var seed = file.Seed + 2;
+        var alone = new MatchPlan(
+            _definition,
+            new GameSetup(seed, second.Communication, "en", second.FirstSeat ?? Seat.A, second.Options),
+            new Dictionary<Seat, IPlayer> { [Seat.A] = new RandomPlayer(seed + 1), [Seat.B] = new RandomPlayer(seed + 2) },
+            new MatchOptions(),
+            Path.Combine(_harness.Directory, "alone"));
+        await new MatchRunner(_harness.Cost, _harness.Time).RunAsync(alone, TestContext.Current.CancellationToken);
+
+        var inSeries = await File.ReadAllTextAsync(Path.Combine(directory, summary.Entries[1].Directory, "events.jsonl"), TestContext.Current.CancellationToken);
+        var standalone = await File.ReadAllTextAsync(Path.Combine(alone.Directory, "events.jsonl"), TestContext.Current.CancellationToken);
+        Assert.Equal(standalone, inSeries);
+    }
+
+    [Fact]
     public async Task The_first_seat_comes_from_the_file_or_else_from_the_seed()
     {
         var path = Path.Combine(_harness.Directory, "no-first.json");
@@ -234,7 +254,6 @@ public sealed class SeriesAndReportTests : IDisposable
         Assert.Contains("derived assessment", await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), StringComparison.OrdinalIgnoreCase);
         var annotated = MatchRecord.Load(outcome.Directory);
         var report = MatchReportWriter.BuildReport(_definition, annotated);
-        File.WriteAllText("/tmp/claude-1000/-srv-docker/033e6862-94ac-4195-917d-1241fe1e3f38/scratchpad/judge-report.md", report);
         Assert.Contains("Broken word (announced split, decided steal)", report, StringComparison.Ordinal);
         Assert.Contains("Self-report contradicts behavior", report, StringComparison.Ordinal);
     }

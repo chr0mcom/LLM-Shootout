@@ -56,17 +56,15 @@ public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
                 {
                     var answer = JsonNode.Parse(json)!.AsObject();
                     var problem = task.Validate(request, answer);
-                    return problem is null
-                        ? new AnnotationEntry(request.Key, request.Seat, answer, reply.Content, null)
-                        : new AnnotationEntry(request.Key, request.Seat, null, reply.Content, problem);
+                    return new AnnotationEntry(request.Key, request.Seat, problem is null ? answer : null, reply.Content, problem, request.Prompt, reply.Reasoning, reply.Call, reply.RawExchange);
                 }
             }
 
-            return new AnnotationEntry(request.Key, request.Seat, null, reply.Content, "The judge returned no JSON object.");
+            return new AnnotationEntry(request.Key, request.Seat, null, reply.Content, "The judge returned no JSON object.", request.Prompt, reply.Reasoning, reply.Call, reply.RawExchange);
         }
         catch (PlayerFailureException ex)
         {
-            return new AnnotationEntry(request.Key, request.Seat, null, null, ex.Message);
+            return new AnnotationEntry(request.Key, request.Seat, null, null, ex.Message, request.Prompt, null, ex.Call, ex.RawExchange);
         }
     }
 

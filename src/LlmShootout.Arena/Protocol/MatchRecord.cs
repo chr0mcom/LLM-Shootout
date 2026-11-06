@@ -54,11 +54,14 @@ public sealed class MatchRecord
     /// <summary>The debriefing events of the match itself.</summary>
     public IEnumerable<DebriefEvent> Debriefs => Events.OfType<DebriefEvent>();
 
-    /// <summary>Total cost of all calls with known cost.</summary>
-    public decimal CostUsd => Calls.Sum(c => c.Call?.CostUsd ?? 0m);
+    /// <summary>Total cost: reported cost plus, where OpenRouter reported none, the estimate from tokens and prices.</summary>
+    public decimal CostUsd => Calls.Sum(c => c.Call?.CostUsd ?? c.Call?.EstimatedCostUsd ?? 0m);
 
-    /// <summary>Number of calls whose cost is unknown.</summary>
-    public int CostUnknownCalls => Calls.Count(c => c.CostUnknown);
+    /// <summary>Number of calls whose cost was estimated because OpenRouter reported none.</summary>
+    public int CostEstimatedCalls => Calls.Count(c => c.Call is { CostUsd: null, EstimatedCostUsd: not null });
+
+    /// <summary>Number of calls whose cost is unknown (neither reported nor estimable).</summary>
+    public int CostUnknownCalls => Calls.Count(c => c.Call is null ? c.CostUnknown : c.Call is { CostUsd: null, EstimatedCostUsd: null });
 
     /// <summary>Time between the first and the last event.</summary>
     public TimeSpan Duration => Events[^1].At - Events[0].At;

@@ -12,6 +12,10 @@ call, books `ModelCallInfo.CostUsd` after it, and books "unknown" for a failed c
 still be billed). Unknown costs are counted and shown in the report. `BudgetExceededException` ends the match
 cleanly with a valid protocol (`match_aborted`, reason `cost_limit`).
 
+Cost that OpenRouter did not report is estimated from tokens and the model price; a call with neither is held back with a fixed
+reserve (`CostMeter.ReservedUsd`), so the limit still bites if the cost field disappears. A failed call books the cost its error response carried.
+If the limit is reached during the debriefing, the match keeps its result and ends with `cost_limit`.
+
 ## Alternatives
 A `DelegatingChatClient` in the `ChatClientBuilder` pipeline. Rejected: cost is not part of the chat
 abstraction (ADR 0006), and a gateway above the player also meters scripted test players and keeps the rule in one

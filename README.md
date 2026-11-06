@@ -68,10 +68,10 @@ Finished examples (made with random players) are in [`matches/examples/`](matche
 | Command | What it does |
 |---|---|
 | `shootout games` | lists the games |
-| `shootout models [--filter text] [--schema-only]` | OpenRouter models with prices and JSON schema support (needs no key) |
+| `shootout models [--filter text] [--schema-only] [--limit n] [--from file]` | OpenRouter models with prices and JSON schema support (needs no key; `--from` reads a saved response, for example `docs/examples/models-sample.json`) |
 | `shootout play <game> --a <player> --b <player>` | one match |
 | `shootout series <file> [--a --b]` | all matches of a series file |
-| `shootout replay <match>` | plays a stored match back in the console |
+| `shootout replay <match> [--delay ms] [--step] [--show-thoughts]` | plays a stored match back in the console (all at once by default; `--step` waits for a key, only with a terminal) |
 | `shootout report <match-or-series>` | rebuilds `match.json` and `report.md` from the protocol |
 | `shootout debrief <match>` | asks the players again, into a new file |
 | `shootout annotate <match-or-series> --judge <model>` | lets a judge model rate the matches (derived file) |
@@ -85,6 +85,9 @@ A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slu
 | `--reveal-identity` | name the opponent model in the prompt (default: hidden) |
 | `--seed <n>`, `--first-seat A\|B` | reproducibility (`play`); a series takes its seed from the file |
 | `--lang de\|en` | prompt language (default `de`) |
+| `--game-option key=value` | game specific option, repeatable (for example `pot=1000`; `play` only, a series takes them from the file) |
+| `--redact-identity` | replace model names in public messages by a placeholder (default: only mark them) |
+| `--thought-memory <n>` | how many of its own earlier thoughts a player sees again (default 10, 0 for none) |
 | `--max-cost <usd>` | spending limit for the run (default 1) |
 | `--no-debrief` | skip the questions after the game |
 | `--show-thoughts` | also print the private thoughts of the players while playing |
@@ -93,7 +96,7 @@ A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slu
 | `--temperature`, `--reasoning-effort`, `--max-output-tokens`, `--timeout` | model settings; **not sent unless given** |
 
 Exit codes: `0` success, `2` wrong usage (the message says what to do), `3` the run was aborted or ended early (cost
-limit, timeout, failure), `1` unexpected error. Every command also runs without a terminal, with redirected input and output.
+limit, timeout, failure), `130` cancelled with Ctrl+C, `1` unexpected error. Every command also runs without a terminal, with redirected input and output.
 
 ## What you get per match
 

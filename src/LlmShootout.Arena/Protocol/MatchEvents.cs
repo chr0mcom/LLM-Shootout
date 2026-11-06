@@ -29,7 +29,7 @@ public abstract record MatchEvent(DateTimeOffset At)
 }
 
 /// <summary>Who plays a seat.</summary>
-public sealed record PlayerDescription(string Name, string? RequestedModel);
+public sealed record PlayerDescription(string Name, string? RequestedModel, IReadOnlyDictionary<string, string>? Settings = null);
 
 /// <summary>First event of a match: everything needed to understand and repeat it.</summary>
 public sealed record MatchStartedEvent(

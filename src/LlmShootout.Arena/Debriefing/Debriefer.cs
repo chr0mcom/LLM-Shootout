@@ -49,6 +49,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
             catch (BudgetExceededException ex)
             {
                 await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, false, new Dictionary<string, string>(), [ex.Message], 0), CancellationToken.None);
+                throw;
             }
         }
     }

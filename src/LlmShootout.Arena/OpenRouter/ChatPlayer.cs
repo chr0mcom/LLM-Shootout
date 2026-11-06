@@ -17,6 +17,9 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
     public ModelIdentity? Model { get; private set; } = new ModelIdentity(modelSlug);
 
     /// <inheritdoc />
+    public IReadOnlyDictionary<string, string> Settings { get; } = DescribeSettings(options);
+
+    /// <inheritdoc />
     public async Task<PlayerReply> RespondAsync(PlayerCall request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -52,6 +55,30 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
                 RawExchange = scope.Capture.RenderExchange(),
             };
         }
+    }
+
+    private static Dictionary<string, string> DescribeSettings(OpenRouterOptions options)
+    {
+        var settings = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["callTimeoutSeconds"] = options.CallTimeout.TotalSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        };
+        if (options.Temperature is { } temperature)
+        {
+            settings["temperature"] = temperature.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (options.ReasoningEffort is { } effort)
+        {
+            settings["reasoningEffort"] = effort;
+        }
+
+        if (options.MaxOutputTokens is { } tokens)
+        {
+            settings["maxOutputTokens"] = tokens.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        return settings;
     }
 
     private static List<ChatMessage> ToMessages(PlayerCall request) =>
