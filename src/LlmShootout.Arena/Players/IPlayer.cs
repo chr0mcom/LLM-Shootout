@@ -53,7 +53,8 @@ public sealed record PlayerCall(
 /// <param name="Content">The text of the answer. May be null or empty for reasoning models.</param>
 /// <param name="Reasoning">The reasoning channel of the model, if delivered.</param>
 /// <param name="Call">Technical details of the model call, or null for players that are not models.</param>
-public sealed record PlayerReply(string? Content, string? Reasoning = null, ModelCallInfo? Call = null);
+/// <param name="RawExchange">The raw HTTP request and response without credentials, or null.</param>
+public sealed record PlayerReply(string? Content, string? Reasoning = null, ModelCallInfo? Call = null, string? RawExchange = null);
 
 /// <summary>Technical details of one model call, copied into the protocol.</summary>
 public sealed record ModelCallInfo(

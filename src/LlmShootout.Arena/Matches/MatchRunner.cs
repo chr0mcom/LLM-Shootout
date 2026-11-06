@@ -1,0 +1,144 @@
+using LlmShootout.Arena.Answers;
+using LlmShootout.Arena.Games;
+using LlmShootout.Arena.Players;
+using LlmShootout.Arena.Prompting;
+using LlmShootout.Arena.Protocol;
+using LlmShootout.Arena.Templates;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace LlmShootout.Arena.Matches;
+
+/// <summary>
+/// Runs one match from the first turn to the result and writes the protocol. The loop is the same for every game:
+/// ask the pending seats, collect their answers, hand the whole round to the game, record what happened.
+/// </summary>
+public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<MatchRunner>? logger = null)
+{
+    private readonly ILogger _logger = logger ?? NullLogger<MatchRunner>.Instance;
+
+    /// <summary>Plays the match. A technical failure or the cost limit abort it cleanly; the protocol stays valid.</summary>
+    public async Task<MatchOutcome> RunAsync(MatchPlan plan, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        var game = plan.Definition.Create(plan.Setup);
+        var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options);
+        var evaluator = new AnswerEvaluator(plan.Options, prompts);
+
+        await using var writer = new ProtocolWriter(plan.Directory);
+        var context = new MatchContext(plan, game, prompts, evaluator, writer, cost, time);
+        MatchLog.Started(_logger, plan.Definition.Id, plan.Setup.Seed, plan.Directory);
+        await writer.AppendAsync(StartedEvent(plan), cancellationToken);
+
+        try
+        {
+            var executor = new TurnExecutor(context, _logger);
+            while (game.PendingTurns.Count > 0)
+            {
+                await PlayRoundAsync(context, executor, cancellationToken);
+            }
+
+            var result = game.Result ?? throw new InvalidOperationException($"Game '{plan.Definition.Id}' ended without a result.");
+            await writer.AppendAsync(new MatchFinishedEvent(time.GetUtcNow(), result, cost.TotalUsd, cost.UnknownCalls), cancellationToken);
+            MatchLog.Finished(_logger, result.Outcome);
+            return new MatchOutcome(plan.Directory, result, null, null);
+        }
+        catch (BudgetExceededException ex)
+        {
+            return await AbortAsync(context, "cost_limit", ex.Message);
+        }
+        catch (PlayerFailureException ex)
+        {
+            return await AbortAsync(context, ex.IsTimeout ? "timeout" : "player_failure", ex.Message);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            await AbortAsync(context, "cancelled", "The run was cancelled.");
+            throw;
+        }
+    }
+
+    private async Task PlayRoundAsync(MatchContext context, TurnExecutor executor, CancellationToken cancellationToken)
+    {
+        var turns = context.Game.PendingTurns.ToArray();
+        var results = new List<TurnResult>(turns.Length);
+        foreach (var turn in turns)
+        {
+            results.Add(await executor.ExecuteAsync(turn, cancellationToken));
+        }
+
+        foreach (var (turn, result) in turns.Zip(results))
+        {
+            await RecordTurnAsync(context, turn, result, cancellationToken);
+        }
+
+        var resolution = context.Game.Apply([.. results.Select(r => r.Submission)]);
+        foreach (var fact in resolution.Facts)
+        {
+            var turnId = turns[0].TurnId;
+            context.Timeline.AddFact(turnId, fact);
+            await context.Writer.AppendAsync(
+                new FactEvent(time.GetUtcNow(), turnId, fact.Kind, fact.Audience, fact.Seat, context.Prompts.RenderFact(fact, null), fact.Data),
+                cancellationToken);
+        }
+    }
+
+    private async Task RecordTurnAsync(MatchContext context, TurnRequest turn, TurnResult result, CancellationToken cancellationToken)
+    {
+        await context.Writer.AppendAsync(
+            new TurnEvent(
+                time.GetUtcNow(),
+                turn.TurnId,
+                turn.Kind,
+                turn.Seat,
+                result.Submission.Move,
+                result.Submission.Status.ToString().ToLowerInvariant(),
+                result.Thought,
+                result.ThoughtTruncated,
+                result.Attempts,
+                result.InvalidAnswers,
+                result.Refusals),
+            cancellationToken);
+
+        if (result.MessageAllowed)
+        {
+            context.Timeline.AddMessage(turn.TurnId, turn.Seat, result.Message);
+            await context.Writer.AppendAsync(
+                new MessageEvent(time.GetUtcNow(), turn.TurnId, turn.Seat, result.Message, result.Silent, result.MessageTruncated, []),
+                cancellationToken);
+        }
+    }
+
+    private async Task<MatchOutcome> AbortAsync(MatchContext context, string reason, string detail)
+    {
+        MatchLog.Aborted(_logger, reason, detail);
+        await context.Writer.AppendAsync(new MatchAbortedEvent(time.GetUtcNow(), reason, detail), CancellationToken.None);
+        return new MatchOutcome(context.Plan.Directory, null, reason, detail);
+    }
+
+    private MatchStartedEvent StartedEvent(MatchPlan plan)
+    {
+        var players = Seat.All.ToDictionary(
+            seat => seat,
+            seat => new PlayerDescription(plan.Players[seat].Name, plan.Players[seat].Model?.Slug));
+        var language = plan.Setup.Language;
+        var hashes = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["arena"] = ArenaTemplates.Default.Hash(language),
+            [plan.Definition.Id] = plan.Definition.Templates.Hash(language),
+        };
+        var version = typeof(MatchRunner).Assembly.GetName().Version?.ToString() ?? "unknown";
+        return new MatchStartedEvent(
+            time.GetUtcNow(),
+            plan.Definition.Id,
+            plan.Setup.Seed,
+            language,
+            plan.Setup.Communication,
+            plan.Setup.FirstSeat,
+            plan.Setup.Options,
+            players,
+            hashes,
+            plan.Options,
+            version);
+    }
+}

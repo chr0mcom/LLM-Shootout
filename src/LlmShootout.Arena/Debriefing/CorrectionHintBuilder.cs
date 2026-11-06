@@ -9,27 +9,43 @@ namespace LlmShootout.Arena.Debriefing;
 /// <param name="Allowed">The allowed values, or empty if there is no useful enumeration.</param>
 public sealed record FieldViolation(string Key, string Violation, string Allowed = "");
 
+/// <summary>The fixed phrases of a correction hint, so that hints can be worded in any language.</summary>
+/// <param name="InvalidFieldsHeader">Introduces the list of invalid fields.</param>
+/// <param name="AllowedLabel">Introduces the allowed values of a field.</param>
+/// <param name="UnknownFieldsHeader">Introduces the list of unknown keys.</param>
+/// <param name="Generic">Used when there is nothing more specific to say.</param>
+public sealed record HintTexts(string InvalidFieldsHeader, string AllowedLabel, string UnknownFieldsHeader, string Generic)
+{
+    /// <summary>The English phrases.</summary>
+    public static HintTexts English { get; } = new(
+        "Invalid or missing fields:",
+        "Allowed:",
+        "Remove unknown field(s):",
+        "Your previous response was not a valid JSON object matching the required format.");
+}
+
 /// <summary>
 /// Builds the text of a correction hint: names each invalid key, its violation and its allowed values.
 /// </summary>
 public static class CorrectionHintBuilder
 {
     /// <summary>Builds the hint for the given violations and unknown keys.</summary>
-    public static string Build(IReadOnlyList<FieldViolation> violations, IReadOnlyList<string> extraKeys)
+    public static string Build(IReadOnlyList<FieldViolation> violations, IReadOnlyList<string> extraKeys, HintTexts? texts = null)
     {
         ArgumentNullException.ThrowIfNull(violations);
         ArgumentNullException.ThrowIfNull(extraKeys);
 
+        texts ??= HintTexts.English;
         var sb = new StringBuilder();
         if (violations.Count > 0)
         {
-            sb.Append("Invalid or missing fields:");
+            sb.Append(texts.InvalidFieldsHeader);
             foreach (var (key, violation, allowed) in violations)
             {
                 sb.Append("\n- \"").Append(key).Append("\": ").Append(violation).Append('.');
                 if (!string.IsNullOrEmpty(allowed))
                 {
-                    sb.Append(" Allowed: ").Append(allowed).Append('.');
+                    sb.Append(' ').Append(texts.AllowedLabel).Append(' ').Append(allowed).Append('.');
                 }
             }
         }
@@ -41,13 +57,13 @@ public static class CorrectionHintBuilder
                 sb.Append('\n');
             }
 
-            sb.Append("Remove unknown field(s): ")
+            sb.Append(texts.UnknownFieldsHeader).Append(' ')
               .Append(string.Join(", ", extraKeys.Select(k => $"\"{k}\"")))
               .Append('.');
         }
 
         return sb.Length > 0
             ? sb.ToString()
-            : "Your previous response was not a valid JSON object matching the required format.";
+            : texts.Generic;
     }
 }

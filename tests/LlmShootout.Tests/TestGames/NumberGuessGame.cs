@@ -1,0 +1,112 @@
+using System.Globalization;
+using LlmShootout.Arena.Debriefing;
+using LlmShootout.Arena.Games;
+using LlmShootout.Arena.Randomness;
+using LlmShootout.Arena.Templates;
+
+namespace LlmShootout.Tests.TestGames;
+
+/// <summary>Test game: alternating guesses of a hidden number with higher/lower feedback.</summary>
+public sealed class NumberGuessDefinition : IGameDefinition
+{
+    public string Id => "number-guess";
+
+    public string DisplayName => "Number guess";
+
+    public ITemplateSource Templates { get; } = MarkdownTemplates.FromText(new Dictionary<string, string>
+    {
+        ["en"] = """
+            ## rules
+            You and your opponent take turns guessing a secret number from 1 to 100. Whoever hits it wins. After {max} guesses it is a draw.
+            ## view
+            Secret number: between 1 and 100. Next is guess {n} of {max}.
+            ## instruction
+            Guess the number.
+            ## format
+            An integer from 1 to 100.
+            ## error.not_number
+            "{move}" is not an integer
+            ## error.range
+            {move} is outside 1 to 100
+            ## fact.guess
+            {who} guessed {guess}: {hint}.
+            """,
+    });
+
+    public IGame Create(GameSetup setup) => new NumberGuessGame(setup);
+
+    public IReadOnlyList<DebriefingQuestion> ExtraQuestions(GameSetup setup) => [];
+
+    public IGameAnalyzer? Analyzer => null;
+}
+
+public sealed class NumberGuessGame(GameSetup setup) : IGame
+{
+    private const int MaxGuesses = 6;
+    private readonly int _secret = new SeededRng(setup.Seed).NextInt(100) + 1;
+    private Seat _current = setup.FirstSeat;
+    private int _guess = 1;
+
+    public int Secret => _secret;
+
+    public GameResult? Result { get; private set; }
+
+    private FieldRule MessageRule =>
+        !setup.Communication ? FieldRule.Forbidden : setup.Options?["messageRequired"]?.GetValue<bool>() == true ? FieldRule.Required : FieldRule.Optional;
+
+    public IReadOnlyList<TurnRequest> PendingTurns => Result is not null
+        ? []
+        :
+        [
+            new TurnRequest(
+                $"guess-{_guess}",
+                "guess",
+                _current,
+                MessageRule,
+                FieldRule.Required,
+                TemplateRef.Of("instruction"),
+                new MoveFormat(TemplateRef.Of("format"))),
+        ];
+
+    public TemplateRef RulesFor(Seat seat) => TemplateRef.Of("rules", ("max", MaxGuesses.ToString(CultureInfo.InvariantCulture)));
+
+    public TemplateRef ViewFor(Seat seat) => TemplateRef.Of("view", ("n", _guess.ToString(CultureInfo.InvariantCulture)), ("max", MaxGuesses.ToString(CultureInfo.InvariantCulture)));
+
+    public MoveCheck Check(TurnRequest turn, string move)
+    {
+        if (!int.TryParse(move, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
+        {
+            return MoveCheck.Reject("not-number", TemplateRef.Of("error.not_number", ("move", move)));
+        }
+
+        return number is >= 1 and <= 100
+            ? MoveCheck.Ok(number.ToString(CultureInfo.InvariantCulture))
+            : MoveCheck.Reject("range", TemplateRef.Of("error.range", ("move", move)));
+    }
+
+    public TurnResolution Apply(IReadOnlyList<TurnSubmission> submissions)
+    {
+        var submission = Assert.Single(submissions);
+        var facts = new List<GameFact>();
+        if (submission.Move is { } move)
+        {
+            var guess = int.Parse(move, CultureInfo.InvariantCulture);
+            var hint = guess == _secret ? "correct" : guess < _secret ? "higher" : "lower";
+            facts.Add(new GameFact("guess", FactAudience.Everyone, submission.Seat, TemplateRef.Of("fact.guess", ("guess", move), ("hint", hint)), new Dictionary<string, string> { ["guess"] = move, ["hint"] = hint }));
+            if (guess == _secret)
+            {
+                Result = new GameResult("solved", new Dictionary<Seat, SeatResult> { [submission.Seat] = new(1, "win"), [submission.Seat.Opponent] = new(0, "loss") });
+            }
+        }
+
+        if (Result is null && ++_guess > MaxGuesses)
+        {
+            Result = new GameResult("draw", new Dictionary<Seat, SeatResult> { [Seat.A] = new(0, "draw"), [Seat.B] = new(0, "draw") });
+        }
+
+        _current = _current.Opponent;
+        return new TurnResolution(facts);
+    }
+
+    public string? SampleLegalMove(TurnRequest turn, SeededRng rng) => (rng.NextInt(100) + 1).ToString(CultureInfo.InvariantCulture);
+}
