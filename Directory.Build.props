@@ -7,7 +7,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <InvariantGlobalization>true</InvariantGlobalization>
     <Deterministic>true</Deterministic>
     <RepositoryUrl>https://github.com/chr0mcom/LLM-Shootout</RepositoryUrl>
     <Authors>Stefan S. Bechtel</Authors>
