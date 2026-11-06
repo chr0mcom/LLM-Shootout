@@ -1,0 +1,83 @@
+using System.Globalization;
+using System.Text.Json.Nodes;
+
+namespace LlmShootout.Arena.OpenRouter;
+
+/// <summary>A model from the OpenRouter model list.</summary>
+/// <param name="Id">The slug, for example <c>openai/gpt-4o</c>.</param>
+/// <param name="Name">Display name.</param>
+/// <param name="PromptUsdPerMillion">Input price in USD per million tokens.</param>
+/// <param name="CompletionUsdPerMillion">Output price in USD per million tokens.</param>
+/// <param name="ContextLength">Context window in tokens.</param>
+/// <param name="SupportsJsonSchema">True if <c>supported_parameters</c> lists <c>structured_outputs</c>.</param>
+/// <param name="SupportsReasoning">True if <c>supported_parameters</c> lists <c>reasoning</c>.</param>
+public sealed record ModelInfo(
+    string Id,
+    string Name,
+    decimal PromptUsdPerMillion,
+    decimal CompletionUsdPerMillion,
+    int ContextLength,
+    bool SupportsJsonSchema,
+    bool SupportsReasoning);
+
+/// <summary>
+/// The model list of OpenRouter (<c>GET /models</c>, no key needed) with a short file cache, so that repeated
+/// commands do not hit the API and offline runs can still use the last list.
+/// </summary>
+public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, TimeProvider time)
+{
+    private const string CacheFile = "models.json";
+
+    /// <summary>How long a cached list is used without asking OpenRouter again.</summary>
+    public static TimeSpan CacheLifetime { get; } = TimeSpan.FromHours(1);
+
+    /// <summary>Loads the list from the cache or from OpenRouter. Falls back to an older cache if the network fails.</summary>
+    public async Task<IReadOnlyList<ModelInfo>> GetModelsAsync(CancellationToken cancellationToken)
+    {
+        var path = Path.Combine(options.CacheDirectory, CacheFile);
+        if (File.Exists(path) && time.GetUtcNow() - File.GetLastWriteTimeUtc(path) < CacheLifetime)
+        {
+            return Parse(await File.ReadAllTextAsync(path, cancellationToken));
+        }
+
+        try
+        {
+            var json = await http.GetStringAsync(new Uri("models", UriKind.Relative), cancellationToken);
+            Directory.CreateDirectory(options.CacheDirectory);
+            await File.WriteAllTextAsync(path, json, cancellationToken);
+            return Parse(json);
+        }
+        catch (HttpRequestException) when (File.Exists(path))
+        {
+            return Parse(await File.ReadAllTextAsync(path, cancellationToken));
+        }
+    }
+
+    /// <summary>Finds a model by slug, or null.</summary>
+    public async Task<ModelInfo?> FindAsync(string slug, CancellationToken cancellationToken) =>
+        (await GetModelsAsync(cancellationToken)).FirstOrDefault(m => string.Equals(m.Id, slug, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Parses a response of the models endpoint.</summary>
+    public static IReadOnlyList<ModelInfo> Parse(string json)
+    {
+        var data = JsonNode.Parse(json)?["data"]?.AsArray() ?? [];
+        return
+        [
+            .. data.Select(node => node as JsonObject).OfType<JsonObject>().Select(m =>
+            {
+                var supported = m["supported_parameters"]?.AsArray().Select(p => p?.ToString()).ToHashSet(StringComparer.Ordinal) ?? [];
+                return new ModelInfo(
+                    m["id"]?.ToString() ?? string.Empty,
+                    m["name"]?.ToString() ?? string.Empty,
+                    PerMillion(m["pricing"]?["prompt"]),
+                    PerMillion(m["pricing"]?["completion"]),
+                    int.TryParse(m["context_length"]?.ToString(), CultureInfo.InvariantCulture, out var context) ? context : 0,
+                    supported.Contains("structured_outputs"),
+                    supported.Contains("reasoning"));
+            }).Where(m => m.Id.Length > 0),
+        ];
+    }
+
+    private static decimal PerMillion(JsonNode? perToken) =>
+        decimal.TryParse(perToken?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value * 1_000_000m : 0m;
+}
