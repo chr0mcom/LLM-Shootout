@@ -2,6 +2,7 @@
 # Runs every command of the application without an API key and checks that it works. Exit code 0 means success.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+unset OPENROUTER_API_KEY   # never spend money in a smoke test
 
 dotnet build --nologo --verbosity quiet >/dev/null
 SHOOTOUT=(dotnet src/LlmShootout.Cli/bin/Debug/net10.0/shootout.dll)
@@ -28,7 +29,8 @@ SERIES="$("${SHOOTOUT[@]}" series shootouts/split-or-steal.json --a random --b r
 test -f "$SERIES/series.json" && test -f "$SERIES/series-report.md"
 
 step "replay"
-"${SHOOTOUT[@]}" replay "$SERIES/01-talk-A-first" --show-thoughts | head -n 12
+"${SHOOTOUT[@]}" replay "$SERIES/01-talk-A-first" --show-thoughts > "$WORK/replay.txt"
+head -n 12 "$WORK/replay.txt"
 
 step "annotate with a random judge"
 "${SHOOTOUT[@]}" annotate "$SERIES" --judge random

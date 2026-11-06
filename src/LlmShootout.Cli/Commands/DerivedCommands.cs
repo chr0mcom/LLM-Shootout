@@ -26,7 +26,7 @@ public static class DerivedCommands
             await RebuildAsync(directory, ct);
             env.Console.WriteLine(directory);
             return 0;
-        }));
+        }, ct));
         return command;
     }
 
@@ -51,8 +51,8 @@ public static class DerivedCommands
             var definition = CliEnvironment.RequireGame(record.GameId);
             var players = new Dictionary<Seat, IPlayer>
             {
-                [Seat.A] = await env.CreatePlayerAsync(settings.PlayerA ?? record.Started.Players[Seat.A].Name, record.Started.Seed + 1, settings.OpenRouter, ct),
-                [Seat.B] = await env.CreatePlayerAsync(settings.PlayerB ?? record.Started.Players[Seat.B].Name, record.Started.Seed + 2, settings.OpenRouter, ct),
+                [Seat.A] = await env.CreatePlayerAsync(SpecFor(settings.PlayerA, record, Seat.A), record.Started.Seed + 1, settings.OpenRouter, ct),
+                [Seat.B] = await env.CreatePlayerAsync(SpecFor(settings.PlayerB, record, Seat.B), record.Started.Seed + 2, settings.OpenRouter, ct),
             };
 
             var file = $"debrief.{env.Time.GetUtcNow():yyyyMMdd-HHmmss}.jsonl";
@@ -62,10 +62,11 @@ public static class DerivedCommands
                 await new Debriefer(new PlayerGateway(cost), env.Time).RunAsync(definition, record, players, record.Started.Options, writer, ct);
             }
 
-            PrintAnswers(env.Console, ProtocolReader.ReadAll(record.Directory, file).OfType<DebriefEvent>().ToArray());
+            var events = ProtocolReader.ReadAll(record.Directory, file).OfType<DebriefEvent>().ToArray();
+            PrintAnswers(env.Console, events);
             env.Console.WriteLine($"Written to {Path.Combine(record.Directory, file)} (the protocol events.jsonl is unchanged).");
-            return 0;
-        }));
+            return events.All(e => e.Valid) ? 0 : ErrorHandling.Aborted;
+        }, ct));
         return command;
     }
 
@@ -98,8 +99,16 @@ public static class DerivedCommands
 
             await RebuildAsync(directory, ct);
             return 0;
-        }));
+        }, ct));
         return command;
+    }
+
+    private static string SpecFor(string? given, MatchRecord record, Seat seat)
+    {
+        var name = given ?? record.Started.Players[seat].Name;
+        return given is null && name.StartsWith("scripted:", StringComparison.Ordinal)
+            ? throw new UsageException($"Seat {seat} was played by a script ({name}). Pass the player again with --{(seat == Seat.A ? "a" : "b")} <player>.")
+            : name;
     }
 
     /// <summary>The match directories below a path: the path itself if it is a match, otherwise its sub-directories that contain a protocol.</summary>
@@ -129,7 +138,7 @@ public static class DerivedCommands
             records.Add(record);
         }
 
-        if (!File.Exists(Path.Combine(path, ProtocolFiles.Events)))
+        if (!File.Exists(Path.Combine(path, ProtocolFiles.Events)) && File.Exists(Path.Combine(path, SeriesReportWriter.SummaryFile)))
         {
             var first = records[0];
             var summary = SeriesReportWriter.Summarize(first.GameId, first.Started.Players[Seat.A].Name, first.Started.Players[Seat.B].Name, records);

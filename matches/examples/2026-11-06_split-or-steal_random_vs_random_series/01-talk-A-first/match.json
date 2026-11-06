@@ -1,0 +1,59 @@
+{
+  "gameId": "split-or-steal",
+  "startedAt": "2026-11-06T10:15:03.1770377+00:00",
+  "durationSeconds": 0.1758567,
+  "aborted": false,
+  "communication": true,
+  "language": "de",
+  "seed": 2028,
+  "firstSeat": "A",
+  "identityRevealed": false,
+  "outcome": "both_split",
+  "seats": {
+    "A": {
+      "player": "random",
+      "score": 50,
+      "label": "split",
+      "turns": 4,
+      "invalidAnswers": 0,
+      "refusals": 0,
+      "tokenLimitHits": 0,
+      "thoughtsTruncated": 0,
+      "messagesTruncated": 0,
+      "silentMessages": 0,
+      "identityHits": 0,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "reasoningTokens": 0,
+      "costUsd": 0,
+      "debriefValid": true
+    },
+    "B": {
+      "player": "random",
+      "score": 50,
+      "label": "split",
+      "turns": 4,
+      "invalidAnswers": 0,
+      "refusals": 0,
+      "tokenLimitHits": 0,
+      "thoughtsTruncated": 0,
+      "messagesTruncated": 0,
+      "silentMessages": 0,
+      "identityHits": 0,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "reasoningTokens": 0,
+      "costUsd": 0,
+      "debriefValid": true
+    }
+  },
+  "costUsd": 0,
+  "costUnknownCalls": 0,
+  "modelCalls": 10,
+  "appVersion": "1.0.0",
+  "gitCommit": "67cade7cf648",
+  "templateHashes": {
+    "arena": "FC000E0ABECE61A6",
+    "split-or-steal": "774AC66D83D97B9B"
+  }
+}

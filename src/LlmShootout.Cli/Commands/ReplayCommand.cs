@@ -17,7 +17,7 @@ public static class ReplayCommand
         var thoughts = new Option<bool>("--show-thoughts") { Description = "Also print the private thoughts." };
         var command = new Command("replay", "Replays a stored match in the console. Prints everything at once unless --delay or --step is given.") { directory, delay, step, thoughts };
 
-        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, () =>
+        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, async () =>
         {
             var record = MatchRecord.Load(parse.GetRequiredValue(directory));
             var view = new LiveView(env.Console, parse.GetValue(thoughts));
@@ -32,7 +32,7 @@ public static class ReplayCommand
                 ct.ThrowIfCancellationRequested();
                 if (e is TurnEvent or MessageEvent && parse.GetValue(delay) > 0)
                 {
-                    Thread.Sleep(parse.GetValue(delay));
+                    await Task.Delay(parse.GetValue(delay), ct);
                 }
 
                 if (e is TurnEvent && interactive)
@@ -43,8 +43,8 @@ public static class ReplayCommand
                 view.Handle(e);
             }
 
-            return Task.FromResult(0);
-        }));
+            return 0;
+        }, ct));
         return command;
     }
 }

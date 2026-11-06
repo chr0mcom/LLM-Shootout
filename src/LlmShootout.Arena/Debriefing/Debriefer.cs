@@ -157,7 +157,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
             ("notes", thoughts.Length == 0 ? string.Empty : s.Prompts.Arena("debrief.notes", ("thoughts", string.Join('\n', thoughts))) + "\n\n"),
             ("outcome", Outcome(s, seat)),
             ("questions", string.Join('\n', s.Questions.Select(q => Describe(s, q)))),
-            ("format", FormatExample(s.Questions)));
+            ("format", FormatExample(s, s.Questions)));
     }
 
     private static string Outcome(Session s, Seat seat)
@@ -189,19 +189,20 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         return q.WithReason ? line + "\n" + s.Prompts.Arena("debrief.reason", ("key", q.Key)) : line;
     }
 
-    private static string FormatExample(IReadOnlyList<DebriefingQuestion> questions)
+    private static string FormatExample(Session s, IReadOnlyList<DebriefingQuestion> questions)
     {
-        var example = new JsonObject();
+        string Placeholder(DebriefingQuestion q) => s.Prompts.Arena($"debrief.placeholder.{q.Kind.ToString().ToLowerInvariant()}");
+        var members = new List<string>();
         foreach (var q in questions)
         {
-            example[q.Key] = "...";
+            members.Add($"\"{q.Key}\": {Placeholder(q)}");
             if (q.WithReason)
             {
-                example[q.Key + "_reason"] = "...";
+                members.Add($"\"{q.Key}_reason\": {s.Prompts.Arena("debrief.placeholder.text")}");
             }
         }
 
-        return example.ToJsonString();
+        return "{" + string.Join(", ", members) + "}";
     }
 
     private ModelCallEvent CallEvent(

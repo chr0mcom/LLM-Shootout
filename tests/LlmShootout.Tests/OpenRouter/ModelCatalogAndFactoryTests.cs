@@ -11,6 +11,7 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
         {"data":[
           {"id":"vendor/alpha","name":"Alpha","context_length":128000,"pricing":{"prompt":"0.000001","completion":"0.000004"},"supported_parameters":["temperature","structured_outputs","reasoning"]},
           {"id":"vendor/beta","name":"Beta","context_length":8192,"pricing":{"prompt":"0","completion":"0"},"supported_parameters":["temperature"]},
+          {"id":"vendor/gamma","name":"Gamma","context_length":4096,"pricing":{"prompt":"0","completion":"0"},"supported_parameters":["structured_outputs"]},
           {"name":"no id"}
         ]}
         """;
@@ -36,7 +37,7 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
     {
         var models = ModelCatalog.Parse(Models);
 
-        Assert.Equal(2, models.Count);
+        Assert.Equal(3, models.Count);
         var alpha = models[0];
         Assert.Equal(("vendor/alpha", 1m, 4m, 128000), (alpha.Id, alpha.PromptUsdPerMillion, alpha.CompletionUsdPerMillion, alpha.ContextLength));
         Assert.True(alpha.SupportsJsonSchema);
@@ -72,7 +73,7 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
         var offline = new FakeOpenRouterHandler().Respond(HttpStatusCode.BadGateway, "{}");
         var models = await Catalog(offline, options).GetModelsAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, models.Count);
+        Assert.Equal(3, models.Count);
     }
 
     [Fact]
@@ -131,10 +132,10 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
     [Fact]
     public async Task An_unknown_model_gets_a_clear_message_with_a_hint()
     {
-        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Options(), new FakeOpenRouterHandler().Ok(Models)).CreateAsync("vendor/gamma", 1, TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Options(), new FakeOpenRouterHandler().Ok(Models)).CreateAsync("vendor/delta", 1, TestContext.Current.CancellationToken));
 
         Assert.Contains("does not exist", ex.Message, StringComparison.Ordinal);
-        Assert.Contains("shootout models --filter gamma", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("shootout models --filter delta", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -154,6 +155,29 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
 
         Assert.Equal("openrouter:vendor/alpha", player.Name);
         Assert.Equal("vendor/alpha", player.Model!.Slug);
+    }
+
+    [Fact]
+    public void The_options_text_never_contains_the_api_key()
+    {
+        var text = new OpenRouterOptions { ApiKey = "sk-or-v1-SECRET" }.ToString();
+
+        Assert.DoesNotContain("SECRET", text, StringComparison.Ordinal);
+        Assert.Contains("<set>", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Configured_parameters_the_model_does_not_support_are_refused_at_creation()
+    {
+        var options = Options() with { Temperature = 0.3f };
+        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(options, new FakeOpenRouterHandler().Ok(Models)).CreateAsync("vendor/gamma", 1, TestContext.Current.CancellationToken));
+
+        Assert.Contains("does not support 'temperature'", ex.Message, StringComparison.Ordinal);
+        var effort = Options() with { ReasoningEffort = "low" };
+        var ex2 = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(effort, new FakeOpenRouterHandler().Ok(Models)).CreateAsync("vendor/beta", 1, TestContext.Current.CancellationToken));
+        Assert.Contains("reasoning effort", ex2.Message, StringComparison.Ordinal);
+        var ok = await Factory(effort, new FakeOpenRouterHandler().Ok(Models)).CreateAsync("vendor/alpha", 1, TestContext.Current.CancellationToken);
+        Assert.Equal("vendor/alpha", ok.Model!.Slug);
     }
 
     [Fact]

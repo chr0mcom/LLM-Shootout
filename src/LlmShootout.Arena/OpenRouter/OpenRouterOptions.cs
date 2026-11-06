@@ -37,6 +37,13 @@ public sealed record OpenRouterOptions
     /// <summary>Directory for the cached model list.</summary>
     public string CacheDirectory { get; init; } = Path.Combine(Path.GetTempPath(), "llm-shootout-cache");
 
+    /// <summary>The text of the record without the API key, so that it cannot end up in a log by accident.</summary>
+    private bool PrintMembers(System.Text.StringBuilder builder)
+    {
+        builder.Append(System.Globalization.CultureInfo.InvariantCulture, $"BaseAddress = {BaseAddress}, ApiKey = {(string.IsNullOrEmpty(ApiKey) ? "<unset>" : "<set>")}, CallTimeout = {CallTimeout}, MaxHttpRetries = {MaxHttpRetries}");
+        return true;
+    }
+
     /// <summary>Reads the API key from the environment and returns a copy with it set.</summary>
     public OpenRouterOptions WithApiKeyFromEnvironment() =>
         this with { ApiKey = Environment.GetEnvironmentVariable(ApiKeyVariable) };

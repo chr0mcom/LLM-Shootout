@@ -256,7 +256,7 @@ public sealed class SeriesAndReportTests : IDisposable
 
         var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), judge, TestContext.Current.CancellationToken);
 
-        var file = JsonSerializer.Deserialize(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), AnnotationJson.Default.AnnotationFile)!;
+        var file = AnnotationJson.Read(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken))!;
         Assert.All(file.Entries, e => Assert.NotNull(e.Error));
     }
 
@@ -267,7 +267,7 @@ public sealed class SeriesAndReportTests : IDisposable
 
         var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), new RandomPlayer(3), TestContext.Current.CancellationToken);
 
-        var file = JsonSerializer.Deserialize(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), AnnotationJson.Default.AnnotationFile)!;
+        var file = AnnotationJson.Read(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken))!;
         Assert.All(file.Entries, e => Assert.Equal("unclear", e.Result!["announced"]!.ToString()));
     }
 }

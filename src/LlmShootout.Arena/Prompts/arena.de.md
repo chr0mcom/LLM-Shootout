@@ -183,6 +183,18 @@ Text
 ## debrief.reason
   Zusätzlich "{key}_reason": eine kurze Begründung als Text.
 
+## debrief.placeholder.text
+"<Text>"
+
+## debrief.placeholder.scale
+<ganze Zahl>
+
+## debrief.placeholder.boolean
+<true oder false>
+
+## debrief.placeholder.choice
+"<einer der erlaubten Werte>"
+
 ## debrief.retry
 Deine Antwort auf die Fragen war nicht gültig.
 {hint}

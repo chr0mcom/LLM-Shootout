@@ -120,4 +120,47 @@ public sealed class CliProcessTests : IDisposable
         Assert.Equal(0, (await RunAsync("report", series)).Exit);
         Assert.Contains("Vergleich mit und ohne Kommunikation", File.ReadAllText(Path.Combine(series, "series-report.md")), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_match_stopped_by_the_cost_limit_exits_with_3_and_says_why_even_when_quiet()
+    {
+        var (exit, output, error) = await RunAsync("play", "split-or-steal", "--a", "random", "--b", "random", "--max-cost", "0", "--quiet", "--out", _work);
+
+        Assert.Equal(3, exit);
+        Assert.True(Directory.Exists(output.Trim()));
+        Assert.Contains("cost_limit", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_series_that_ends_early_exits_with_3()
+    {
+        var (exit, _, error) = await RunAsync("series", "shootouts/split-or-steal.json", "--a", "random", "--b", "random", "--max-cost", "0", "--quiet", "--out", _work);
+
+        Assert.Equal(3, exit);
+        Assert.Contains("ended early", error, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("a")]
+    [InlineData("B")]
+    public async Task The_first_seat_is_accepted_in_either_case(string seat)
+    {
+        var (exit, output, _) = await RunAsync("play", "split-or-steal", "--a", "random", "--b", "random", "--first-seat", seat, "--quiet", "--out", _work);
+
+        Assert.Equal(0, exit);
+        Assert.True(Directory.Exists(output.Trim()));
+    }
+
+    [Fact]
+    public async Task Report_on_a_plain_folder_of_matches_does_not_invent_a_series()
+    {
+        await RunAsync("play", "split-or-steal", "--a", "random", "--b", "random", "--quiet", "--out", _work);
+        await RunAsync("play", "split-or-steal", "--a", "random", "--b", "random", "--quiet", "--out", _work, "--seed", "5");
+
+        var (exit, _, _) = await RunAsync("report", _work);
+
+        Assert.Equal(0, exit);
+        Assert.False(File.Exists(Path.Combine(_work, "series.json")));
+        Assert.All(Directory.GetDirectories(_work), d => Assert.True(File.Exists(Path.Combine(d, "report.md"))));
+    }
 }

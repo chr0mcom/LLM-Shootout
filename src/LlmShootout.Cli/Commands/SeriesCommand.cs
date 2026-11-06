@@ -51,8 +51,14 @@ public static class SeriesCommand
             var summary = await runner.RunAsync(plan, ct);
 
             env.Console.WriteLine(settings.Quiet ? directory : $"Series report: {Path.Combine(directory, SeriesReportWriter.ReportFile)}");
-            return summary.Aborted == 0 ? 0 : ErrorHandling.Aborted;
-        }));
+            var complete = summary.Aborted == 0 && summary.Matches == series.Matches.Count;
+            if (!complete)
+            {
+                env.Error.MarkupLine($"[yellow]The series ended early:[/] {summary.Matches} of {series.Matches.Count} matches were played, {summary.Aborted} aborted (cost limit, timeout or failure).");
+            }
+
+            return complete ? 0 : ErrorHandling.Aborted;
+        }, ct));
         return command;
     }
 }

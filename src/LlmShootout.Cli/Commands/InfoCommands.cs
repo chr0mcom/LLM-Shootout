@@ -65,7 +65,7 @@ public static class InfoCommands
             env.Console.Write(table);
             env.Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{Math.Min(selected.Length, parse.GetValue(limit))} of {selected.Length} matching models shown ({models.Count} in total)."));
             return 0;
-        }));
+        }, ct));
         return command;
     }
 }

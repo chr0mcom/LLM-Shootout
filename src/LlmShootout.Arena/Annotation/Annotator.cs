@@ -40,7 +40,7 @@ public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
             time.GetUtcNow(),
             entries);
         var path = Path.Combine(match.Directory, $"annotation.{task.Name}.{Slug(judge.Name)}.json");
-        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(file, AnnotationJson.Default.AnnotationFile), cancellationToken);
+        await File.WriteAllTextAsync(path, AnnotationJson.Write(file), cancellationToken);
         return path;
     }
 

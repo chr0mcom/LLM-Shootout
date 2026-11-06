@@ -26,7 +26,6 @@ public static class PlayCommand
         var reveal = new Option<bool>("--reveal-identity") { Description = "Name the opponent model in the prompts (default: hidden)." };
         var seed = new Option<long?>("--seed") { Description = "Seed for all random decisions. Default: derived from the clock; it is printed and stored." };
         var first = new Option<string?>("--first-seat") { Description = "Seat that starts, A or B. Default: the seed decides." };
-        first.AcceptOnlyFromAmong("A", "B");
         var gameOption = new Option<string[]>("--game-option") { Description = "Game specific option as key=value, repeatable (for example pot=1000).", AllowMultipleArgumentsPerToken = false };
 
         var command = new Command("play", "Plays one match between two players.") { game, communication, reveal, seed, first, gameOption };
@@ -41,7 +40,7 @@ public static class PlayCommand
             var definition = CliEnvironment.RequireGame(parse.GetRequiredValue(game));
             var (specA, specB) = RequirePlayers(settings);
             var matchSeed = parse.GetValue(seed) ?? env.Time.GetUtcNow().Ticks % int.MaxValue;
-            var firstSeat = parse.GetValue(first) is { } f ? Enum.Parse<Seat>(f) : new SeededRng(matchSeed).NextBool(0.5) ? Seat.A : Seat.B;
+            var firstSeat = parse.GetValue(first) is { } f ? ParseSeat(f) : new SeededRng(matchSeed).NextBool(0.5) ? Seat.A : Seat.B;
             var setup = new GameSetup(
                 matchSeed,
                 parse.GetRequiredValue(communication) == "on",
@@ -65,10 +64,20 @@ public static class PlayCommand
             var record = MatchRecord.Load(outcome.Directory);
             await MatchReportWriter.WriteAsync(definition, record, ct);
             Finish(env, settings, outcome);
+            if (outcome.AbortReason is not null && settings.Quiet)
+            {
+                env.Error.MarkupLine($"[yellow]Aborted:[/] {Markup.Escape(outcome.AbortReason)}: {Markup.Escape(outcome.AbortDetail ?? string.Empty)}");
+            }
+
             return outcome.AbortReason is null ? 0 : ErrorHandling.Aborted;
-        }));
+        }, ct));
         return command;
     }
+
+    private static Seat ParseSeat(string text) =>
+        Enum.TryParse<Seat>(text.Trim(), ignoreCase: true, out var seat) && Enum.IsDefined(seat)
+            ? seat
+            : throw new UsageException($"--first-seat must be A or B, but is '{text}'.");
 
     internal static (string A, string B) RequirePlayers(RunSettings settings) =>
         (settings.PlayerA ?? throw new UsageException("Please give both players: --a <player> --b <player>. Use 'random' to play without an API key."),

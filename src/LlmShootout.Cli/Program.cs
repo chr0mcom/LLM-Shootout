@@ -55,4 +55,4 @@ if (parse.Errors.Count > 0)
     return ErrorHandling.UsageError;
 }
 
-return await parse.InvokeAsync();
+return await parse.InvokeAsync(new InvocationConfiguration { ProcessTerminationTimeout = TimeSpan.FromSeconds(30) });

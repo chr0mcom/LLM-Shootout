@@ -93,7 +93,7 @@ public sealed class MatchRecord
     private static List<AnnotationFile> ReadAnnotations(string directory) =>
     [
         .. System.IO.Directory.EnumerateFiles(directory, "annotation.*.json").Order(StringComparer.Ordinal)
-            .Select(path => JsonSerializer.Deserialize(File.ReadAllText(path), AnnotationJson.Default.AnnotationFile))
+            .Select(path => AnnotationJson.Read(File.ReadAllText(path)))
             .OfType<AnnotationFile>(),
     ];
 }

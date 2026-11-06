@@ -62,20 +62,23 @@ public sealed record SeriesSummary(
 /// <summary>One match of a series.</summary>
 public sealed record SeriesEntry(string Directory, bool Communication, string? Outcome, decimal CostUsd);
 
-/// <summary>Source-generated JSON settings for summaries.</summary>
-[JsonSourceGenerationOptions(
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    DictionaryKeyPolicy = JsonKnownNamingPolicy.CamelCase,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    WriteIndented = true,
-    UseStringEnumConverter = true)]
+/// <summary>Source-generated JSON for summaries: camelCase, indented, enums as text, readable umlauts, dictionary keys unchanged.</summary>
 [JsonSerializable(typeof(MatchSummary))]
 [JsonSerializable(typeof(SeriesSummary))]
 public sealed partial class SummaryJson : JsonSerializerContext
 {
+    private static readonly SummaryJson Readable = new(new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() },
+    });
+
     /// <summary>Serializes a match summary.</summary>
-    public static string Write(MatchSummary summary) => JsonSerializer.Serialize(summary, Default.MatchSummary);
+    public static string Write(MatchSummary summary) => JsonSerializer.Serialize(summary, Readable.MatchSummary);
 
     /// <summary>Serializes a series summary.</summary>
-    public static string Write(SeriesSummary summary) => JsonSerializer.Serialize(summary, Default.SeriesSummary);
+    public static string Write(SeriesSummary summary) => JsonSerializer.Serialize(summary, Readable.SeriesSummary);
 }
