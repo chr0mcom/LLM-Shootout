@@ -321,6 +321,22 @@ silence
 ## report.flag.identity
 identity hits: {hits}
 
+## report.identity
+Identity: guessed or read?
+
+## report.identity.header
+| Seat | Answer to `opponent_guess` | Hits in the opponent's messages (named itself) | Hits in own messages (named the opponent) | Assessment |
+|---|---|---|---|---|
+
+## report.identity.read
+may have been read
+
+## report.identity.guessed
+guessed (no name appeared in the conversation)
+
+## report.identity.note
+The identity of the opponent was hidden. A hit in the opponent's messages means the player could read the name. Without a hit the answer is a guess or was inferred from style.
+
 ## report.thoughts
 Thoughts (private, for the analysis only)
 

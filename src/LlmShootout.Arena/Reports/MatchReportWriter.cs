@@ -89,6 +89,7 @@ public static class MatchReportWriter
             sb.AppendLine().AppendLine("## " + section.Title).AppendLine().AppendLine(section.Markdown);
         }
 
+        AppendIdentity(sb, match, T);
         AppendThoughts(sb, match, T);
         AppendMetrics(sb, summary, T);
         AppendDebrief(sb, match, T);
@@ -186,6 +187,29 @@ public static class MatchReportWriter
         FactAudience.Analysis => t("report.history.fact.analysis", [("text", fact.Text)]),
         _ => t("report.history.fact", [("text", fact.Text)]),
     };
+
+    private static void AppendIdentity(StringBuilder sb, MatchRecord match, Func<string, (string, string)[], string> t)
+    {
+        var guesses = Seat.All.ToDictionary(seat => seat, seat => match.Debriefs.LastOrDefault(d => d.Seat == seat && d.Valid)?.Answers.GetValueOrDefault("opponent_guess"));
+        if (match.Started.Options.RevealIdentity || guesses.Values.All(g => g is null))
+        {
+            return;
+        }
+
+        int Hits(Seat author, string subject) =>
+            match.Messages(author).Sum(m => m.IdentityHits.Count(h => h.StartsWith(subject + ":", StringComparison.Ordinal)));
+
+        sb.AppendLine().AppendLine("## " + t("report.identity", [])).AppendLine().AppendLine(t("report.identity.header", []));
+        foreach (var seat in Seat.All.Where(s => guesses[s] is not null))
+        {
+            var read = Hits(seat.Opponent, "self") + Hits(seat.Opponent, "ambiguous");
+            var said = Hits(seat, "opponent") + Hits(seat, "ambiguous");
+            var finding = t(read > 0 ? "report.identity.read" : "report.identity.guessed", []);
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {seat} | {Cell(guesses[seat]!)} | {read} | {said} | {finding} |");
+        }
+
+        sb.AppendLine().AppendLine(t("report.identity.note", [])).AppendLine();
+    }
 
     private static void AppendThoughts(StringBuilder sb, MatchRecord match, Func<string, (string, string)[], string> t)
     {

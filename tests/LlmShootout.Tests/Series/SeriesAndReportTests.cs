@@ -271,3 +271,47 @@ public sealed class SeriesAndReportTests : IDisposable
         Assert.All(file.Entries, e => Assert.Equal("unclear", e.Result!["announced"]!.ToString()));
     }
 }
+
+public sealed class IdentityReportTests : IDisposable
+{
+    private readonly MatchHarness _harness = new();
+    private readonly SplitOrStealDefinition _definition = new();
+
+    public void Dispose() => _harness.Dispose();
+
+    private async Task<string> ReportAsync(string messageOfB, string guessOfA)
+    {
+        var a = new ScriptedPlayer("a", new LlmShootout.Arena.Identity.ModelIdentity("vendor-a/model-a"));
+        var b = new ScriptedPlayer("b", new LlmShootout.Arena.Identity.ModelIdentity("anthropic/claude-sonnet"));
+        for (var i = 0; i < 3; i++)
+        {
+            a.Reply(MatchHarness.Answer("t", "hello"));
+            b.Reply(MatchHarness.Answer("t", i == 0 ? messageOfB : "fine"));
+        }
+
+        a.Reply(MatchHarness.Answer("t", move: "split")).Reply(Debriefing.SplitOrStealMatchTests.DebriefJson().Replace("Maybe GPT, it was polite.", guessOfA, StringComparison.Ordinal));
+        b.Reply(MatchHarness.Answer("t", move: "split")).Reply(Debriefing.SplitOrStealMatchTests.DebriefJson());
+        var (outcome, _) = await _harness.RunAsync(_definition, a, b, true, new MatchOptions(), debrief: true);
+        return MatchReportWriter.BuildReport(_definition, MatchRecord.Load(outcome.Directory));
+    }
+
+    [Fact]
+    public async Task A_name_the_opponent_wrote_itself_means_the_guess_may_have_been_read()
+    {
+        var report = await ReportAsync("I am Claude, by the way", "Claude, it said so");
+
+        var row = report.Split('\n').Single(l => l.StartsWith("| A | Claude, it said so", StringComparison.Ordinal));
+        Assert.Contains("| 1 |", row, StringComparison.Ordinal);
+        Assert.Contains("may have been read", row, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Without_a_name_in_the_conversation_the_guess_counts_as_a_guess()
+    {
+        var report = await ReportAsync("Let us split", "Probably Claude");
+
+        var row = report.Split('\n').Single(l => l.StartsWith("| A | Probably Claude", StringComparison.Ordinal));
+        Assert.Contains("| 0 |", row, StringComparison.Ordinal);
+        Assert.Contains("guessed (no name appeared in the conversation)", row, StringComparison.Ordinal);
+    }
+}

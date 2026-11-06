@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Datum | 2026-11-06 10:15 UTC |
+| Datum | 2026-11-06 10:29 UTC |
 | Seed | 2029 |
 | Sprache der Prompts | de |
 | Kommunikation | an |
@@ -13,7 +13,7 @@
 | Ausgang | a_stole |
 | Dauer | 00:00:00 |
 | Kosten | 0.0000 |
-| Version | 1.0.0 (67cade7cf648) |
+| Version | 1.0.0 (a66e3b2f3076) |
 
 ## Ergebnis
 
@@ -64,6 +64,16 @@ Es liegt keine Judge-Bewertung vor. Die Tabelle stellt Nachrichten und Entscheid
 |---|---|---|---|---|
 | A | ja | nein | nicht bewertet | offen |
 | B | ja | nein | nicht bewertet | offen |
+
+## Identität: erraten oder gelesen?
+
+| Sitz | Antwort auf `opponent_guess` | Treffer in Nachrichten des Gegners (nannte sich selbst) | Treffer in eigenen Nachrichten (nannte den Gegner) | Einordnung |
+|---|---|---|---|---|
+| A | Zufällige Antwort. | 0 | 0 | erraten (im Gespräch fiel kein Name) |
+| B | Zufällige Antwort. | 0 | 0 | erraten (im Gespräch fiel kein Name) |
+
+Die Identität des Gegners war verdeckt. Ein Treffer in den Nachrichten des Gegners heißt: der Befragte konnte den Namen lesen. Ohne Treffer ist die Antwort geraten oder aus dem Stil geschlossen.
+
 
 ## Gedanken (privat, nur für die Auswertung)
 

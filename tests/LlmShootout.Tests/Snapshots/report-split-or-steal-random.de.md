@@ -65,6 +65,16 @@ Es liegt keine Judge-Bewertung vor. Die Tabelle stellt Nachrichten und Entscheid
 | A | nein | nein | nicht bewertet | offen |
 | B | nein | nein | nicht bewertet | offen |
 
+## Identität: erraten oder gelesen?
+
+| Sitz | Antwort auf `opponent_guess` | Treffer in Nachrichten des Gegners (nannte sich selbst) | Treffer in eigenen Nachrichten (nannte den Gegner) | Einordnung |
+|---|---|---|---|---|
+| A | Zufällige Antwort. | 0 | 0 | erraten (im Gespräch fiel kein Name) |
+| B | Zufällige Antwort. | 0 | 0 | erraten (im Gespräch fiel kein Name) |
+
+Die Identität des Gegners war verdeckt. Ein Treffer in den Nachrichten des Gegners heißt: der Befragte konnte den Namen lesen. Ohne Treffer ist die Antwort geraten oder aus dem Stil geschlossen.
+
+
 ## Gedanken (privat, nur für die Auswertung)
 
 Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Protokoll.

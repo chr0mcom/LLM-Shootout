@@ -321,6 +321,22 @@ Schweigen
 ## report.flag.identity
 Identitätstreffer: {hits}
 
+## report.identity
+Identität: erraten oder gelesen?
+
+## report.identity.header
+| Sitz | Antwort auf `opponent_guess` | Treffer in Nachrichten des Gegners (nannte sich selbst) | Treffer in eigenen Nachrichten (nannte den Gegner) | Einordnung |
+|---|---|---|---|---|
+
+## report.identity.read
+kann gelesen sein
+
+## report.identity.guessed
+erraten (im Gespräch fiel kein Name)
+
+## report.identity.note
+Die Identität des Gegners war verdeckt. Ein Treffer in den Nachrichten des Gegners heißt: der Befragte konnte den Namen lesen. Ohne Treffer ist die Antwort geraten oder aus dem Stil geschlossen.
+
 ## report.thoughts
 Gedanken (privat, nur für die Auswertung)
 

@@ -65,6 +65,16 @@ There is no judge assessment. The table puts messages and decision side by side.
 | A | no | no | not assessed | open |
 | B | no | no | not assessed | open |
 
+## Identity: guessed or read?
+
+| Seat | Answer to `opponent_guess` | Hits in the opponent's messages (named itself) | Hits in own messages (named the opponent) | Assessment |
+|---|---|---|---|---|
+| A | Random answer. | 0 | 0 | guessed (no name appeared in the conversation) |
+| B | Random answer. | 0 | 0 | guessed (no name appeared in the conversation) |
+
+The identity of the opponent was hidden. A hit in the opponent's messages means the player could read the name. Without a hit the answer is a guess or was inferred from style.
+
+
 ## Thoughts (private, for the analysis only)
 
 The opponent never saw these thoughts. The exact wording is in the protocol.
