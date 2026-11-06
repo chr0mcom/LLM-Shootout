@@ -1,5 +1,6 @@
 using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Games;
+using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Prompting;
 using LlmShootout.Arena.Protocol;
@@ -22,11 +23,12 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
     {
         ArgumentNullException.ThrowIfNull(plan);
         var game = plan.Definition.Create(plan.Setup);
-        var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options);
+        var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options, plan.Setup.Communication);
         var evaluator = new AnswerEvaluator(plan.Options, prompts);
 
         await using var writer = new ProtocolWriter(plan.Directory);
-        var context = new MatchContext(plan, game, prompts, evaluator, writer, cost, time);
+        var guard = new IdentityGuard(Seat.All.ToDictionary(seat => seat, seat => plan.Players[seat].Model), plan.Options.IdentityScanner, plan.Options.RedactIdentity);
+        var context = new MatchContext(plan, game, prompts, evaluator, writer, cost, new PlayerGateway(cost), guard, time);
         MatchLog.Started(_logger, plan.Definition.Id, plan.Setup.Seed, plan.Directory);
         await writer.AppendAsync(StartedEvent(plan), cancellationToken);
 
@@ -102,9 +104,10 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
 
         if (result.MessageAllowed)
         {
-            context.Timeline.AddMessage(turn.TurnId, turn.Seat, result.Message);
+            var inspected = context.IdentityGuard.Inspect(turn.Seat, result.Message);
+            context.Timeline.AddMessage(turn.TurnId, turn.Seat, inspected.Text);
             await context.Writer.AppendAsync(
-                new MessageEvent(time.GetUtcNow(), turn.TurnId, turn.Seat, result.Message, result.Silent, result.MessageTruncated, []),
+                new MessageEvent(time.GetUtcNow(), turn.TurnId, turn.Seat, inspected.Text, result.Silent, result.MessageTruncated, inspected.Hits),
                 cancellationToken);
         }
     }
@@ -127,7 +130,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             ["arena"] = ArenaTemplates.Default.Hash(language),
             [plan.Definition.Id] = plan.Definition.Templates.Hash(language),
         };
-        var version = typeof(MatchRunner).Assembly.GetName().Version?.ToString() ?? "unknown";
+        var (version, commit) = AppInfo.Current;
         return new MatchStartedEvent(
             time.GetUtcNow(),
             plan.Definition.Id,
@@ -139,6 +142,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             players,
             hashes,
             plan.Options,
-            version);
+            version,
+            commit);
     }
 }

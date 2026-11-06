@@ -109,4 +109,10 @@ public sealed class PlayerFailureException : Exception
 
     /// <summary>True if the call timed out. A timeout uses up one attempt; other failures abort the match.</summary>
     public bool IsTimeout { get; }
+
+    /// <summary>What is known about the failed call (requested model, HTTP attempts), or null.</summary>
+    public ModelCallInfo? Call { get; init; }
+
+    /// <summary>The raw exchange of the failed call without credentials, or null.</summary>
+    public string? RawExchange { get; init; }
 }

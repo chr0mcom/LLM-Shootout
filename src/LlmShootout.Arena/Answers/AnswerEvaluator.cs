@@ -38,8 +38,8 @@ public sealed record Evaluation(
 public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
 {
     /// <summary>
-    /// Evaluates an answer. In the <paramref name="isLastAttempt"/> the evaluation salvages what it can: a long
-    /// message is shortened, a missing required message becomes silence, a failing optional move is dropped.
+    /// Evaluates an answer. In the <paramref name="isLastAttempt"/> the evaluation salvages the message only: a long
+    /// message is shortened and a missing required message becomes silence. Thought and move rules always apply.
     /// </summary>
     public Evaluation Evaluate(TurnRequest turn, ParsedAnswer answer, string? rawText, IGame game, bool isLastAttempt)
     {
@@ -48,9 +48,9 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
         ArgumentNullException.ThrowIfNull(game);
 
         var violations = new List<FieldViolation>();
-        var (thought, thoughtCut) = CheckThought(turn, answer, violations, isLastAttempt);
+        var (thought, thoughtCut) = CheckThought(turn, answer, violations);
         var (message, messageCut, silent) = CheckMessage(turn, answer, violations, isLastAttempt);
-        var move = CheckMove(turn, answer, game, violations, isLastAttempt);
+        var move = CheckMove(turn, answer, game, violations);
 
         var cls = !answer.HasJson || violations.Count > 0 ? ClassifyFailure(rawText) : AnswerClass.Valid;
         return new Evaluation(cls, thought, thoughtCut, message, messageCut, silent, move, violations, answer.ExtraKeys);
@@ -59,7 +59,7 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
     private AnswerClass ClassifyFailure(string? rawText) =>
         RefusalDetector.IsRefusal(rawText, options.RefusalKeywords) ? AnswerClass.Refusal : AnswerClass.Invalid;
 
-    private (string? Text, bool Truncated) CheckThought(TurnRequest turn, ParsedAnswer answer, List<FieldViolation> violations, bool last)
+    private (string? Text, bool Truncated) CheckThought(TurnRequest turn, ParsedAnswer answer, List<FieldViolation> violations)
     {
         if (!answer.HasJson)
         {
@@ -67,10 +67,7 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
         }
 
         var text = answer.Thought;
-        if (!last)
-        {
-            AddPresenceViolation("thought", turn.Thought, text, violations);
-        }
+        AddPresenceViolation("thought", turn.Thought, text, violations);
 
         return text is null || turn.Thought == FieldRule.Forbidden ? (null, false) : Shorten(text, options.MaxThoughtWords);
     }
@@ -118,7 +115,7 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
         return (null, false, false);
     }
 
-    private string? CheckMove(TurnRequest turn, ParsedAnswer answer, IGame game, List<FieldViolation> violations, bool last)
+    private string? CheckMove(TurnRequest turn, ParsedAnswer answer, IGame game, List<FieldViolation> violations)
     {
         if (!answer.HasJson)
         {
@@ -138,11 +135,7 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
             return check.NormalizedMove;
         }
 
-        if (!(last && turn.Move == FieldRule.Optional))
-        {
-            violations.Add(new FieldViolation("move", prompts.RenderGame(check.Reason!), check.Allowed ?? AllowedFrom(turn)));
-        }
-
+        violations.Add(new FieldViolation("move", prompts.RenderGame(check.Reason!), check.Allowed ?? AllowedFrom(turn)));
         return null;
     }
 

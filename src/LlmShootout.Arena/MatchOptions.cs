@@ -27,6 +27,9 @@ public sealed record MatchOptions
     /// <summary>Spending limit for one run of the application, in USD.</summary>
     public decimal MaxCostUsd { get; init; } = 1m;
 
+    /// <summary>Settings of the identity scanner.</summary>
+    public Identity.IdentityScannerSettings IdentityScanner { get; init; } = new(ProviderAliases: Identity.IdentityAliases.Providers);
+
     /// <summary>Keywords (lower case) that mark an unusable answer as a refusal.</summary>
     public IReadOnlyList<string> RefusalKeywords { get; init; } = Answers.RefusalDetector.DefaultKeywords;
 }

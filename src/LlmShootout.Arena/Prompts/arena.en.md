@@ -51,6 +51,11 @@ Answer with a single JSON object of this shape and no text before or after it:
 {"thought": ..., "message": ..., "move": ...}
 {fields}
 
+## contract.silent
+Answer with a single JSON object of this shape and no text before or after it:
+{"thought": ..., "move": ...}
+{fields}
+
 ## field.thought.required
 - "thought": your private thought, at most {max_thought_words} words. It stays secret.
 

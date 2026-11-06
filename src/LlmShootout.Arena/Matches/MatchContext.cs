@@ -13,6 +13,8 @@ public sealed class MatchContext(
     AnswerEvaluator evaluator,
     ProtocolWriter writer,
     CostMeter cost,
+    PlayerGateway gateway,
+    Identity.IdentityGuard identityGuard,
     TimeProvider time)
 {
     /// <summary>The plan.</summary>
@@ -32,6 +34,12 @@ public sealed class MatchContext(
 
     /// <summary>The spending meter of the application run.</summary>
     public CostMeter Cost { get; } = cost;
+
+    /// <summary>The door to all players.</summary>
+    public PlayerGateway Gateway { get; } = gateway;
+
+    /// <summary>Marks identity mentions in public messages.</summary>
+    public Identity.IdentityGuard IdentityGuard { get; } = identityGuard;
 
     /// <summary>The clock.</summary>
     public TimeProvider Time { get; } = time;

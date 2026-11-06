@@ -51,6 +51,11 @@ Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder
 {"thought": ..., "message": ..., "move": ...}
 {fields}
 
+## contract.silent
+Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder danach:
+{"thought": ..., "move": ...}
+{fields}
+
 ## field.thought.required
 - "thought": dein privater Gedanke, höchstens {max_thought_words} Wörter. Er bleibt geheim.
 

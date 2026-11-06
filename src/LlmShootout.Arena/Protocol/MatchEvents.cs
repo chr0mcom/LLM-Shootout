@@ -43,7 +43,8 @@ public sealed record MatchStartedEvent(
     IReadOnlyDictionary<Seat, PlayerDescription> Players,
     IReadOnlyDictionary<string, string> TemplateHashes,
     MatchOptions Options,
-    string AppVersion) : MatchEvent(At);
+    string AppVersion,
+    string GitCommit) : MatchEvent(At);
 
 /// <summary>The fields of an answer as parsed by the arena.</summary>
 public sealed record ParsedFields(string? Thought, string? Message, string? Move, bool FromReasoning, IReadOnlyList<string> ExtraKeys);

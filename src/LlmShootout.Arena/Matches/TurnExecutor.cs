@@ -56,7 +56,6 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         for (var attempt = 1; attempt <= max; attempt++)
         {
             MatchLog.Attempt(logger, turn.TurnId, turn.Seat, attempt);
-            context.Cost.EnsureWithinLimit();
             var evaluation = await TryAttemptAsync(turn, attempt, attempt == max, state, cancellationToken);
             if (evaluation?.IsValid == true)
             {
@@ -84,17 +83,16 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             state.PreviousAnswer,
             state.Hint,
             state.AfterRefusal));
-        var request = new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn), attempt, rng => SampleAnswer(turn, rng));
+        var request = new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn, context.Plan.Setup.Communication), attempt, rng => SampleAnswer(turn, rng));
         var started = context.Time.GetTimestamp();
 
         PlayerReply reply;
         try
         {
-            reply = await context.Plan.Players[turn.Seat].RespondAsync(request, cancellationToken);
+            reply = await context.Gateway.CallAsync(context.Plan.Players[turn.Seat], request, cancellationToken);
         }
         catch (PlayerFailureException ex)
         {
-            context.Cost.Record(null);
             await WriteFailureAsync(turn, attempt, messages, ex, cancellationToken);
             if (ex.IsTimeout)
             {
@@ -104,9 +102,8 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             throw;
         }
 
-        context.Cost.Record(reply.Call is null ? 0m : reply.Call.CostUsd);
         var parsed = AnswerParser.Parse(reply.Content, reply.Reasoning);
-        var evaluation = context.Evaluator.Evaluate(turn, parsed, reply.Content, context.Game, isLast);
+        var evaluation = context.Evaluator.Evaluate(turn, parsed, string.IsNullOrWhiteSpace(reply.Content) ? reply.Reasoning : reply.Content, context.Game, isLast);
         state.LastEvaluation = evaluation;
         await WriteCallAsync(turn, attempt, messages, reply, parsed, evaluation, started, cancellationToken);
         MatchLog.Classified(logger, turn.TurnId, turn.Seat, attempt, evaluation.Class);
@@ -157,7 +154,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
 
     private Task WriteFailureAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerFailureException ex, CancellationToken cancellationToken) =>
         context.Writer.AppendAsync(
-            new ModelCallEvent(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, attempt, messages, null, null, null, "technical_error", [], null, true, ex.Message, null),
+            new ModelCallEvent(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, attempt, messages, null, null, null, "technical_error", [], ex.Call, true, ex.Message, ex.RawExchange),
             cancellationToken);
 
     private Task WriteCallAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, long started, CancellationToken cancellationToken)

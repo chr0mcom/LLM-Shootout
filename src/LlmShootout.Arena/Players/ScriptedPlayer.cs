@@ -49,9 +49,9 @@ public sealed class ScriptedPlayer : IPlayer
     }
 
     /// <summary>Queues a technical failure that aborts the match.</summary>
-    public ScriptedPlayer Fail(string message)
+    public ScriptedPlayer Fail(string message, ModelCallInfo? info = null, string? rawExchange = null)
     {
-        _script.Enqueue(_ => throw new PlayerFailureException(message));
+        _script.Enqueue(_ => throw new PlayerFailureException(message) { Call = info, RawExchange = rawExchange });
         return this;
     }
 

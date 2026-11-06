@@ -81,7 +81,7 @@ public class AnswerParsingTests
         var setup = new GameSetup(1, communication, "en");
         var game = definition.Create(setup);
         var opts = options ?? new MatchOptions();
-        var prompts = new PromptBuilder(ArenaTemplates.Default, definition.Templates, "en", opts);
+        var prompts = new PromptBuilder(ArenaTemplates.Default, definition.Templates, "en", opts, communication);
         return (new AnswerEvaluator(opts, prompts), game, game.PendingTurns[0]);
     }
 

@@ -30,7 +30,7 @@ public sealed record TurnPromptInput(
 /// Builds the prompt of a turn from scratch: system message (contract and rules), one user message (view,
 /// history, own notes, task), and on a retry the previous answer plus a correction hint.
 /// </summary>
-public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSource gameTemplates, string language, MatchOptions options)
+public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSource gameTemplates, string language, MatchOptions options, bool communication)
 {
     /// <summary>Renders a template of the arena.</summary>
     public string Arena(string key, params (string Name, string Value)[] values) =>
@@ -112,13 +112,14 @@ public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSourc
 
     private string BuildContract(TurnRequest turn)
     {
-        var lines = new List<string>
+        var lines = new List<string> { Field("thought", turn.Thought) };
+        if (communication)
         {
-            Field("thought", turn.Thought),
-            Field("message", turn.Message),
-            Field("move", turn.Move, turn.Format is null ? null : RenderGame(turn.Format.Description)),
-        };
-        return Arena("contract", ("fields", string.Join('\n', lines)));
+            lines.Add(Field("message", turn.Message));
+        }
+
+        lines.Add(Field("move", turn.Move, turn.Format is null ? null : RenderGame(turn.Format.Description)));
+        return Arena(communication ? "contract" : "contract.silent", ("fields", string.Join('\n', lines)));
     }
 
     private string Field(string name, FieldRule rule, string? format = null) => Arena(

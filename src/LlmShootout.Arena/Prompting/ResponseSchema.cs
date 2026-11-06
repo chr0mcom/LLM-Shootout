@@ -6,21 +6,29 @@ namespace LlmShootout.Arena.Prompting;
 /// <summary>Builds the JSON schema of the answer of a turn, for models that support structured output.</summary>
 public static class ResponseSchema
 {
-    /// <summary>Schema for <c>{thought, message, move}</c>. All keys are present; unused ones are null.</summary>
-    public static JsonNode ForTurn(TurnRequest turn)
+    /// <summary>
+    /// Schema for <c>{thought, message, move}</c>. All keys are present; unused ones are null. Without
+    /// communication the <c>message</c> key does not exist at all.
+    /// </summary>
+    public static JsonNode ForTurn(TurnRequest turn, bool communication = true)
     {
         ArgumentNullException.ThrowIfNull(turn);
+        var properties = new JsonObject { ["thought"] = NullableString() };
+        var required = new JsonArray("thought");
+        if (communication)
+        {
+            properties["message"] = NullableString();
+            required.Add("message");
+        }
+
+        properties["move"] = MoveSchema(turn);
+        required.Add("move");
         return new JsonObject
         {
             ["type"] = "object",
             ["additionalProperties"] = false,
-            ["required"] = new JsonArray("thought", "message", "move"),
-            ["properties"] = new JsonObject
-            {
-                ["thought"] = NullableString(),
-                ["message"] = NullableString(),
-                ["move"] = MoveSchema(turn),
-            },
+            ["required"] = required,
+            ["properties"] = properties,
         };
     }
 
