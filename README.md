@@ -66,6 +66,12 @@ Report: matches/2026-11-06_split-or-steal_random_vs_random_01/report.md
 
 Finished examples (made with random players) are in [`matches/examples/`](matches/examples/).
 
+## Web interface
+
+Prefer a page to a terminal? `src/LlmShootout.Web` is a small web interface: pick two players, start the match and
+watch the messages, private thoughts, moves and the debriefing arrive live. It is protected by one password. See
+[docs/web.md](docs/web.md).
+
 ## Commands
 
 | Command | What it does |

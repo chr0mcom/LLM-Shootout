@@ -205,6 +205,20 @@ public sealed class EndpointTests : IDisposable
         Assert.Equal("claude:anything", player.Name);
     }
 
+    [Fact]
+    public async Task An_openrouter_model_above_the_price_ceiling_is_refused()
+    {
+        const string Models = """{"data":[{"id":"vendor/cheap","pricing":{"prompt":"0.000001","completion":"0.000002"},"supported_parameters":["structured_outputs"]},{"id":"vendor/dear","pricing":{"prompt":"0.00001","completion":"0.00008"},"supported_parameters":["structured_outputs"]}]}""";
+        var options = Base();
+        var factory = new PlayerFactory(options, Catalog(new FakeOpenRouterHandler().Ok(Models).Ok(Models), options), TimeProvider.System, null, Registry(), null, 40m);
+
+        var cheap = await factory.CreateAsync("vendor/cheap", 1, TestContext.Current.CancellationToken);
+        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => factory.CreateAsync("vendor/dear", 1, TestContext.Current.CancellationToken));
+
+        Assert.Equal("openrouter:vendor/cheap", cheap.Name);
+        Assert.Contains("above the limit of 40", ex.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("claude:claude-sonnet-latest", "claude-sonnet-latest")]
     [InlineData("openrouter:openai/gpt-4o", "gpt-4o")]

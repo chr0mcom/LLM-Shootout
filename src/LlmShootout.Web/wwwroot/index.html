@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLM Shootout</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/site.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>LLM Shootout</h1>
+    <p id="runstate" class="runstate" role="status"></p>
+    <button id="watchLive" class="quiet" type="button" hidden>Watch live</button>
+    <form method="post" action="/logout"><button class="quiet" type="submit">Log out</button></form>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <form id="start" class="start" autocomplete="off">
+        <h2>New match</h2>
+        <label for="game">Game</label>
+        <select id="game" name="game"></select>
+
+        <label for="playerA" class="seat-a">Seat A</label>
+        <input id="playerA" name="a" list="players" placeholder="random or claude:claude-haiku-latest" required spellcheck="false">
+        <label for="playerB" class="seat-b">Seat B</label>
+        <input id="playerB" name="b" list="players" placeholder="random or codex:gpt-6.1-terra" required spellcheck="false">
+        <datalist id="players"></datalist>
+
+        <fieldset class="inline">
+          <legend>Prompt language</legend>
+          <label><input type="radio" name="language" value="de" checked> German</label>
+          <label><input type="radio" name="language" value="en"> English</label>
+        </fieldset>
+        <label class="check"><input type="checkbox" name="communication" checked> Players may talk to each other</label>
+        <label class="check"><input type="checkbox" name="debrief" checked> Ask both players about it afterwards</label>
+
+        <div class="pair">
+          <div><label for="firstSeat">Starts</label>
+            <select id="firstSeat" name="firstSeat"><option value="">Auto</option><option value="A">Seat A</option><option value="B">Seat B</option></select></div>
+          <div><label for="seed">Seed</label><input id="seed" name="seed" inputmode="numeric" pattern="[0-9]*" placeholder="random"></div>
+          <div><label for="maxCost">Limit (USD)</label><input id="maxCost" name="maxCostUsd" inputmode="decimal" value="1"></div>
+        </div>
+
+        <p id="formError" class="error" role="alert" hidden></p>
+        <div class="buttons">
+          <button id="startButton" class="primary" type="submit">Start match</button>
+          <button id="cancelButton" class="danger" type="button" hidden>Cancel match</button>
+        </div>
+      </form>
+
+      <section class="history">
+        <h2>Earlier matches</h2>
+        <ol id="history"></ol>
+        <p id="historyEmpty" class="empty" hidden>No matches yet. Start one above.</p>
+      </section>
+    </aside>
+
+    <main id="arena" class="arena" aria-live="polite">
+      <div id="empty" class="arena-empty">
+        <p class="big">Nothing in the arena.</p>
+        <p>Pick two players and start a match, or open an earlier one from the list.</p>
+      </div>
+      <div id="stage" hidden>
+        <section class="plates" aria-label="Players">
+          <article id="plateA" class="plate a"></article>
+          <div id="center" class="center"></div>
+          <article id="plateB" class="plate b"></article>
+        </section>
+        <div id="banner" class="banner" hidden></div>
+        <section class="board" aria-label="Match transcript">
+          <div id="rows" class="rows"></div>
+        </section>
+        <section id="debrief" class="debrief" hidden>
+          <h2>Debriefing</h2>
+          <div class="debrief-cols">
+            <div id="debriefA" class="a"></div>
+            <div id="debriefB" class="b"></div>
+          </div>
+        </section>
+        <details id="callsBox" class="calls">
+          <summary>Model calls <span id="callCount"></span></summary>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Turn</th><th>Seat</th><th>Try</th><th>Result</th><th class="num">In</th><th class="num">Out</th><th class="num">Thinking</th><th class="num">Seconds</th><th class="num">USD</th><th></th></tr></thead>
+              <tbody id="calls"></tbody>
+            </table>
+          </div>
+        </details>
+        <p id="files" class="files"></p>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="callDialog">
+    <form method="dialog" class="dialog-head"><h2 id="callTitle"></h2><button class="quiet">Close</button></form>
+    <div id="callBody"></div>
+  </dialog>
+</body>
+</html>

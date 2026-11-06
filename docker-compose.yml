@@ -1,0 +1,44 @@
+# Web interface of LLM Shootout at https://shootout.stefan-bechtel.de
+# Secrets (web password, OpenRouter token, proxy key) live in ~/.config/llm-shootout/env, never in this file.
+#   docker compose build --no-cache web && docker compose up -d web
+name: llm-shootout
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    image: llm-shootout-web:latest
+    container_name: llm-shootout-web
+    restart: unless-stopped
+    stop_grace_period: 20s
+    env_file:
+      - /home/developer/.config/llm-shootout/env
+    environment:
+      LLMSHOOTOUT_Endpoints__claude__BaseAddress: http://cli-proxy:8090/v1/claude
+      LLMSHOOTOUT_Endpoints__claude__FlatRate: "true"
+      LLMSHOOTOUT_Endpoints__claude__ApiKeyVariable: LLMSHOOTOUT_PROXY_API_KEY
+      LLMSHOOTOUT_Endpoints__codex__BaseAddress: http://cli-proxy:8090/v1/codex
+      LLMSHOOTOUT_Endpoints__codex__FlatRate: "true"
+      LLMSHOOTOUT_Endpoints__codex__ApiKeyVariable: LLMSHOOTOUT_PROXY_API_KEY
+    volumes:
+      - shootout-data:/data
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.llm-shootout.rule=Host(`shootout.stefan-bechtel.de`)"
+      - "traefik.http.routers.llm-shootout.entrypoints=websecure"
+      - "traefik.http.routers.llm-shootout.tls=true"
+      - "traefik.http.routers.llm-shootout.tls.certresolver=le"
+      - "traefik.http.routers.llm-shootout.middlewares=chain@file"
+      - "traefik.http.services.llm-shootout.loadbalancer.server.port=8080"
+
+volumes:
+  shootout-data:
+
+networks:
+  proxy:
+    external: true

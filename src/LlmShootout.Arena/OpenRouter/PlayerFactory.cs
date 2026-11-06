@@ -36,13 +36,15 @@ public sealed class PlayerSpecException : Exception
 /// <param name="loggerFactory">Logging.</param>
 /// <param name="endpoints">The configured endpoints besides OpenRouter.</param>
 /// <param name="catalogFor">Creates the model list of another endpoint.</param>
+/// <param name="maxOutputUsdPerMillion">OpenRouter models that charge more per million output tokens are refused; null for no limit.</param>
 public sealed class PlayerFactory(
     OpenRouterOptions options,
     ModelCatalog catalog,
     TimeProvider time,
     ILoggerFactory? loggerFactory = null,
     EndpointRegistry? endpoints = null,
-    Func<OpenRouterOptions, ModelCatalog>? catalogFor = null)
+    Func<OpenRouterOptions, ModelCatalog>? catalogFor = null,
+    decimal? maxOutputUsdPerMillion = null)
 {
     /// <summary>Creates a player. <paramref name="seed"/> seeds the random player.</summary>
     public async Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken)
@@ -134,6 +136,11 @@ public sealed class PlayerFactory(
 
         var model = await FindModelAsync(endpoint, models, slug, cancellationToken);
         RequireSupportedParameters(endpoint, model);
+        if (endpoint.Kind == EndpointKind.OpenRouter && maxOutputUsdPerMillion is { } ceiling && model.CompletionUsdPerMillion > ceiling)
+        {
+            throw new PlayerSpecException($"Model '{model.Id}' costs {model.CompletionUsdPerMillion:0.##} USD per million output tokens, above the limit of {ceiling:0.##}. Raise Web__MaxOutputUsdPerMillion to allow it.");
+        }
+
         var http = OpenRouterClientFactory.CreateHttpClient(endpoint);
         var client = OpenRouterClientFactory.CreateChatClient(endpoint, model.Id, http, loggerFactory);
         return new ChatPlayer(client, model.Id, endpoint, model.SupportsJsonSchema, time, endpoint.Kind == EndpointKind.OpenRouter ? model : null);

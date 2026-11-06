@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLM Shootout</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/site.css">
+  <script src="/login.js" defer></script>
+</head>
+<body class="login-page">
+  <main class="login">
+    <div class="duel-mark" aria-hidden="true"><span class="a"></span><span class="b"></span></div>
+    <h1>LLM Shootout</h1>
+    <p class="lede">Two language models play a game. You watch.</p>
+    <form method="post" action="/login">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+      <p id="error" class="error" role="alert" hidden>That password is not right. Try again.</p>
+      <button class="primary" type="submit">Open the arena</button>
+    </form>
+  </main>
+</body>
+</html>

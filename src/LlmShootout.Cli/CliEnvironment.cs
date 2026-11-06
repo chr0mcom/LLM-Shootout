@@ -50,17 +50,8 @@ public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOpt
     /// <summary>The configured endpoints besides OpenRouter.</summary>
     public EndpointRegistry Endpoints => endpoints;
 
-    /// <summary>Creates the model list of an endpoint. A key is sent to endpoints other than OpenRouter, whose lists need no key.</summary>
-    public ModelCatalog CreateCatalog(OpenRouterOptions options)
-    {
-        var http = new HttpClient { BaseAddress = options.BaseAddress, Timeout = TimeSpan.FromSeconds(30) };
-        if (options.Kind != EndpointKind.OpenRouter && !string.IsNullOrEmpty(options.ApiKey))
-        {
-            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
-        }
-
-        return new ModelCatalog(http, options, time);
-    }
+    /// <summary>Creates the model list of an endpoint.</summary>
+    public ModelCatalog CreateCatalog(OpenRouterOptions options) => ModelCatalog.ForEndpoint(options, time);
 
     /// <summary>Creates a player from its specification.</summary>
     public Task<IPlayer> CreatePlayerAsync(string spec, long seed, OpenRouterOptions options, CancellationToken cancellationToken) =>

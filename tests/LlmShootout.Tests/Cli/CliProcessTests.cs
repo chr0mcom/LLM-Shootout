@@ -15,6 +15,15 @@ public sealed class CliProcessTests : IDisposable
         }
     }
 
+    private static string ShootoutDll { get; } = Path.Combine(
+        Snapshot.RepositoryRoot,
+        "src",
+        "LlmShootout.Cli",
+        "bin",
+        Path.GetFileName(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory)))!,
+        Path.GetFileName(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory)),
+        "shootout.dll");
+
     private static async Task<(int Exit, string Out, string Err)> RunAsync(params string[] args)
     {
         var start = new ProcessStartInfo("dotnet")
@@ -24,7 +33,7 @@ public sealed class CliProcessTests : IDisposable
             RedirectStandardInput = true,
             WorkingDirectory = Snapshot.RepositoryRoot,
         };
-        start.ArgumentList.Add(Path.Combine(AppContext.BaseDirectory, "shootout.dll"));
+        start.ArgumentList.Add(ShootoutDll);
         foreach (var arg in args)
         {
             start.ArgumentList.Add(arg);

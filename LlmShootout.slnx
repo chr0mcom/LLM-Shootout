@@ -3,6 +3,7 @@
     <Project Path="src/LlmShootout.Arena/LlmShootout.Arena.csproj" />
     <Project Path="src/LlmShootout.Games/LlmShootout.Games.csproj" />
     <Project Path="src/LlmShootout.Cli/LlmShootout.Cli.csproj" />
+    <Project Path="src/LlmShootout.Web/LlmShootout.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LlmShootout.Tests/LlmShootout.Tests.csproj" />

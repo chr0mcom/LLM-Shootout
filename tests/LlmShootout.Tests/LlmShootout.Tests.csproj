@@ -10,10 +10,12 @@
     <PackageReference Include="xunit.v3.mtp-v2" />
     <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LlmShootout.Arena\LlmShootout.Arena.csproj" />
     <ProjectReference Include="..\..\src\LlmShootout.Games\LlmShootout.Games.csproj" />
     <ProjectReference Include="..\..\src\LlmShootout.Cli\LlmShootout.Cli.csproj" />
+    <ProjectReference Include="..\..\src\LlmShootout.Web\LlmShootout.Web.csproj" />
   </ItemGroup>
 </Project>

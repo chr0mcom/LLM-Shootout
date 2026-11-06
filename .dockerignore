@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+.git/
+internal/
+matches/
+tests/
+TestResults/
+coverage/
+docs/
+scripts/
+shootouts/
+shootout.settings.json
+*.md

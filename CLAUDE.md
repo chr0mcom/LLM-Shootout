@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 LLM Shootout is a .NET console application in which two language models play a game against each other
-through OpenRouter. The solution contains a reusable arena (`LlmShootout.Arena`), the games
-(`LlmShootout.Games`), a command line (`LlmShootout.Cli`) and tests (`LlmShootout.Tests`).
+through OpenRouter or another OpenAI-compatible endpoint. The solution contains a reusable arena
+(`LlmShootout.Arena`), the games (`LlmShootout.Games`), a command line (`LlmShootout.Cli`), a small web interface
+(`LlmShootout.Web`, see `docs/web.md`) and tests (`LlmShootout.Tests`).
 
 ## Commands
 

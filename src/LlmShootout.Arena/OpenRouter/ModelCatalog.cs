@@ -31,6 +31,19 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
 {
     private string CacheFile => options.Kind == EndpointKind.OpenRouter ? "models.json" : $"models.{CacheName(options.EndpointName)}.json";
 
+    /// <summary>Creates the model list of an endpoint. A key is sent to endpoints other than OpenRouter, whose lists need no key.</summary>
+    public static ModelCatalog ForEndpoint(OpenRouterOptions options, TimeProvider time)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var http = new HttpClient { BaseAddress = options.BaseAddress, Timeout = TimeSpan.FromSeconds(30) };
+        if (options.Kind != EndpointKind.OpenRouter && !string.IsNullOrEmpty(options.ApiKey))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
+        }
+
+        return new ModelCatalog(http, options, time);
+    }
+
     /// <summary>How long a cached list is used without asking OpenRouter again.</summary>
     public static TimeSpan CacheLifetime { get; } = TimeSpan.FromHours(1);
 
