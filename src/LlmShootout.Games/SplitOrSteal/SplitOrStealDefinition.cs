@@ -25,6 +25,9 @@ public sealed class SplitOrStealDefinition : IGameDefinition
     public string DisplayName => "Split or Steal";
 
     /// <inheritdoc />
+    public string Question => "Does a model keep its word?";
+
+    /// <inheritdoc />
     public ITemplateSource Templates { get; } = MarkdownTemplates.FromResources(
         typeof(SplitOrStealDefinition).Assembly,
         "LlmShootout.Games.SplitOrSteal.split-or-steal",

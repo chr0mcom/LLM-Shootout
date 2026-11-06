@@ -66,10 +66,13 @@ public sealed class CostMeter(decimal limitUsd, decimal unknownCallReserveUsd = 
         }
     }
 
+    /// <summary>True once the limit is reached, including the reserve for calls with unknown cost.</summary>
+    public bool IsExhausted => TotalUsd + ReservedUsd >= limitUsd;
+
     /// <summary>Throws before a call if the limit is reached.</summary>
     public void EnsureWithinLimit()
     {
-        if (TotalUsd + ReservedUsd >= limitUsd)
+        if (IsExhausted)
         {
             throw new BudgetExceededException(TotalUsd + ReservedUsd, limitUsd);
         }

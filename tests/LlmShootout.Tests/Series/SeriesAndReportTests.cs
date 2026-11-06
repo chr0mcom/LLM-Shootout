@@ -26,7 +26,7 @@ public sealed class SeriesAndReportTests : IDisposable
         var directory = Path.Combine(_harness.Directory, Guid.NewGuid().ToString("N"));
         var file = SeriesFile.Load(StandardSeries);
         var plan = new SeriesPlan(_definition, file, new RandomPlayer(1), new RandomPlayer(2), language, new MatchOptions(), directory);
-        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time)).RunAsync(plan, TestContext.Current.CancellationToken);
+        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
         return (summary, directory);
     }
 
@@ -74,7 +74,7 @@ public sealed class SeriesAndReportTests : IDisposable
         await File.WriteAllTextAsync(path, "{ \"game\": \"split-or-steal\", \"seed\": 5, \"matches\": [ {}, {}, {} ] }", TestContext.Current.CancellationToken);
         var plan = new SeriesPlan(_definition, SeriesFile.Load(path), new RandomPlayer(1), new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(_harness.Directory, "s"));
 
-        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time)).RunAsync(plan, TestContext.Current.CancellationToken);
+        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
 
         Assert.All(summary.Entries, e => Assert.Matches("^0[123]-talk-[AB]-first$", e.Directory));
         Assert.Equal(3, summary.Matches);
@@ -91,14 +91,17 @@ public sealed class SeriesAndReportTests : IDisposable
         }
 
         var plan = new SeriesPlan(_definition, SeriesFile.Load(StandardSeries), costly, new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(harness.Directory, "s"));
-        var summary = await new SeriesRunner(new MatchRunner(harness.Cost, harness.Time)).RunAsync(plan, TestContext.Current.CancellationToken);
+        var summary = await new SeriesRunner(new MatchRunner(harness.Cost, harness.Time), harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
 
         Assert.True(summary.Matches < 3);
         Assert.Equal(1, summary.Aborted);
     }
 
     [Theory]
-    [InlineData("{ \"matches\": [] }", "needs a 'game'")]
+    [InlineData("{ \"matches\": [] }", "is not valid")]
+    [InlineData("{ \"game\": \"x\", \"matches\": [ {} ] }", "is not valid")]
+    [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"communicaton\": false } ] }", "is not valid")]
+    [InlineData("{ \"game\": \"x\", \"seed\": 1, \"mathces\": [] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [] }", "at least one entry")]
     [InlineData("not json", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"firstSeat\": \"C\" } ] }", "is not valid")]
@@ -112,6 +115,40 @@ public sealed class SeriesAndReportTests : IDisposable
 
         Assert.Contains(expected, ex.Message, StringComparison.Ordinal);
         Assert.Contains("bad.json", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Invalid_game_options_in_a_later_match_are_found_before_anything_is_played()
+    {
+        var path = Path.Combine(_harness.Directory, "late-error.json");
+        Directory.CreateDirectory(_harness.Directory);
+        await File.WriteAllTextAsync(path, "{ \"game\": \"split-or-steal\", \"seed\": 1, \"matches\": [ {}, { \"options\": { \"pot\": 7 } } ] }", TestContext.Current.CancellationToken);
+        var scripted = new ScriptedPlayer("never");
+        var plan = new SeriesPlan(_definition, SeriesFile.Load(path), scripted, scripted, "en", new MatchOptions(), Path.Combine(_harness.Directory, "late"));
+
+        var ex = await Assert.ThrowsAsync<GameOptionsException>(() => new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken));
+
+        Assert.Contains("Match 2", ex.Message, StringComparison.Ordinal);
+        Assert.Empty(scripted.Calls);
+        Assert.False(Directory.Exists(Path.Combine(_harness.Directory, "late")));
+    }
+
+    [Fact]
+    public async Task No_further_match_starts_once_the_budget_is_used_up()
+    {
+        using var harness = new MatchHarness(maxCostUsd: 0.05m);
+        var costly = new ScriptedPlayer("m", new LlmShootout.Arena.Identity.ModelIdentity("x/y"));
+        for (var i = 0; i < 10; i++)
+        {
+            costly.Reply(MatchHarness.Answer("t", "hi", "split"), info: MatchHarness.Info(0.03m));
+        }
+
+        var plan = new SeriesPlan(_definition, SeriesFile.Load(StandardSeries), costly, new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(harness.Directory, "s"));
+        var summary = await new SeriesRunner(new MatchRunner(harness.Cost, harness.Time), harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
+
+        Assert.True(harness.Cost.IsExhausted);
+        Assert.Equal(summary.Entries.Count, summary.Matches);
+        Assert.True(summary.Matches < 3);
     }
 
     [Fact]

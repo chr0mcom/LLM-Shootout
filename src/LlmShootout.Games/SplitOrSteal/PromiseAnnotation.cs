@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Protocol;
@@ -12,6 +14,8 @@ public sealed class PromiseAnnotation(ITemplateSource templates) : IAnnotationTa
 {
     /// <summary>Name used in file names.</summary>
     public const string TaskName = "promise";
+
+    private static readonly string[] Allowed = ["split", "steal", "none", "unclear"];
 
     /// <inheritdoc />
     public string Name => TaskName;
@@ -32,6 +36,25 @@ public sealed class PromiseAnnotation(ITemplateSource templates) : IAnnotationTa
         }
 
         return requests;
+    }
+
+    /// <inheritdoc />
+    public string? Validate(AnnotationRequest request, JsonObject answer)
+    {
+        ArgumentNullException.ThrowIfNull(answer);
+        if (answer["announced"] is not JsonValue announced || announced.GetValueKind() != JsonValueKind.String || !Allowed.Contains(announced.GetValue<string>().Trim().ToLowerInvariant()))
+        {
+            return "'announced' must be one of: split, steal, none, unclear.";
+        }
+
+        if (answer["quote"] is { } quote && quote.GetValueKind() is not (JsonValueKind.String or JsonValueKind.Null))
+        {
+            return "'quote' must be text or null.";
+        }
+
+        return answer["confidence"] is { } confidence && (confidence.GetValueKind() != JsonValueKind.Number || confidence.GetValue<double>() is < 0 or > 1)
+            ? "'confidence' must be a number from 0 to 1."
+            : null;
     }
 
     /// <summary>The key of the request for a seat.</summary>

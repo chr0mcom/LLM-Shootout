@@ -24,7 +24,7 @@ public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
         var entries = new List<AnnotationEntry>();
         foreach (var request in task.Build(match))
         {
-            entries.Add(await AskAsync(request, judge, cancellationToken));
+            entries.Add(await AskAsync(task, request, judge, cancellationToken));
         }
 
         var file = new AnnotationFile(
@@ -38,7 +38,7 @@ public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
         return path;
     }
 
-    private async Task<AnnotationEntry> AskAsync(AnnotationRequest request, IPlayer judge, CancellationToken cancellationToken)
+    private async Task<AnnotationEntry> AskAsync(IAnnotationTask task, AnnotationRequest request, IPlayer judge, CancellationToken cancellationToken)
     {
         var call = new PlayerCall(CallPurpose.Judge, [new PromptMessage(PromptRole.User, request.Prompt)], null, 1, _ => request.SampleAnswer);
         try
@@ -48,7 +48,11 @@ public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
             {
                 if (ReasoningJsonRecovery.TryExtractJsonObject(text, out var json))
                 {
-                    return new AnnotationEntry(request.Key, request.Seat, JsonNode.Parse(json)!.AsObject(), reply.Content, null);
+                    var answer = JsonNode.Parse(json)!.AsObject();
+                    var problem = task.Validate(request, answer);
+                    return problem is null
+                        ? new AnnotationEntry(request.Key, request.Seat, answer, reply.Content, null)
+                        : new AnnotationEntry(request.Key, request.Seat, null, reply.Content, problem);
                 }
             }
 

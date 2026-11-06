@@ -93,32 +93,26 @@ public static class DebriefAnswers
             return false;
         }
 
-        var text = node.GetValueKind() == JsonValueKind.String ? node.GetValue<string>().Trim() : node.ToJsonString();
+        var kind = node.GetValueKind();
+        var text = kind == JsonValueKind.String ? node.GetValue<string>().Trim() : node.ToJsonString();
         switch (q.Kind)
         {
-            case QuestionKind.Scale when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number >= q.Min && number <= q.Max:
+            case QuestionKind.Scale when kind == JsonValueKind.Number && int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number >= q.Min && number <= q.Max:
                 value = number.ToString(CultureInfo.InvariantCulture);
                 return true;
-            case QuestionKind.Boolean when ParseBool(text) is { } flag:
-                value = flag ? "true" : "false";
+            case QuestionKind.Boolean when kind is JsonValueKind.True or JsonValueKind.False:
+                value = kind == JsonValueKind.True ? "true" : "false";
                 return true;
-            case QuestionKind.Choice when q.Choices?.FirstOrDefault(c => string.Equals(c, text, StringComparison.OrdinalIgnoreCase)) is { } choice:
+            case QuestionKind.Choice when kind == JsonValueKind.String && q.Choices?.FirstOrDefault(c => string.Equals(c, text, StringComparison.OrdinalIgnoreCase)) is { } choice:
                 value = choice;
                 return true;
-            case QuestionKind.Text when text.Length > 0 && node.GetValueKind() == JsonValueKind.String:
+            case QuestionKind.Text when text.Length > 0 && kind == JsonValueKind.String:
                 value = text;
                 return true;
             default:
                 return false;
         }
     }
-
-    private static bool? ParseBool(string text) => text.ToLowerInvariant() switch
-    {
-        "true" or "yes" or "ja" => true,
-        "false" or "no" or "nein" => false,
-        _ => null,
-    };
 
     private static JsonObject TypeSchema(DebriefingQuestion q) => q.Kind switch
     {

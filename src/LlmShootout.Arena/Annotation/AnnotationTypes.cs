@@ -19,6 +19,9 @@ public interface IAnnotationTask
 
     /// <summary>Builds the questions for a match.</summary>
     IReadOnlyList<AnnotationRequest> Build(MatchRecord match);
+
+    /// <summary>Checks the judge's answer. Returns a message if it is unusable (wrong value, missing field), otherwise null.</summary>
+    string? Validate(AnnotationRequest request, JsonObject answer) => null;
 }
 
 /// <summary>The judge's answer to one request.</summary>

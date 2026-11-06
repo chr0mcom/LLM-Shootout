@@ -12,6 +12,9 @@ public interface IGameDefinition
     /// <summary>Name for people.</summary>
     string DisplayName { get; }
 
+    /// <summary>The question the game is meant to answer, in English, for example "Does a model keep its word?".</summary>
+    string Question => string.Empty;
+
     /// <summary>All wording of the game: rules, views, instructions, error messages, facts.</summary>
     ITemplateSource Templates { get; }
 

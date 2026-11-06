@@ -15,7 +15,7 @@ namespace LlmShootout.Arena.Matches;
 /// Runs one match from the first turn to the result and writes the protocol. The loop is the same for every game:
 /// ask the pending seats, collect their answers, hand the whole round to the game, record what happened.
 /// </summary>
-public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<MatchRunner>? logger = null)
+public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<MatchRunner>? logger = null, Action<MatchEvent>? observer = null)
 {
     private readonly ILogger _logger = logger ?? NullLogger<MatchRunner>.Instance;
 
@@ -27,7 +27,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options, plan.Setup.Communication);
         var evaluator = new AnswerEvaluator(plan.Options, prompts);
 
-        await using var writer = new ProtocolWriter(plan.Directory);
+        await using var writer = new ProtocolWriter(plan.Directory) { Observer = observer };
         var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner, plan.Options.RedactIdentity);
         var context = new MatchContext(plan, game, prompts, evaluator, writer, cost, new PlayerGateway(cost), guard, time);
         var (startCost, startUnknown) = (cost.TotalUsd, cost.UnknownCalls);

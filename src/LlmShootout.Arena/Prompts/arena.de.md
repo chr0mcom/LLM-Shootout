@@ -189,10 +189,10 @@ Deine Antwort auf die Fragen war nicht gültig.
 Antworte erneut mit genau einem JSON-Objekt, das alle Schlüssel enthält.
 
 ## debrief.violation.scale
-muss eine ganze Zahl von {min} bis {max} sein
+muss eine ganze Zahl (JSON-Zahl) von {min} bis {max} sein
 
 ## debrief.violation.boolean
-muss true oder false sein
+muss true oder false (JSON-Boolean) sein
 
 ## debrief.violation.choice
 muss einer der erlaubten Werte sein

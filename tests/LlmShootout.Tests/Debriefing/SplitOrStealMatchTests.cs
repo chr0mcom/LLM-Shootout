@@ -133,7 +133,7 @@ public sealed class SplitOrStealMatchTests : IDisposable
 
         var retry = a.Calls[^1].Messages;
         Assert.Contains("trust_in_opponent", retry[^1].Text, StringComparison.Ordinal);
-        Assert.Contains("integer from 1 to 5", retry[^1].Text, StringComparison.Ordinal);
+        Assert.Contains("from 1 to 5", retry[^1].Text, StringComparison.Ordinal);
         var debrief = events.OfType<DebriefEvent>().First(d => d.Seat == Seat.A);
         Assert.True(debrief.Valid);
         Assert.Equal(2, debrief.Attempts);
@@ -161,7 +161,9 @@ public sealed class SplitOrStealMatchTests : IDisposable
         var (outcome, events, _, _) = await PlayAsync(debriefA: null);
 
         Assert.True(outcome.Completed);
-        Assert.False(events.OfType<DebriefEvent>().First(d => d.Seat == Seat.A).Valid);
+        var failed = events.OfType<DebriefEvent>().First(d => d.Seat == Seat.A);
+        Assert.False(failed.Valid);
+        Assert.Equal(1, failed.Attempts);
         Assert.Contains(events.OfType<ModelCallEvent>(), c => c.Purpose == CallPurpose.Debrief && c.Class == "technical_error");
     }
 

@@ -25,7 +25,7 @@ public sealed record SeriesPlan(
     string Directory);
 
 /// <summary>Runs the matches of a series one after the other and writes <c>series.json</c> and <c>series-report.md</c>.</summary>
-public sealed class SeriesRunner(MatchRunner runner)
+public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
 {
     /// <summary>Called after each finished match, for progress output.</summary>
     public Action<int, MatchOutcome>? OnMatchFinished { get; set; }
@@ -34,20 +34,19 @@ public sealed class SeriesRunner(MatchRunner runner)
     public async Task<SeriesSummary> RunAsync(SeriesPlan plan, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(plan);
+        PlanMatches(plan);
         var records = new List<MatchRecord>();
         var entries = new List<SeriesEntry>();
         var number = 0;
         foreach (var match in plan.File.Matches)
         {
             number++;
-            var seed = plan.File.Seed + number;
-            var first = match.FirstSeat ?? (new SeededRng(seed).NextBool(0.5) ? Seat.A : Seat.B);
-            var matchPlan = new MatchPlan(
-                plan.Definition,
-                new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
-                new Dictionary<Seat, IPlayer> { [Seat.A] = plan.PlayerA, [Seat.B] = plan.PlayerB },
-                plan.Options with { RevealIdentity = match.RevealIdentity },
-                MatchPaths.SeriesMatch(plan.Directory, number, match.Communication, first));
+            if (number > 1 && cost.IsExhausted)
+            {
+                break;
+            }
+
+            var matchPlan = PlanMatch(plan, match, number);
 
             var outcome = await runner.RunAsync(matchPlan, cancellationToken);
             var record = MatchRecord.Load(outcome.Directory);
@@ -64,6 +63,35 @@ public sealed class SeriesRunner(MatchRunner runner)
         var summary = Summarize(plan, records, entries);
         await SeriesReportWriter.WriteAsync(plan.Definition, plan.Directory, summary, records, plan.Language, cancellationToken);
         return summary;
+    }
+
+    private static MatchPlan PlanMatch(SeriesPlan plan, SeriesMatch match, int number)
+    {
+        var seed = plan.File.Seed + number;
+        var first = match.FirstSeat ?? (new SeededRng(seed).NextBool(0.5) ? Seat.A : Seat.B);
+        return new MatchPlan(
+            plan.Definition,
+            new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
+            new Dictionary<Seat, IPlayer> { [Seat.A] = plan.PlayerA, [Seat.B] = plan.PlayerB },
+            plan.Options with { RevealIdentity = match.RevealIdentity },
+            MatchPaths.SeriesMatch(plan.Directory, number, match.Communication, first));
+    }
+
+    private static void PlanMatches(SeriesPlan plan)
+    {
+        var number = 0;
+        foreach (var match in plan.File.Matches)
+        {
+            number++;
+            try
+            {
+                plan.Definition.Create(PlanMatch(plan, match, number).Setup);
+            }
+            catch (GameOptionsException ex)
+            {
+                throw new GameOptionsException($"Match {number} of the series: {ex.Message}", ex);
+            }
+        }
     }
 
     private static SeriesSummary Summarize(SeriesPlan plan, List<MatchRecord> records, List<SeriesEntry> entries) =>

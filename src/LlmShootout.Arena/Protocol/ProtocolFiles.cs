@@ -28,11 +28,15 @@ public sealed class ProtocolWriter : IAsyncDisposable
         _writer = new StreamWriter(stream, new UTF8Encoding(false)) { NewLine = "\n" };
     }
 
+    /// <summary>Called with every event after it has been written, for example by a live view. Optional.</summary>
+    public Action<MatchEvent>? Observer { get; init; }
+
     /// <summary>Appends one event.</summary>
     public async Task AppendAsync(MatchEvent matchEvent, CancellationToken cancellationToken = default)
     {
         await _writer.WriteLineAsync(ProtocolJson.ToLine(matchEvent).AsMemory(), cancellationToken);
         await _writer.FlushAsync(cancellationToken);
+        Observer?.Invoke(matchEvent);
     }
 
     /// <inheritdoc />

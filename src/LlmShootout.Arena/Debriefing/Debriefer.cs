@@ -63,10 +63,12 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         var schema = DebriefAnswers.Schema(s.Questions);
         var problems = new List<string>();
         Dictionary<string, string> answers = [];
+        var attempts = 0;
 
         for (var attempt = 1; attempt <= maxRetries + 1; attempt++)
         {
             var request = new PlayerCall(CallPurpose.Debrief, [.. messages], schema, attempt, rng => DebriefAnswers.Sample(s.Questions, rng, s.Prompts.Arena("debrief.sample.text")));
+            attempts = attempt;
             PlayerReply reply;
             try
             {
@@ -91,7 +93,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
             messages.Add(new PromptMessage(PromptRole.User, s.Prompts.Arena("debrief.retry", ("hint", Hint(s, problems)))));
         }
 
-        await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, false, answers, problems, Math.Min(maxRetries + 1, messages.Count)), cancellationToken);
+        await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, false, answers, problems, attempts), cancellationToken);
     }
 
     private static JsonObject? ReadObject(PlayerReply reply)
