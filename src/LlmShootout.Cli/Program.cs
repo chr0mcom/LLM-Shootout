@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Spectre.Console;
 
 var builder = Host.CreateApplicationBuilder([]);
+builder.Configuration.AddJsonFile("shootout.settings.json", optional: true);
 builder.Configuration.AddEnvironmentVariables("LLMSHOOTOUT_");
 if (Environment.GetEnvironmentVariable(OpenRouterOptions.ApiKeyVariable) is { Length: > 0 } apiKey)
 {
@@ -26,6 +27,7 @@ builder.Services.Configure<ConsoleLifetimeOptions>(o => o.SuppressStatusMessages
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(_ => ConsoleFactory.Create(Console.Out));
 builder.Services.AddOptions<OpenRouterOptions>().Bind(builder.Configuration.GetSection("OpenRouter")).ValidateDataAnnotations();
+builder.Services.AddSingleton(_ => new EndpointRegistry(builder.Configuration.GetSection("Endpoints").Get<Dictionary<string, EndpointDefinition>>()));
 builder.Services.AddSingleton<CliEnvironment>();
 
 using var host = builder.Build();

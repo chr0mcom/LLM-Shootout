@@ -12,7 +12,7 @@ using Spectre.Console;
 namespace LlmShootout.Cli;
 
 /// <summary>Everything the commands share: console, clock, the validated base options, and helpers that create players and catalogs.</summary>
-public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOptions<OpenRouterOptions> openRouter, ILoggerFactory loggerFactory)
+public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOptions<OpenRouterOptions> openRouter, ILoggerFactory loggerFactory, EndpointRegistry endpoints)
 {
     private readonly Lazy<IAnsiConsole> _error = new(() => ConsoleFactory.Create(System.Console.Error));
 
@@ -47,13 +47,24 @@ public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOpt
         return options;
     }
 
-    /// <summary>Creates a catalog of OpenRouter models.</summary>
-    public ModelCatalog CreateCatalog(OpenRouterOptions options) =>
-        new(new HttpClient { BaseAddress = options.BaseAddress, Timeout = TimeSpan.FromSeconds(30) }, options, time);
+    /// <summary>The configured endpoints besides OpenRouter.</summary>
+    public EndpointRegistry Endpoints => endpoints;
+
+    /// <summary>Creates the model list of an endpoint. A key is sent to endpoints other than OpenRouter, whose lists need no key.</summary>
+    public ModelCatalog CreateCatalog(OpenRouterOptions options)
+    {
+        var http = new HttpClient { BaseAddress = options.BaseAddress, Timeout = TimeSpan.FromSeconds(30) };
+        if (options.Kind != EndpointKind.OpenRouter && !string.IsNullOrEmpty(options.ApiKey))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
+        }
+
+        return new ModelCatalog(http, options, time);
+    }
 
     /// <summary>Creates a player from its specification.</summary>
     public Task<IPlayer> CreatePlayerAsync(string spec, long seed, OpenRouterOptions options, CancellationToken cancellationToken) =>
-        new PlayerFactory(options, CreateCatalog(options), time, loggerFactory).CreateAsync(spec, seed, cancellationToken);
+        new PlayerFactory(options, CreateCatalog(options), time, loggerFactory, endpoints, CreateCatalog).CreateAsync(spec, seed, cancellationToken);
 
     /// <summary>Creates a match runner that reports every protocol event to <paramref name="observer"/>.</summary>
     public MatchRunner CreateRunner(CostMeter cost, Action<Arena.Protocol.MatchEvent>? observer) =>

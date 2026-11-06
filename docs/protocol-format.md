@@ -46,7 +46,7 @@ First line. Everything needed to understand and repeat the match.
 |---|---|
 | `gameId`, `seed`, `language`, `communication`, `firstSeat` | the game and its setup |
 | `gameOptions` | game specific options from the series file, or absent |
-| `players` | per seat: `name` (for example `openrouter:openai/gpt-oss-20b` or `random`), `requestedModel`, and `settings` (temperature, reasoning effort, output limit, call timeout, only those that are sent; a repeated debriefing uses them again) |
+| `players` | per seat: `name` (for example `openrouter:openai/gpt-oss-20b`, `claude:claude-sonnet-latest` or `random`; the prefix is the [endpoint](endpoints.md)), `requestedModel`, and `settings` (temperature, reasoning effort, output limit, call timeout, only those that are sent; a repeated debriefing uses them again) |
 | `templateHashes` | hash of the template file of the arena and of the game, for the language used |
 | `options` | the `MatchOptions`: attempts, word limits, thought memory, identity settings, cost limit, refusal keywords |
 | `appVersion`, `gitCommit` | version and short commit of the application |

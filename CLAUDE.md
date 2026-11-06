@@ -27,6 +27,7 @@ Live tests against OpenRouter run only with `OPENROUTER_API_KEY` and `LLMSHOOTOU
   file-scoped namespaces, nullable everywhere, `CancellationToken` everywhere, `TimeProvider` for time.
 - Games are registered explicitly in one place, never discovered by reflection.
 - Prompts live in versioned template files, not in code.
-- The API key comes from `OPENROUTER_API_KEY` and never appears in files, logs or protocols.
+- The OpenRouter key comes from `OPENROUTER_API_KEY`, the key of another endpoint from the variable named in its
+  configuration (`docs/endpoints.md`). Keys never appear in files, logs or protocols.
 - Public text (code, comments, docs) is English. Details: `docs/dev/dotnet-baseline.md`.
 - Every architecture decision gets an ADR in `docs/decisions/`.

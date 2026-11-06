@@ -1,5 +1,6 @@
 using System.Globalization;
 using LlmShootout.Arena.Games;
+using LlmShootout.Arena.OpenRouter;
 
 namespace LlmShootout.Arena.Series;
 
@@ -18,10 +19,11 @@ public static class MatchPaths
     public static string SeriesMatch(string seriesDirectory, int number, bool communication, Seat firstSeat) =>
         Path.Combine(seriesDirectory, string.Create(CultureInfo.InvariantCulture, $"{number:00}-{(communication ? "talk" : "silent")}-{firstSeat}-first"));
 
-    /// <summary>Makes a player name usable in a file name: <c>openrouter:openai/gpt-4o</c> becomes <c>gpt-4o</c>.</summary>
+    /// <summary>Makes a player name usable in a file name: <c>openrouter:openai/gpt-4o</c> and <c>claude:gpt-4o</c> become <c>gpt-4o</c>.</summary>
     public static string Slug(string player)
     {
-        var name = player.Contains(':', StringComparison.Ordinal) && player.StartsWith("openrouter:", StringComparison.Ordinal) ? player["openrouter:".Length..] : player;
+        var (endpoint, model) = EndpointRegistry.Split(player);
+        var name = endpoint is null or "scripted" ? player : model;
         name = name[(name.LastIndexOf('/') + 1)..];
         var slug = new string([.. name.Select(c => char.IsLetterOrDigit(c) || c is '-' or '.' or '_' ? c : '-')]).Trim('-');
         return slug.Length == 0 ? "player" : slug;

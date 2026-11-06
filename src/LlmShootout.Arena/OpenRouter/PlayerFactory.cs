@@ -27,9 +27,22 @@ public sealed class PlayerSpecException : Exception
 
 /// <summary>
 /// Turns a player specification into a player: <c>random</c>, <c>scripted:&lt;file&gt;</c>,
-/// <c>openrouter:&lt;slug&gt;</c>, or a bare slug such as <c>openai/gpt-4o</c>.
+/// <c>&lt;endpoint&gt;:&lt;model&gt;</c> for an endpoint of the configuration (<c>claude:claude-sonnet-latest</c>),
+/// <c>openrouter:&lt;slug&gt;</c>, or a bare OpenRouter slug such as <c>openai/gpt-4o</c>.
 /// </summary>
-public sealed class PlayerFactory(OpenRouterOptions options, ModelCatalog catalog, TimeProvider time, ILoggerFactory? loggerFactory = null)
+/// <param name="options">Base options; the OpenRouter endpoint uses them as they are, other endpoints replace address, dialect and key.</param>
+/// <param name="catalog">The model list of the base endpoint.</param>
+/// <param name="time">The clock.</param>
+/// <param name="loggerFactory">Logging.</param>
+/// <param name="endpoints">The configured endpoints besides OpenRouter.</param>
+/// <param name="catalogFor">Creates the model list of another endpoint.</param>
+public sealed class PlayerFactory(
+    OpenRouterOptions options,
+    ModelCatalog catalog,
+    TimeProvider time,
+    ILoggerFactory? loggerFactory = null,
+    EndpointRegistry? endpoints = null,
+    Func<OpenRouterOptions, ModelCatalog>? catalogFor = null)
 {
     /// <summary>Creates a player. <paramref name="seed"/> seeds the random player.</summary>
     public async Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken)
@@ -41,12 +54,33 @@ public sealed class PlayerFactory(OpenRouterOptions options, ModelCatalog catalo
             "random" => new RandomPlayer(seed),
             _ when trimmed.StartsWith("scripted:", StringComparison.Ordinal) => await ReadScriptAsync(trimmed["scripted:".Length..], cancellationToken),
             "scripted" => throw new PlayerSpecException("'scripted' needs a file: scripted:<file.json> (a JSON array of answer strings)."),
-            _ => await CreateModelPlayerAsync(trimmed.StartsWith("openrouter:", StringComparison.Ordinal) ? trimmed["openrouter:".Length..] : trimmed, cancellationToken),
+            _ => await CreateModelPlayerAsync(trimmed, cancellationToken),
         };
     }
 
-    private void RequireSupportedParameters(ModelInfo model)
+    private (OpenRouterOptions Options, ModelCatalog Catalog, string Slug) ResolveEndpoint(string spec)
     {
+        var (name, slug) = EndpointRegistry.Split(spec);
+        if (name is null || string.Equals(name, EndpointRegistry.OpenRouterName, StringComparison.OrdinalIgnoreCase))
+        {
+            return (options, catalog, name is null ? spec : slug);
+        }
+
+        var registry = endpoints ?? new EndpointRegistry();
+        var resolved = registry.Resolve(name, options) ?? throw new PlayerSpecException(
+            $"Unknown endpoint '{name}' in '{spec}'. Configured endpoints: {string.Join(", ", registry.Names.Prepend(EndpointRegistry.OpenRouterName))}. " +
+            "Endpoints are defined in shootout.settings.json, see docs/endpoints.md.");
+        var resolvedCatalog = catalogFor?.Invoke(resolved) ?? new ModelCatalog(new HttpClient { BaseAddress = resolved.BaseAddress, Timeout = TimeSpan.FromSeconds(30) }, resolved, time);
+        return (resolved, resolvedCatalog, slug);
+    }
+
+    private static void RequireSupportedParameters(OpenRouterOptions endpoint, ModelInfo model)
+    {
+        if (endpoint.Kind != EndpointKind.OpenRouter)
+        {
+            return;
+        }
+
         void Require(bool configured, string label, params string[] names)
         {
             if (configured && !names.Any(model.SupportedParameters.Contains))
@@ -57,9 +91,9 @@ public sealed class PlayerFactory(OpenRouterOptions options, ModelCatalog catalo
             }
         }
 
-        Require(options.Temperature is not null, "temperature", "temperature");
-        Require(options.ReasoningEffort is not null, "reasoning effort", "reasoning", "reasoning_effort");
-        Require(options.MaxOutputTokens is not null, "max output tokens", "max_tokens", "max_completion_tokens");
+        Require(endpoint.Temperature is not null, "temperature", "temperature");
+        Require(endpoint.ReasoningEffort is not null, "reasoning effort", "reasoning", "reasoning_effort");
+        Require(endpoint.MaxOutputTokens is not null, "max output tokens", "max_tokens", "max_completion_tokens");
     }
 
     private static async Task<IPlayer> ReadScriptAsync(string path, CancellationToken cancellationToken)
@@ -88,33 +122,48 @@ public sealed class PlayerFactory(OpenRouterOptions options, ModelCatalog catalo
         return player;
     }
 
-    private async Task<IPlayer> CreateModelPlayerAsync(string slug, CancellationToken cancellationToken)
+    private async Task<IPlayer> CreateModelPlayerAsync(string spec, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
+        var (endpoint, models, slug) = ResolveEndpoint(spec);
+        if (endpoint.Kind == EndpointKind.OpenRouter && string.IsNullOrWhiteSpace(endpoint.ApiKey))
         {
             throw new PlayerSpecException(
                 $"The environment variable {OpenRouterOptions.ApiKeyVariable} is not set. " +
                 "Create a key at https://openrouter.ai/keys, export it, or play with 'random' players.");
         }
 
+        var model = await FindModelAsync(endpoint, models, slug, cancellationToken);
+        RequireSupportedParameters(endpoint, model);
+        var http = OpenRouterClientFactory.CreateHttpClient(endpoint);
+        var client = OpenRouterClientFactory.CreateChatClient(endpoint, model.Id, http, loggerFactory);
+        return new ChatPlayer(client, model.Id, endpoint, model.SupportsJsonSchema, time, endpoint.Kind == EndpointKind.OpenRouter ? model : null);
+    }
+
+    /// <summary>
+    /// Looks the model up in the list of its endpoint. If another endpoint cannot deliver its list, the model is trusted:
+    /// the first call reports an unknown model anyway.
+    /// </summary>
+    private static async Task<ModelInfo> FindModelAsync(OpenRouterOptions endpoint, ModelCatalog models, string slug, CancellationToken cancellationToken)
+    {
         ModelInfo? model;
         try
         {
-            model = await catalog.FindAsync(slug, cancellationToken);
+            model = await models.FindAsync(slug, cancellationToken);
+        }
+        catch (HttpRequestException) when (endpoint.Kind != EndpointKind.OpenRouter)
+        {
+            return new ModelInfo(slug, slug, 0m, 0m, 0, true, false, new HashSet<string>());
         }
         catch (HttpRequestException ex)
         {
             throw new PlayerSpecException($"Cannot check model '{slug}': the OpenRouter model list is not reachable ({ex.Message}).", ex);
         }
 
-        if (model is null)
-        {
-            throw new PlayerSpecException($"Model '{slug}' does not exist on OpenRouter. Find the exact slug with: shootout models --filter {slug.Split('/')[^1]}");
-        }
-
-        RequireSupportedParameters(model);
-        var http = OpenRouterClientFactory.CreateHttpClient(options);
-        var client = OpenRouterClientFactory.CreateChatClient(options, model.Id, http, loggerFactory);
-        return new ChatPlayer(client, model.Id, options, model.SupportsJsonSchema, time, model);
+        return model ?? throw new PlayerSpecException(UnknownModelMessage(endpoint, slug));
     }
+
+    private static string UnknownModelMessage(OpenRouterOptions endpoint, string slug) =>
+        endpoint.Kind == EndpointKind.OpenRouter
+            ? $"Model '{slug}' does not exist on OpenRouter. Find the exact slug with: shootout models --filter {slug.Split('/')[^1]}"
+            : $"Model '{slug}' is not offered by endpoint '{endpoint.EndpointName}'. List its models with: shootout models --endpoint {endpoint.EndpointName}";
 }

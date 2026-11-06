@@ -36,13 +36,15 @@ public static class InfoCommands
         var schemaOnly = new Option<bool>("--schema-only") { Description = "Only models that support JSON schema output." };
         var limit = new Option<int>("--limit") { Description = "Show at most this many models.", DefaultValueFactory = _ => 40 };
         var from = new Option<string?>("--from") { Description = "Read a saved response of the models endpoint instead of calling OpenRouter." };
-        var command = new Command("models", "Lists OpenRouter models with prices and JSON schema support. Needs no API key.") { filter, schemaOnly, limit, from };
+        var endpoint = new Option<string?>("--endpoint") { Description = "Name of a configured endpoint (default: openrouter). See docs/endpoints.md." };
+        var command = new Command("models", "Lists the models of OpenRouter (with prices) or of a configured endpoint. OpenRouter needs no API key.") { filter, schemaOnly, limit, from, endpoint };
 
         command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, async () =>
         {
+            var options = ResolveEndpoint(env, parse.GetValue(endpoint));
             var models = parse.GetValue(from) is { } path
-                ? ModelCatalog.Parse(await File.ReadAllTextAsync(path, ct))
-                : await env.CreateCatalog(env.BaseOptions).GetModelsAsync(ct);
+                ? ModelCatalog.Parse(await File.ReadAllTextAsync(path, ct), options.Kind)
+                : await env.CreateCatalog(options).GetModelsAsync(ct);
             var text = parse.GetValue(filter);
             var selected = models
                 .Where(m => text is null || m.Id.Contains(text, StringComparison.OrdinalIgnoreCase) || m.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
@@ -55,11 +57,11 @@ public static class InfoCommands
             {
                 table.AddRow(
                     Markup.Escape(m.Id),
-                    m.PromptUsdPerMillion.ToString("0.##", CultureInfo.InvariantCulture),
-                    m.CompletionUsdPerMillion.ToString("0.##", CultureInfo.InvariantCulture),
+                    options.Kind == EndpointKind.OpenRouter ? m.PromptUsdPerMillion.ToString("0.##", CultureInfo.InvariantCulture) : "-",
+                    options.Kind == EndpointKind.OpenRouter ? m.CompletionUsdPerMillion.ToString("0.##", CultureInfo.InvariantCulture) : "-",
                     m.ContextLength.ToString(CultureInfo.InvariantCulture),
-                    m.SupportsJsonSchema ? "yes" : "no",
-                    m.SupportsReasoning ? "yes" : "no");
+                    options.Kind == EndpointKind.OpenRouter ? (m.SupportsJsonSchema ? "yes" : "no") : "-",
+                    options.Kind == EndpointKind.OpenRouter ? (m.SupportsReasoning ? "yes" : "no") : "-");
             }
 
             env.Console.Write(table);
@@ -68,4 +70,10 @@ public static class InfoCommands
         }, ct));
         return command;
     }
+
+    private static OpenRouterOptions ResolveEndpoint(CliEnvironment env, string? name) =>
+        name is null
+            ? env.BaseOptions
+            : env.Endpoints.Resolve(name, env.BaseOptions)
+                ?? throw new UsageException($"Unknown endpoint '{name}'. Configured endpoints: {string.Join(", ", env.Endpoints.Names.Prepend(EndpointRegistry.OpenRouterName))}. See docs/endpoints.md.");
 }

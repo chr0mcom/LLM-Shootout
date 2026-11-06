@@ -43,6 +43,8 @@ step "report"
 
 step "usage errors give exit code 2"
 set +e
+"${SHOOTOUT[@]}" models --endpoint nowhere 2>/dev/null
+test $? -eq 2
 "${SHOOTOUT[@]}" play chess --a random --b random 2>/dev/null
 test $? -eq 2
 "${SHOOTOUT[@]}" play split-or-steal --a openai/gpt-4o --b random 2>/dev/null

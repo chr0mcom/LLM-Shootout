@@ -7,4 +7,5 @@ coverage/
 .idea/
 *.user
 matches/*
+shootout.settings.json
 !matches/examples/

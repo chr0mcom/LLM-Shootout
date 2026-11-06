@@ -39,7 +39,7 @@ public sealed class FakeOpenRouterHandler : HttpMessageHandler
     public static string Completion(
         string? content,
         string? reasoning = null,
-        decimal cost = 0.00123m,
+        decimal? cost = 0.00123m,
         string model = "vendor/model-2026-10-01",
         string provider = "TestProvider",
         string finish = "stop")

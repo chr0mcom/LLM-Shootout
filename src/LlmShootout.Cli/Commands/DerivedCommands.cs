@@ -76,7 +76,7 @@ public static class DerivedCommands
     {
         var run = new RunOptionSet();
         var path = new Argument<string>("directory") { Description = "A match directory or a series directory." };
-        var judge = new Option<string>("--judge") { Description = "Judge model: openrouter:<slug>, <slug>, random or scripted:<file>.", Required = true };
+        var judge = new Option<string>("--judge") { Description = "Judge model: <endpoint>:<model>, openrouter:<slug>, <slug>, random or scripted:<file>.", Required = true };
         var command = new Command("annotate", "Lets a judge model rate the matches (for example: was a promise made?). The result goes to its own file and is marked as a derived assessment.") { path, judge };
         command.Options.Add(run.MaxCost);
         command.Options.Add(run.Temperature);

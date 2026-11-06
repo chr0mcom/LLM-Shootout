@@ -23,12 +23,13 @@ public sealed record ModelInfo(
     IReadOnlySet<string> SupportedParameters);
 
 /// <summary>
-/// The model list of OpenRouter (<c>GET /models</c>, no key needed) with a short file cache, so that repeated
-/// commands do not hit the API and offline runs can still use the last list.
+/// The model list of an endpoint (<c>GET models</c>; OpenRouter needs no key) with a short file cache, so that repeated
+/// commands do not hit the API and offline runs can still use the last list. Other OpenAI-compatible endpoints list
+/// only ids: prices are 0 and every model counts as capable of JSON schema output.
 /// </summary>
 public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, TimeProvider time)
 {
-    private const string CacheFile = "models.json";
+    private string CacheFile => options.Kind == EndpointKind.OpenRouter ? "models.json" : $"models.{CacheName(options.EndpointName)}.json";
 
     /// <summary>How long a cached list is used without asking OpenRouter again.</summary>
     public static TimeSpan CacheLifetime { get; } = TimeSpan.FromHours(1);
@@ -39,7 +40,7 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
         var path = Path.Combine(options.CacheDirectory, CacheFile);
         if (File.Exists(path) && time.GetUtcNow() - File.GetLastWriteTimeUtc(path) < CacheLifetime)
         {
-            return Parse(await File.ReadAllTextAsync(path, cancellationToken));
+            return Parse(await File.ReadAllTextAsync(path, cancellationToken), options.Kind);
         }
 
         try
@@ -47,11 +48,11 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
             var json = await http.GetStringAsync(new Uri("models", UriKind.Relative), cancellationToken);
             Directory.CreateDirectory(options.CacheDirectory);
             await File.WriteAllTextAsync(path, json, cancellationToken);
-            return Parse(json);
+            return Parse(json, options.Kind);
         }
         catch (HttpRequestException) when (File.Exists(path))
         {
-            return Parse(await File.ReadAllTextAsync(path, cancellationToken));
+            return Parse(await File.ReadAllTextAsync(path, cancellationToken), options.Kind);
         }
     }
 
@@ -60,8 +61,9 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
         (await GetModelsAsync(cancellationToken)).FirstOrDefault(m => string.Equals(m.Id, slug, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Parses a response of the models endpoint.</summary>
-    public static IReadOnlyList<ModelInfo> Parse(string json)
+    public static IReadOnlyList<ModelInfo> Parse(string json, EndpointKind kind = EndpointKind.OpenRouter)
     {
+        var generic = kind != EndpointKind.OpenRouter;
         var data = JsonNode.Parse(json)?["data"]?.AsArray() ?? [];
         return
         [
@@ -74,12 +76,15 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
                     PerMillion(m["pricing"]?["prompt"]),
                     PerMillion(m["pricing"]?["completion"]),
                     int.TryParse(m["context_length"]?.ToString(), CultureInfo.InvariantCulture, out var context) ? context : 0,
-                    supported.Contains("structured_outputs"),
+                    generic || supported.Contains("structured_outputs"),
                     supported.Contains("reasoning"),
                     supported!);
             }).Where(m => m.Id.Length > 0),
         ];
     }
+
+    private static string CacheName(string endpoint) =>
+        new([.. endpoint.Select(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' ? c : '_')]);
 
     private static decimal PerMillion(JsonNode? perToken) =>
         decimal.TryParse(perToken?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value * 1_000_000m : 0m;

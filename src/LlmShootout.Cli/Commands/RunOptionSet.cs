@@ -10,7 +10,7 @@ namespace LlmShootout.Cli.Commands;
 public sealed class RunOptionSet
 {
     /// <summary>Player for seat A.</summary>
-    public Option<string?> PlayerA { get; } = new("--a") { Description = "Player for seat A: random, scripted:<file>, openrouter:<slug> or <slug>." };
+    public Option<string?> PlayerA { get; } = new("--a") { Description = "Player for seat A: random, scripted:<file>, <endpoint>:<model> (a configured endpoint), openrouter:<slug> or <slug>." };
 
     /// <summary>Player for seat B.</summary>
     public Option<string?> PlayerB { get; } = new("--b") { Description = "Player for seat B." };

@@ -79,6 +79,18 @@ public sealed class CliProcessTests : IDisposable
     }
 
     [Theory]
+    [InlineData("play", "split-or-steal", "--a", "nowhere:some-model", "--b", "random")]
+    [InlineData("models", "--endpoint", "nowhere")]
+    public async Task An_unknown_endpoint_is_a_usage_error_that_lists_the_configured_ones(params string[] args)
+    {
+        var (exit, _, error) = await RunAsync(args);
+
+        Assert.Equal(2, exit);
+        Assert.Contains("Unknown endpoint 'nowhere'", error, StringComparison.Ordinal);
+        Assert.Contains("openrouter", error, StringComparison.Ordinal);
+    }
+
+    [Theory]
     [InlineData("OPENROUTER_API_KEY")]
     public async Task A_model_without_an_api_key_gets_a_clear_message_and_exit_code_2(string variable)
     {

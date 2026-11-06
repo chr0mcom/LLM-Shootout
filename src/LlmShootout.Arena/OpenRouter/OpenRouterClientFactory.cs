@@ -53,9 +53,12 @@ public static class OpenRouterClientFactory
     /// already be paid for; it ends the call. A connection that breaks while the answer is being read is not
     /// retried either, for the same reason.
     /// </summary>
-    private static ResiliencePipeline<HttpResponseMessage> BuildPipeline(OpenRouterOptions options) =>
-        new ResiliencePipelineBuilder<HttpResponseMessage>()
-            .AddRetry(new HttpRetryStrategyOptions
+    private static ResiliencePipeline<HttpResponseMessage> BuildPipeline(OpenRouterOptions options)
+    {
+        var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
+        if (options.MaxHttpRetries > 0)
+        {
+            builder.AddRetry(new HttpRetryStrategyOptions
             {
                 MaxRetryAttempts = options.MaxHttpRetries,
                 Delay = options.RetryDelay,
@@ -63,9 +66,11 @@ public static class OpenRouterClientFactory
                 UseJitter = true,
                 ShouldRetryAfterHeader = false,
                 ShouldHandle = args => ValueTask.FromResult(IsRetryable(args.Outcome)),
-            })
-            .AddTimeout(options.CallTimeout)
-            .Build();
+            });
+        }
+
+        return builder.AddTimeout(options.CallTimeout).Build();
+    }
 
     /// <summary>
     /// The client-level timeout spans all HTTP attempts of a call, so it must be larger than every attempt plus the backoff

@@ -7,11 +7,15 @@ using Polly.Timeout;
 
 namespace LlmShootout.Arena.OpenRouter;
 
-/// <summary>A player backed by a language model reached through an <see cref="IChatClient"/>.</summary>
+/// <summary>
+/// A player backed by a language model reached through an <see cref="IChatClient"/>. Its name is
+/// <c>&lt;endpoint&gt;:&lt;model&gt;</c>. Without a reported cost, the call counts as 0 USD on a flat-rate endpoint and
+/// is estimated from the model price otherwise.
+/// </summary>
 public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterOptions options, bool useJsonSchema, TimeProvider time, ModelInfo? pricing = null) : IPlayer
 {
     /// <inheritdoc />
-    public string Name => $"openrouter:{modelSlug}";
+    public string Name => $"{options.EndpointName}:{modelSlug}";
 
     /// <inheritdoc />
     public ModelIdentity? Model { get; private set; } = new ModelIdentity(modelSlug);
@@ -40,7 +44,7 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
         }
         catch (ClientResultException ex)
         {
-            var what = ex.Status == 0 ? "Connection to OpenRouter failed" : $"OpenRouter returned HTTP {ex.Status}";
+            var what = ex.Status == 0 ? $"Connection to {Label} failed" : $"{Label} returned HTTP {ex.Status}";
             throw new PlayerFailureException($"{what} for '{modelSlug}': {Shorten(ex.Message)}", ex)
             {
                 Call = FailedCall(scope.Capture, time.GetElapsedTime(started)),
@@ -49,7 +53,7 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
         }
         catch (HttpRequestException ex)
         {
-            throw new PlayerFailureException($"Connection to OpenRouter failed for '{modelSlug}': {ex.Message}", ex)
+            throw new PlayerFailureException($"Connection to {Label} failed for '{modelSlug}': {ex.Message}", ex)
             {
                 Call = FailedCall(scope.Capture, time.GetElapsedTime(started)),
                 RawExchange = scope.Capture.RenderExchange(),
@@ -137,7 +141,7 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
             fields.CostUsd is null ? Estimate(promptTokens, completionTokens) : null);
         if (fields.ErrorMessage is not null || info.FinishReason == "error")
         {
-            throw new PlayerFailureException($"OpenRouter reported an error for '{modelSlug}': {Shorten(fields.ErrorMessage ?? "finish_reason error")}")
+            throw new PlayerFailureException($"{Label} reported an error for '{modelSlug}': {Shorten(fields.ErrorMessage ?? "finish_reason error")}")
             {
                 Call = info,
                 RawExchange = capture.RenderExchange(),
@@ -148,10 +152,19 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
         return new PlayerReply(string.IsNullOrWhiteSpace(content) ? null : content, fields.Reasoning, info, capture.RenderExchange());
     }
 
-    private decimal? Estimate(int? promptTokens, int? completionTokens) =>
-        pricing is null || promptTokens is null || completionTokens is null
+    private string Label => options.Kind == EndpointKind.OpenRouter ? "OpenRouter" : $"endpoint '{options.EndpointName}'";
+
+    private decimal? Estimate(int? promptTokens, int? completionTokens)
+    {
+        if (options.FlatRate)
+        {
+            return 0m;
+        }
+
+        return pricing is null || promptTokens is null || completionTokens is null
             ? null
             : ((promptTokens.Value * pricing.PromptUsdPerMillion) + (completionTokens.Value * pricing.CompletionUsdPerMillion)) / 1_000_000m;
+    }
 
     private ModelCallInfo FailedCall(CallCapture capture, TimeSpan latency) =>
         new(modelSlug, null, null, null, null, null, null, null, latency, null, Math.Max(capture.HttpAttempts, 1));

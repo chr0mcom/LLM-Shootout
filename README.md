@@ -38,6 +38,9 @@ dotnet run --project src/LlmShootout.Cli -- series shootouts/split-or-steal.json
 
 Real model calls cost money. The default limit is **1 USD per run** (`--max-cost`); the run stops cleanly when it is reached.
 
+No OpenRouter account? Any OpenAI-compatible API works as a named endpoint, and each player can use a different one:
+`--a claude:claude-sonnet-latest --b codex:gpt-6.1-sol`. `scripts/shootout.sh` loads your keys from one file. See [docs/endpoints.md](docs/endpoints.md).
+
 ### Example output
 
 ```text
@@ -68,7 +71,7 @@ Finished examples (made with random players) are in [`matches/examples/`](matche
 | Command | What it does |
 |---|---|
 | `shootout games` | lists the games |
-| `shootout models [--filter text] [--schema-only] [--limit n] [--from file]` | OpenRouter models with prices and JSON schema support (needs no key; `--from` reads a saved response, for example `docs/examples/models-sample.json`) |
+| `shootout models [--filter text] [--schema-only] [--limit n] [--from file] [--endpoint name]` | models of OpenRouter with prices and JSON schema support (needs no key) or of a [configured endpoint](docs/endpoints.md); `--from` reads a saved response, for example `docs/examples/models-sample.json` |
 | `shootout play <game> --a <player> --b <player>` | one match |
 | `shootout series <file> [--a --b]` | all matches of a series file |
 | `shootout replay <match> [--delay ms] [--step] [--show-thoughts]` | plays a stored match back in the console (all at once by default; `--step` waits for a key, only with a terminal) |
@@ -76,8 +79,8 @@ Finished examples (made with random players) are in [`matches/examples/`](matche
 | `shootout debrief <match>` | asks the players again, into a new file |
 | `shootout annotate <match-or-series> --judge <model>` | lets a judge model rate the matches (derived file) |
 
-A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slug>`, or just a slug like
-`openai/gpt-4o`. Useful options of `play` and `series`:
+A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slug>`, just a slug like
+`openai/gpt-4o`, or `<endpoint>:<model>` for an endpoint from your [configuration](docs/endpoints.md). Useful options of `play` and `series`:
 
 | Option | Meaning |
 |---|---|

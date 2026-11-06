@@ -30,7 +30,7 @@ flowchart LR
   Players --> Chat[ChatPlayer<br/>IChatClient pipeline]
   Players --> Random[RandomPlayer]
   Players --> Script[ScriptedPlayer]
-  Chat --> OR[(OpenRouter)]
+  Chat --> OR[(OpenRouter or another<br/>OpenAI-compatible endpoint)]
   Runner --> Guard[IdentityGuard]
   Runner --> Log[ProtocolWriter<br/>events.jsonl]
   Runner --> Debrief[Debriefer]
@@ -46,7 +46,7 @@ ChatClientBuilder (logging)
   -> OpenAI chat client (no retries of its own)
        -> HttpClient transport
             -> ResilienceHandler        one retry layer (429, 5xx, connect failures) around one timeout per attempt
-            -> OpenRouterRequestHandler adds provider.require_parameters, strict schema, optional reasoning
+            -> OpenRouterRequestHandler adds strict schema, optional reasoning; for OpenRouter also provider.require_parameters (see endpoints.md)
             -> RawCaptureHandler        stores request and response bodies per call, never headers
             -> network
 ```
