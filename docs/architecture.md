@@ -8,31 +8,47 @@ The decisions behind this are in [`docs/decisions/`](decisions/).
 
 | Project | Contents |
 |---|---|
-| `LlmShootout.Arena` | Game abstraction, match runner, prompt building, answer parsing and validation, protocol, debriefing, series, model access (OpenRouter pipeline), identity scanner |
+| `LlmShootout.Arena` | Game abstraction (`Games/`), match runner (`Matches/`), prompts and templates (`Prompting/`, `Templates/`, `Prompts/`), answer parsing and validation (`Answers/`), protocol (`Protocol/`), debriefing (`Debriefing/`), series (`Series/`), reports (`Reports/`), judge annotations (`Annotation/`), model access (`OpenRouter/`), identity scanner (`Identity/`), players (`Players/`) |
 | `LlmShootout.Games` | One folder per game: rules, wording templates, debriefing questions, report analysis. Registered in `GameCatalog` |
-| `LlmShootout.Cli` | Commands, live view, replay |
+| `LlmShootout.Cli` | Commands (`play`, `series`, `games`, `models`, `replay`, `report`, `debrief`, `annotate`), live view, Generic Host setup |
 | `LlmShootout.Tests` | Unit tests with fakes, prompt snapshots, the two test-only games |
 
 ## Components
 
 ```mermaid
 flowchart LR
-  CLI[Cli commands] --> Runner[MatchRunner]
-  CLI --> Series[SeriesRunner]
+  CLI[Cli commands] --> Series[SeriesRunner]
+  CLI --> Runner[MatchRunner]
+  CLI --> Deb2[Debriefer / Annotator<br/>on stored matches]
   Series --> Runner
   Runner -->|PendingTurns, Check, Apply| Game[(IGame<br/>one per match)]
-  Runner --> Prompts[PromptBuilder<br/>templates + timeline]
-  Runner --> Parser[AnswerParser<br/>+ ReasoningJsonRecovery]
-  Runner -->|PlayerCall| Players{{IPlayer}}
+  Runner --> Exec[TurnExecutor<br/>attempts, hints]
+  Exec --> Prompts[PromptBuilder<br/>templates + timeline]
+  Exec --> Parser[AnswerParser + AnswerEvaluator<br/>ReasoningJsonRecovery]
+  Exec --> Gate[PlayerGateway<br/>budget + cost]
+  Gate -->|PlayerCall| Players{{IPlayer}}
   Players --> Chat[ChatPlayer<br/>IChatClient pipeline]
   Players --> Random[RandomPlayer]
   Players --> Script[ScriptedPlayer]
   Chat --> OR[(OpenRouter)]
+  Runner --> Guard[IdentityGuard]
   Runner --> Log[ProtocolWriter<br/>events.jsonl]
   Runner --> Debrief[Debriefer]
-  Log --> Report[ReportWriter<br/>match.json, report.md]
+  Log --> Report[MatchReportWriter / SeriesReportWriter<br/>match.json, report.md, series.*]
   Game -.-> Analyzer[IGameAnalyzer]
   Analyzer --> Report
+```
+
+The HTTP pipeline behind `ChatPlayer` (see [ADR 0006](decisions/0006-model-access-pipeline.md)):
+
+```text
+ChatClientBuilder (logging)
+  -> OpenAI chat client (no retries of its own)
+       -> HttpClient transport
+            -> ResilienceHandler        one retry layer (429, 5xx, connect failures) around one timeout per attempt
+            -> OpenRouterRequestHandler adds provider.require_parameters, strict schema, optional reasoning
+            -> RawCaptureHandler        stores request and response bodies per call, never headers
+            -> network
 ```
 
 ## One turn
@@ -110,3 +126,6 @@ Two test-only games, in the test project, prove the claim: a number guessing gam
 | Turn protocol and game interface | [0003](decisions/0003-game-abstraction-check-apply.md) |
 | Prompts and timeline | [0004](decisions/0004-stateless-prompts-and-timeline.md) |
 | Players, seats, templates | [0005](decisions/0005-players-seats-templates.md) |
+| Model access pipeline, what Microsoft.Extensions.AI carries | [0006](decisions/0006-model-access-pipeline.md) |
+| One retry layer, timeouts | [0007](decisions/0007-single-retry-layer-and-timeout.md) |
+| Cost metering and the spending limit | [0008](decisions/0008-cost-gateway.md) |

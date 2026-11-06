@@ -19,19 +19,24 @@ Source: <https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14>
 
 | Feature | What it does | Minimal example | Used here |
 |---|---|---|---|
-| Extension members | `extension(T source) { ... }` blocks declare extension methods and properties, also static ones. | `extension(IEnumerable<int> s) { public bool IsEmpty => !s.Any(); }` | Planned for helper extensions in the arena (see "Used features" below). |
-| `field` keyword | Compiler-synthesized backing field inside a property accessor. | `public string Name { get; set => field = value.Trim(); }` | Option records with normalizing setters, where it reads better. |
-| Null-conditional assignment | `a?.B = c;` assigns only if `a` is not null. | `console?.Verbosity = Verbosity.Quiet;` | Optional sinks. |
-| `nameof` with unbound generics | `nameof(List<>)` is `"List"`. | `nameof(IChatClient)` style names in log messages. | Rarely. |
-| Implicit span conversions | Arrays convert to spans more naturally. | `ReadOnlySpan<char> s = array;` | Not needed. |
-| Simple lambda parameters with modifiers | `(text, out result) => ...` without types. | see Microsoft docs | Not needed. |
-| Partial constructors and events | Source generators can implement them. | see Microsoft docs | Not needed. |
-| User-defined compound assignment | Operators like `+=` can be overloaded separately. | see Microsoft docs | Not needed. |
+| Extension members | `extension(T source) { ... }` blocks declare extension methods and properties, also static ones. | `extension(IEnumerable<int> s) { public bool IsEmpty => !s.Any(); }` | **yes**: `Seat.A.Opponent` and `Seat.All` in `src/LlmShootout.Arena/Games/Seat.cs` |
+| `field` keyword | Compiler-synthesized backing field inside a property accessor. | `public string Name { get; set => field = value.Trim(); }` | **yes**: validated options in `src/LlmShootout.Arena/MatchOptions.cs` (`MaxAttempts`, word limits, `ThoughtMemory`) |
+| Null-conditional assignment | `a?.B = c;` assigns only if `a` is not null. | `console?.Verbosity = Verbosity.Quiet;` | not needed: no place where it makes the code clearer |
+| `nameof` with unbound generics | `nameof(List<>)` is `"List"`. | `nameof(IChatClient)` style names in log messages. | not needed |
+| Implicit span conversions | Arrays convert to spans more naturally. | `ReadOnlySpan<char> s = array;` | not needed |
+| Simple lambda parameters with modifiers | `(text, out result) => ...` without types. | see Microsoft docs | not needed |
+| Partial constructors and events | Source generators can implement them. | see Microsoft docs | not needed |
+| User-defined compound assignment | Operators like `+=` can be overloaded separately. | see Microsoft docs | not needed |
 
-C# 13 and older features used on purpose: collection expressions (`[]`), primary constructors, `required` members,
-file-scoped namespaces, list patterns, `params ReadOnlySpan<T>` (C# 13), `Lock` type (.NET 9).
+Findings while using extension members: a *static* extension property cannot have an initializer (`{ get; } = ...` gives
+CS9282), so `Seat.All` reads a field of the enclosing class; and the analyzer rule CA1708 reports a false positive for two
+`extension` blocks in one class (switched off in `.editorconfig`).
 
-The "Used features" list with file locations is maintained at the end of this document as the code grows.
+Older features used on purpose: collection expressions (`[]`, `[.. items]`) throughout; primary constructors for
+services (`TurnExecutor`, `PromptBuilder`, `Debriefer`, `PlayerGateway`) and positional records for events and results;
+file-scoped namespaces; list, property and tuple patterns (`SplitOrStealGame.Resolve`, `LiveView.Handle`,
+`OpenRouterClientFactory.IsRetryable`); `[GeneratedRegex]` (`MarkdownTemplates`); `[LoggerMessage]` (`MatchLog`);
+`TimeProvider` (`MatchRunner`, tests use `FakeTimeProvider`); `AsyncLocal` for the per-call capture (`CallCapture`).
 
 ## SDK, runtime and libraries
 
@@ -97,6 +102,15 @@ Versions and licenses checked on NuGet on 2026-11-06.
 Analyzers: the built-in .NET analyzers at `AnalysisLevel` `latest-recommended` with warnings as errors, plus
 `dotnet format` for style. See [ADR 0002](../decisions/0002-packages-and-tooling.md).
 
-## Used features (with location)
+## More used features (with location)
 
-Maintained as the code grows; see the end of Phase 7.
+| Feature | Where |
+|---|---|
+| `System.Text.Json` source generation with polymorphic events (`[JsonPolymorphic]`, `[JsonDerivedType]`) | `Protocol/MatchEvents.cs`, `Protocol/ProtocolJson.cs` |
+| `System.Text.Json` strict reading (`RespectRequiredConstructorParameters`, `UnmappedMemberHandling.Disallow`) | `Series/SeriesFile.cs` |
+| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `OpenRouter/OpenRouterClientFactory.cs`, `OpenRouter/ChatPlayer.cs` |
+| `Microsoft.Extensions.Http.Resilience` (`ResilienceHandler`, custom pipeline) | `OpenRouter/OpenRouterClientFactory.cs` |
+| Generic Host, options pattern with validation (`ValidateDataAnnotations`), logging to stderr | `src/LlmShootout.Cli/Program.cs` |
+| `DelegatingHandler` for request rewriting and raw capture | `OpenRouter/OpenRouterRequestHandler.cs`, `OpenRouter/RawCaptureHandler.cs` |
+| Central Package Management, `.slnx`, Microsoft.Testing.Platform runner | `Directory.Packages.props`, `LlmShootout.slnx`, `global.json` |
+| `dotnet test --coverlet` (coverlet.MTP) | `scripts/coverage.sh` |

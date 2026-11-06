@@ -201,9 +201,19 @@ public sealed class MatchRunnerTests : IDisposable
             cts.Cancel();
             return new PlayerReply(MatchHarness.Answer(move: "10"));
         });
+        var directory = Path.Combine(_harness.Directory, "cancelled");
+        var plan = new MatchPlan(
+            _guess,
+            new GameSetup(7, false, "en"),
+            new Dictionary<Seat, IPlayer> { [Seat.A] = a, [Seat.B] = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "10")) },
+            new MatchOptions { Debrief = false },
+            directory);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => _harness.RunWithTokenAsync(_guess, a, new ScriptedPlayer().Reply(MatchHarness.Answer(move: "10")), false, null, 7, null, Seat.A, cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new MatchRunner(_harness.Cost, _harness.Time).RunAsync(plan, cts.Token));
+
+        var events = ProtocolReader.ReadAll(directory);
+        var aborted = Assert.IsType<MatchAbortedEvent>(events[^1]);
+        Assert.Equal("cancelled", aborted.Reason);
     }
 
     [Fact]

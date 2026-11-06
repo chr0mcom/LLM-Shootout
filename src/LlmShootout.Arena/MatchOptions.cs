@@ -4,16 +4,48 @@ namespace LlmShootout.Arena;
 public sealed record MatchOptions
 {
     /// <summary>Model calls per turn: first try plus retries, shared by invalid answers and refusals.</summary>
-    public int MaxAttempts { get; init; } = 3;
+    public int MaxAttempts
+    {
+        get;
+        init
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            field = value;
+        }
+    } = 3;
 
     /// <summary>Longest private thought. A longer one is shortened and marked, never rejected.</summary>
-    public int MaxThoughtWords { get; init; } = 40;
+    public int MaxThoughtWords
+    {
+        get;
+        init
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            field = value;
+        }
+    } = 40;
 
     /// <summary>Longest public message. A longer one is invalid, except in the last attempt, where it is shortened.</summary>
-    public int MaxMessageWords { get; init; } = 20;
+    public int MaxMessageWords
+    {
+        get;
+        init
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            field = value;
+        }
+    } = 20;
 
     /// <summary>How many of its own earlier thoughts a seat sees again. 0 shows none.</summary>
-    public int ThoughtMemory { get; init; } = 10;
+    public int ThoughtMemory
+    {
+        get;
+        init
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 0);
+            field = value;
+        }
+    } = 10;
 
     /// <summary>True to name the opponent model in the prompt. Default: hidden.</summary>
     public bool RevealIdentity { get; init; }
