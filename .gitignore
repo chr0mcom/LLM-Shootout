@@ -1,0 +1,10 @@
+/internal/
+bin/
+obj/
+TestResults/
+coverage/
+.vs/
+.idea/
+*.user
+matches/*
+!matches/examples/
