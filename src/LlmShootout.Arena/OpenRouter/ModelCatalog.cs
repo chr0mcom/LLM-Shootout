@@ -11,6 +11,7 @@ namespace LlmShootout.Arena.OpenRouter;
 /// <param name="ContextLength">Context window in tokens.</param>
 /// <param name="SupportsJsonSchema">True if <c>supported_parameters</c> lists <c>structured_outputs</c>.</param>
 /// <param name="SupportsReasoning">True if <c>supported_parameters</c> lists <c>reasoning</c>.</param>
+/// <param name="SupportedParameters">All entries of <c>supported_parameters</c>.</param>
 public sealed record ModelInfo(
     string Id,
     string Name,
@@ -18,7 +19,8 @@ public sealed record ModelInfo(
     decimal CompletionUsdPerMillion,
     int ContextLength,
     bool SupportsJsonSchema,
-    bool SupportsReasoning);
+    bool SupportsReasoning,
+    IReadOnlySet<string> SupportedParameters);
 
 /// <summary>
 /// The model list of OpenRouter (<c>GET /models</c>, no key needed) with a short file cache, so that repeated
@@ -65,7 +67,7 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
         [
             .. data.Select(node => node as JsonObject).OfType<JsonObject>().Select(m =>
             {
-                var supported = m["supported_parameters"]?.AsArray().Select(p => p?.ToString()).ToHashSet(StringComparer.Ordinal) ?? [];
+                var supported = m["supported_parameters"]?.AsArray().Select(p => p?.ToString()).OfType<string>().ToHashSet(StringComparer.Ordinal) ?? [];
                 return new ModelInfo(
                     m["id"]?.ToString() ?? string.Empty,
                     m["name"]?.ToString() ?? string.Empty,
@@ -73,7 +75,8 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
                     PerMillion(m["pricing"]?["completion"]),
                     int.TryParse(m["context_length"]?.ToString(), CultureInfo.InvariantCulture, out var context) ? context : 0,
                     supported.Contains("structured_outputs"),
-                    supported.Contains("reasoning"));
+                    supported.Contains("reasoning"),
+                    supported!);
             }).Where(m => m.Id.Length > 0),
         ];
     }

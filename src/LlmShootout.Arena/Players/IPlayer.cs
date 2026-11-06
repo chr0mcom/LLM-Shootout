@@ -68,7 +68,8 @@ public sealed record ModelCallInfo(
     decimal? CostUsd,
     TimeSpan Latency,
     string? FinishReason,
-    int HttpAttempts);
+    int HttpAttempts,
+    decimal? EstimatedCostUsd = null);
 
 /// <summary>Anything that can answer for a seat: a language model, a random player, a script, a human.</summary>
 public interface IPlayer

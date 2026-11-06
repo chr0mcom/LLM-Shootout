@@ -1,3 +1,5 @@
+using LlmShootout.Arena.Protocol;
+
 namespace LlmShootout.Arena.Games;
 
 /// <summary>A named block of Markdown in a report.</summary>

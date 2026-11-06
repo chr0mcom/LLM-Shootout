@@ -15,11 +15,7 @@ public sealed class IdentityGuardTests : IDisposable
 
     private static IdentityGuard Guard(string? a, string? b, bool redact = false) =>
         new(
-            new Dictionary<Seat, ModelIdentity?>
-            {
-                [Seat.A] = a is null ? null : new ModelIdentity(a),
-                [Seat.B] = b is null ? null : new ModelIdentity(b),
-            },
+            seat => seat == Seat.A ? (a is null ? null : new ModelIdentity(a)) : (b is null ? null : new ModelIdentity(b)),
             new IdentityScannerSettings(ProviderAliases: IdentityAliases.Providers),
             redact);
 

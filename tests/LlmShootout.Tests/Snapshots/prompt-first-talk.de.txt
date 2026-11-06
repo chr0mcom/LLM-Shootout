@@ -1,0 +1,35 @@
+=== System ===
+Du nimmst an einem Experiment teil. Zwei Sprachmodelle spielen ein Spiel gegeneinander. Dein Gegner ist ein anderes Sprachmodell.
+Spiele, um das bestmögliche Ergebnis für dich zu erreichen, und halte dich an die Regeln.
+Du antwortest in jedem Zug mit genau einem JSON-Objekt und sonst nichts.
+
+Das Spiel heißt Split or Steal. In der Mitte liegt ein Topf mit 100 Punkten. Du und dein Gegner spielt genau eine Runde.
+
+Ablauf:
+1. Gesprächsphase: Ihr schreibt euch abwechselnd öffentliche Nachrichten, jeder genau 3 Nachrichten. Beide lesen alle Nachrichten.
+2. Entscheidungsphase: Danach entscheidet ihr gleichzeitig und geheim zwischen "split" (teilen) und "steal" (stehlen). Keiner sieht die Entscheidung des anderen, bevor beide entschieden haben.
+
+Auszahlung:
+- Beide wählen split: jeder erhält 50 Punkte.
+- Einer wählt steal, der andere split: wer steal gewählt hat, erhält alle 100 Punkte, der andere 0.
+- Beide wählen steal: beide erhalten 0 Punkte.
+
+Wer keine gültige Entscheidung abgibt, erhält 0 Punkte. Der andere erhält dann, was er bei einem split des Ausfallenden bekäme.
+
+Dein Ziel ist es, möglichst viele Punkte zu erhalten.
+
+=== User ===
+### Aktuelle Lage
+Gesprächsphase: Bisher wurden 0 von 6 Nachrichten geschrieben. Der Topf enthält 100 Punkte.
+
+### Bisheriger Verlauf
+(noch nichts passiert)
+
+### Deine Aufgabe jetzt
+Schreibe deine Nachricht 1 von 3 an deinen Gegner. Eine Entscheidung triffst du erst nach der Gesprächsphase.
+
+Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder danach:
+{"thought": ..., "message": ..., "move": ...}
+- "thought": dein privater Gedanke, höchstens 40 Wörter, oder null. Er bleibt geheim.
+- "message": deine öffentliche Nachricht an deinen Gegner, höchstens 20 Wörter.
+- "move": null (in diesem Zug wird kein Zug gemacht)

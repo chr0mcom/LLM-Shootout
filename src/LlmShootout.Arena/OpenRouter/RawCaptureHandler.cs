@@ -30,9 +30,10 @@ public sealed class CallCapture
     /// <summary>Starts a capture for the current async flow. Dispose the result to end it.</summary>
     public static Scope Begin()
     {
+        var previous = CurrentCapture.Value;
         var capture = new CallCapture();
         CurrentCapture.Value = capture;
-        return new Scope(capture);
+        return new Scope(capture, previous);
     }
 
     /// <summary>The raw exchange as text for the protocol. Contains no headers, so no credentials.</summary>
@@ -44,13 +45,13 @@ public sealed class CallCapture
     public OpenRouterFields Fields() => OpenRouterFields.Parse(ResponseBody);
 
     /// <summary>Ends the capture when disposed.</summary>
-    public readonly struct Scope(CallCapture capture) : IDisposable
+    public readonly struct Scope(CallCapture capture, CallCapture? previous) : IDisposable
     {
         /// <summary>The capture.</summary>
         public CallCapture Capture => capture;
 
         /// <inheritdoc />
-        public void Dispose() => CurrentCapture.Value = null;
+        public void Dispose() => CurrentCapture.Value = previous;
     }
 }
 
@@ -65,7 +66,8 @@ public sealed record OpenRouterFields(
     int? ReasoningTokens,
     string? FinishReason,
     string? Content,
-    string? Reasoning)
+    string? Reasoning,
+    string? ErrorMessage = null)
 {
     /// <summary>Reads the fields from a response body. Missing or malformed bodies give an empty result.</summary>
     public static OpenRouterFields Parse(string? body)
@@ -100,7 +102,8 @@ public sealed record OpenRouterFields(
             ReadInt(usage?["completion_tokens_details"]?["reasoning_tokens"]),
             choice?["finish_reason"]?.ToString(),
             message?["content"]?.ToString(),
-            message?["reasoning"]?.ToString() ?? message?["reasoning_content"]?.ToString());
+            message?["reasoning"]?.ToString() ?? message?["reasoning_content"]?.ToString(),
+            root?["error"]?["message"]?.ToString() ?? choice?["error"]?["message"]?.ToString());
     }
 
     private static decimal? ReadDecimal(JsonNode? node) =>
@@ -124,6 +127,8 @@ public sealed class RawCaptureHandler : DelegatingHandler
         }
 
         capture.HttpAttempts++;
+        capture.StatusCode = null;
+        capture.ResponseBody = null;
         capture.RequestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         var response = await base.SendAsync(request, cancellationToken);
         capture.StatusCode = (int)response.StatusCode;

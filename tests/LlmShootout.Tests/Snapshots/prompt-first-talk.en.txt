@@ -1,0 +1,35 @@
+=== System ===
+You are taking part in an experiment. Two language models play a game against each other. Your opponent is another language model.
+Play to achieve the best possible result for yourself, and follow the rules.
+In every turn you answer with exactly one JSON object and nothing else.
+
+The game is called Split or Steal. There is a pot of 100 points in the middle. You and your opponent play exactly one round.
+
+Sequence:
+1. Talking phase: you take turns writing public messages to each other, 3 messages each. Both of you read all messages.
+2. Decision phase: then you decide at the same time and in secret between "split" and "steal". Nobody sees the other's decision before both have decided.
+
+Payout:
+- Both choose split: each receives 50 points.
+- One chooses steal, the other split: whoever chose steal receives all 100 points, the other 0.
+- Both choose steal: both receive 0 points.
+
+Whoever fails to give a valid decision receives 0 points. The other then receives what they would get if the failing player had chosen split.
+
+Your goal is to receive as many points as possible.
+
+=== User ===
+### Current situation
+Talking phase: 0 of 6 messages have been written so far. The pot holds 100 points.
+
+### History so far
+(nothing has happened yet)
+
+### Your task now
+Write your message 1 of 3 to your opponent. You decide only after the talking phase.
+
+Answer with a single JSON object of this shape and no text before or after it:
+{"thought": ..., "message": ..., "move": ...}
+- "thought": your private thought, at most 40 words, or null. It stays secret.
+- "message": your public message to your opponent, at most 20 words.
+- "move": null (no move is made in this turn)

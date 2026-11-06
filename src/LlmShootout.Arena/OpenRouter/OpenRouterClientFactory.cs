@@ -1,7 +1,6 @@
 using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Net;
-using LlmShootout.Arena.Identity;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
@@ -49,29 +48,29 @@ public static class OpenRouterClientFactory
     }
 
     /// <summary>
-    /// The only retry layer of the application: HTTP 429, 5xx and connection errors, with exponential backoff.
-    /// A timeout is not retried, because the cancelled call may already be paid for; it ends the call.
+    /// The only retry layer of the application: HTTP 429, 5xx and failures to connect, with exponential backoff.
+    /// Inside the retry sits the timeout of one attempt. A timeout is not retried, because the cancelled call may
+    /// already be paid for; it ends the call. A connection that breaks while the answer is being read is not
+    /// retried either, for the same reason.
     /// </summary>
     private static ResiliencePipeline<HttpResponseMessage> BuildPipeline(OpenRouterOptions options) =>
         new ResiliencePipelineBuilder<HttpResponseMessage>()
-            .AddTimeout(options.CallTimeout)
             .AddRetry(new HttpRetryStrategyOptions
             {
                 MaxRetryAttempts = options.MaxHttpRetries,
                 Delay = options.RetryDelay,
                 BackoffType = DelayBackoffType.Exponential,
                 UseJitter = true,
+                ShouldRetryAfterHeader = false,
                 ShouldHandle = args => ValueTask.FromResult(IsRetryable(args.Outcome)),
             })
+            .AddTimeout(options.CallTimeout)
             .Build();
 
     private static bool IsRetryable(Outcome<HttpResponseMessage> outcome) => outcome switch
     {
-        { Exception: HttpRequestException } => true,
+        { Exception: HttpRequestException { HttpRequestError: HttpRequestError.ConnectionError or HttpRequestError.NameResolutionError or HttpRequestError.SecureConnectionError or HttpRequestError.ProxyTunnelError } } => true,
         { Result: { } response } => response.StatusCode == HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500,
         _ => false,
     };
-
-    /// <summary>Describes the model behind a slug for protocols.</summary>
-    public static ModelIdentity IdentityOf(string modelSlug) => new(modelSlug);
 }

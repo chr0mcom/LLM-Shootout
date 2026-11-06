@@ -25,6 +25,8 @@ public sealed class OpenRouterRequestHandler(OpenRouterOptions options) : Delega
             }
         }
 
+        request.Headers.Remove("X-Title");
+        request.Headers.Remove("HTTP-Referer");
         request.Headers.TryAddWithoutValidation("X-Title", "LLM Shootout");
         request.Headers.TryAddWithoutValidation("HTTP-Referer", "https://github.com/chr0mcom/LLM-Shootout");
         return await base.SendAsync(request, cancellationToken);

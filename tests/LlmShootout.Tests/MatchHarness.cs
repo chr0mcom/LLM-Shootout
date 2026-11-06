@@ -38,8 +38,9 @@ public sealed class MatchHarness : IDisposable
         MatchOptions? options = null,
         long seed = 7,
         JsonObject? gameOptions = null,
-        Seat firstSeat = Seat.A) =>
-        await RunWithTokenAsync(definition, a, b, communication, options, seed, gameOptions, firstSeat, TestContext.Current.CancellationToken);
+        Seat firstSeat = Seat.A,
+        bool debrief = false) =>
+        await RunWithTokenAsync(definition, a, b, communication, (options ?? new MatchOptions()) with { Debrief = debrief }, seed, gameOptions, firstSeat, TestContext.Current.CancellationToken);
 
     public async Task<(MatchOutcome Outcome, IReadOnlyList<MatchEvent> Events)> RunWithTokenAsync(
         IGameDefinition definition,
@@ -50,11 +51,12 @@ public sealed class MatchHarness : IDisposable
         long seed,
         JsonObject? gameOptions,
         Seat firstSeat,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string language = "en")
     {
         var plan = new MatchPlan(
             definition,
-            new GameSetup(seed, communication, "en", firstSeat, gameOptions),
+            new GameSetup(seed, communication, language, firstSeat, gameOptions),
             new Dictionary<Seat, IPlayer> { [Seat.A] = a, [Seat.B] = b },
             options ?? new MatchOptions(),
             Path.Combine(_root, Guid.NewGuid().ToString("N")));

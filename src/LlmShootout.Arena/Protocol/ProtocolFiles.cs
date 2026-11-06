@@ -20,11 +20,11 @@ public sealed class ProtocolWriter : IAsyncDisposable
 {
     private readonly StreamWriter _writer;
 
-    /// <summary>Opens (and creates) the event log in a match directory.</summary>
-    public ProtocolWriter(string directory)
+    /// <summary>Opens (and creates) an event log in a match directory. The default is the log of the match itself.</summary>
+    public ProtocolWriter(string directory, string fileName = ProtocolFiles.Events)
     {
         Directory.CreateDirectory(directory);
-        var stream = new FileStream(Path.Combine(directory, ProtocolFiles.Events), FileMode.Append, FileAccess.Write, FileShare.Read);
+        var stream = new FileStream(Path.Combine(directory, fileName), FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
         _writer = new StreamWriter(stream, new UTF8Encoding(false)) { NewLine = "\n" };
     }
 
@@ -42,9 +42,18 @@ public sealed class ProtocolWriter : IAsyncDisposable
 /// <summary>Reads an event log back.</summary>
 public static class ProtocolReader
 {
-    /// <summary>Reads all events of a match directory in order.</summary>
-    public static IReadOnlyList<MatchEvent> ReadAll(string directory) =>
-        [.. File.ReadLines(Path.Combine(directory, ProtocolFiles.Events))
+    /// <summary>Reads all events of a log file of a match directory in order.</summary>
+    public static IReadOnlyList<MatchEvent> ReadAll(string directory, string fileName = ProtocolFiles.Events) =>
+        [.. ReadLines(Path.Combine(directory, fileName))
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .Select(ProtocolJson.FromLine)];
+
+    private static IEnumerable<string> ReadLines(string path)
+    {
+        using var reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite), Encoding.UTF8);
+        while (reader.ReadLine() is { } line)
+        {
+            yield return line;
+        }
+    }
 }

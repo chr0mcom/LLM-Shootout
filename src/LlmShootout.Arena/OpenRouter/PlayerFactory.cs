@@ -45,6 +45,23 @@ public sealed class PlayerFactory(OpenRouterOptions options, ModelCatalog catalo
         };
     }
 
+    private void RequireSupportedParameters(ModelInfo model)
+    {
+        void Require(bool configured, string label, params string[] names)
+        {
+            if (configured && !names.Any(model.SupportedParameters.Contains))
+            {
+                throw new PlayerSpecException(
+                    $"Model '{model.Id}' does not support '{label}', but it is configured. " +
+                    "OpenRouter would reject the request when a JSON schema is sent. Remove the setting or choose another model.");
+            }
+        }
+
+        Require(options.Temperature is not null, "temperature", "temperature");
+        Require(options.ReasoningEffort is not null, "reasoning effort", "reasoning", "reasoning_effort");
+        Require(options.MaxOutputTokens is not null, "max output tokens", "max_tokens", "max_completion_tokens");
+    }
+
     private static async Task<IPlayer> ReadScriptAsync(string path, CancellationToken cancellationToken)
     {
         if (!File.Exists(path))
@@ -95,8 +112,9 @@ public sealed class PlayerFactory(OpenRouterOptions options, ModelCatalog catalo
             throw new PlayerSpecException($"Model '{slug}' does not exist on OpenRouter. Find the exact slug with: shootout models --filter {slug.Split('/')[^1]}");
         }
 
+        RequireSupportedParameters(model);
         var http = OpenRouterClientFactory.CreateHttpClient(options);
         var client = OpenRouterClientFactory.CreateChatClient(options, model.Id, http, loggerFactory);
-        return new ChatPlayer(client, model.Id, options, model.SupportsJsonSchema, time);
+        return new ChatPlayer(client, model.Id, options, model.SupportsJsonSchema, time, model);
     }
 }

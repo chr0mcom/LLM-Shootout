@@ -31,24 +31,22 @@ public sealed record InspectedMessage(string? Text, IReadOnlyList<string> Hits);
 /// </summary>
 public sealed class IdentityGuard
 {
-    private readonly Dictionary<Seat, IdentityTokenSet> _tokens = [];
+    private readonly Dictionary<ModelIdentity, IdentityTokenSet> _tokens = [];
+    private readonly Func<Seat, ModelIdentity?> _models;
     private readonly IdentityScannerSettings _settings;
     private readonly bool _redact;
 
-    /// <summary>Creates the guard. Seats without a model (random, scripted without identity) have no names to find.</summary>
-    public IdentityGuard(IReadOnlyDictionary<Seat, ModelIdentity?> models, IdentityScannerSettings settings, bool redact)
+    /// <summary>
+    /// Creates the guard. <paramref name="models"/> is asked for every message, so a version that a provider reports
+    /// only after the first call is picked up. Seats without a model (random, scripted without identity) have no names to find.
+    /// </summary>
+    public IdentityGuard(Func<Seat, ModelIdentity?> models, IdentityScannerSettings settings, bool redact)
     {
         ArgumentNullException.ThrowIfNull(models);
         ArgumentNullException.ThrowIfNull(settings);
+        _models = models;
         _settings = settings;
         _redact = redact;
-        foreach (var (seat, model) in models)
-        {
-            if (model is not null)
-            {
-                _tokens[seat] = IdentityScanner.BuildTokenSet(model, settings);
-            }
-        }
     }
 
     /// <summary>Scans a message of the given author.</summary>
@@ -72,10 +70,21 @@ public sealed class IdentityGuard
         return new InspectedMessage(text, distinct);
     }
 
-    private IdentityScanResult ScanFor(Seat seat, string message) =>
-        _tokens.TryGetValue(seat, out var set)
-            ? IdentityScanner.Scan(message, set, _settings)
-            : new IdentityScanResult(false, message, [], false);
+    private IdentityScanResult ScanFor(Seat seat, string message)
+    {
+        if (_models(seat) is not { } model)
+        {
+            return new IdentityScanResult(false, message, [], false);
+        }
+
+        if (!_tokens.TryGetValue(model, out var set))
+        {
+            set = IdentityScanner.BuildTokenSet(model, _settings);
+            _tokens[model] = set;
+        }
+
+        return IdentityScanner.Scan(message, set, _settings);
+    }
 
     private static IEnumerable<string> Describe(IdentityScanResult result, LeakedIdentitySubject subject, HashSet<string> ambiguous) =>
         result.Matches.Select(m => $"{(ambiguous.Contains(m.CanonicalToken) ? LeakedIdentitySubject.Ambiguous : subject).ToString().ToLowerInvariant()}:{m.MarkerType}:{m.CanonicalToken}");

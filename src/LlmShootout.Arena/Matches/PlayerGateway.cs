@@ -19,7 +19,7 @@ public sealed class PlayerGateway(CostMeter cost)
             var reply = await player.RespondAsync(request, cancellationToken);
             if (reply.Call is not null)
             {
-                cost.Record(reply.Call.CostUsd);
+                cost.Record(reply.Call.CostUsd, reply.Call.EstimatedCostUsd);
             }
 
             return reply;

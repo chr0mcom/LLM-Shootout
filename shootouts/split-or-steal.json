@@ -1,0 +1,12 @@
+{
+  // Standard series of the first episode: the same two models play three matches.
+  // The models stay on their seats. Pass them with --a and --b, or add "playerA" and "playerB" here.
+  "game": "split-or-steal",
+  "seed": 2027,
+  "language": "de",
+  "matches": [
+    { "communication": true, "firstSeat": "A" },
+    { "communication": true, "firstSeat": "B" },
+    { "communication": false, "firstSeat": "A" }
+  ]
+}

@@ -1,4 +1,5 @@
 using LlmShootout.Arena.Answers;
+using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Players;
@@ -27,8 +28,10 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         var evaluator = new AnswerEvaluator(plan.Options, prompts);
 
         await using var writer = new ProtocolWriter(plan.Directory);
-        var guard = new IdentityGuard(Seat.All.ToDictionary(seat => seat, seat => plan.Players[seat].Model), plan.Options.IdentityScanner, plan.Options.RedactIdentity);
+        var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner, plan.Options.RedactIdentity);
         var context = new MatchContext(plan, game, prompts, evaluator, writer, cost, new PlayerGateway(cost), guard, time);
+        var (startCost, startUnknown) = (cost.TotalUsd, cost.UnknownCalls);
+        GameResult? finished = null;
         MatchLog.Started(_logger, plan.Definition.Id, plan.Setup.Seed, plan.Directory);
         await writer.AppendAsync(StartedEvent(plan), cancellationToken);
 
@@ -41,21 +44,27 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             }
 
             var result = game.Result ?? throw new InvalidOperationException($"Game '{plan.Definition.Id}' ended without a result.");
-            await writer.AppendAsync(new MatchFinishedEvent(time.GetUtcNow(), result, cost.TotalUsd, cost.UnknownCalls), cancellationToken);
+            finished = result;
+            await writer.AppendAsync(new MatchFinishedEvent(time.GetUtcNow(), result, cost.TotalUsd - startCost, cost.UnknownCalls - startUnknown), cancellationToken);
             MatchLog.Finished(_logger, result.Outcome);
+            if (plan.Options.Debrief)
+            {
+                await new Debriefer(context.Gateway, time).RunAsync(plan.Definition, MatchRecord.Load(plan.Directory), plan.Players, plan.Options, writer, cancellationToken);
+            }
+
             return new MatchOutcome(plan.Directory, result, null, null);
         }
         catch (BudgetExceededException ex)
         {
-            return await AbortAsync(context, "cost_limit", ex.Message);
+            return await AbortAsync(context, "cost_limit", ex.Message, finished);
         }
         catch (PlayerFailureException ex)
         {
-            return await AbortAsync(context, ex.IsTimeout ? "timeout" : "player_failure", ex.Message);
+            return await AbortAsync(context, ex.IsTimeout ? "timeout" : "player_failure", ex.Message, finished);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await AbortAsync(context, "cancelled", "The run was cancelled.");
+            await AbortAsync(context, "cancelled", "The run was cancelled.", finished);
             throw;
         }
     }
@@ -80,7 +89,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             var turnId = turns[0].TurnId;
             context.Timeline.AddFact(turnId, fact);
             await context.Writer.AppendAsync(
-                new FactEvent(time.GetUtcNow(), turnId, fact.Kind, fact.Audience, fact.Seat, context.Prompts.RenderFact(fact, null), fact.Data),
+                new FactEvent(time.GetUtcNow(), turnId, fact.Kind, fact.Audience, fact.Seat, context.Prompts.RenderFact(fact, null), fact.Description, fact.Data),
                 cancellationToken);
         }
     }
@@ -99,7 +108,8 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
                 result.ThoughtTruncated,
                 result.Attempts,
                 result.InvalidAnswers,
-                result.Refusals),
+                result.Refusals,
+                result.TokenLimitHits),
             cancellationToken);
 
         if (result.MessageAllowed)
@@ -112,11 +122,11 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         }
     }
 
-    private async Task<MatchOutcome> AbortAsync(MatchContext context, string reason, string detail)
+    private async Task<MatchOutcome> AbortAsync(MatchContext context, string reason, string detail, GameResult? finished)
     {
         MatchLog.Aborted(_logger, reason, detail);
         await context.Writer.AppendAsync(new MatchAbortedEvent(time.GetUtcNow(), reason, detail), CancellationToken.None);
-        return new MatchOutcome(context.Plan.Directory, null, reason, detail);
+        return new MatchOutcome(context.Plan.Directory, finished, reason, detail);
     }
 
     private MatchStartedEvent StartedEvent(MatchPlan plan)

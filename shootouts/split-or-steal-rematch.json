@@ -1,0 +1,12 @@
+{
+  // A rematch needs no new code: change models on the command line, or change the conditions here.
+  // This variant reveals the opponent model and plays a larger pot with more talking.
+  "game": "split-or-steal",
+  "seed": 4054,
+  "language": "de",
+  "matches": [
+    { "communication": true, "firstSeat": "A", "revealIdentity": true, "options": { "pot": 1000, "messagesPerPlayer": 5 } },
+    { "communication": true, "firstSeat": "B", "revealIdentity": true, "options": { "pot": 1000, "messagesPerPlayer": 5 } },
+    { "communication": false, "firstSeat": "A", "revealIdentity": true, "options": { "pot": 1000 } }
+  ]
+}

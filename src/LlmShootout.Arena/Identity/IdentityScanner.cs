@@ -51,10 +51,11 @@ public static class IdentityScanner
         ArgumentNullException.ThrowIfNull(settings);
 
         var provider = PromptIdentityFormatter.GetProvider(model.Slug);
-        var withoutProvider = PromptIdentityFormatter.WithoutProviderPrefix(model.Slug);
+        var withoutProvider = PromptIdentityFormatter.WithoutProviderPrefix(PromptIdentityFormatter.WithoutVariant(model.Slug));
         var seen = new Dictionary<string, IdentityToken>(StringComparer.Ordinal);
 
         AddToken(seen, model.Slug, IdentityLeakMarkerType.ExactName);
+        AddToken(seen, PromptIdentityFormatter.WithoutVariant(model.Slug), IdentityLeakMarkerType.ExactName);
         if (!string.Equals(model.ResolvedVersion, model.Slug, StringComparison.OrdinalIgnoreCase))
         {
             AddToken(seen, model.ResolvedVersion, IdentityLeakMarkerType.ExactName);
@@ -122,7 +123,7 @@ public static class IdentityScanner
 
                 var originalStart = view.Map[hit];
                 var originalEnd = view.Map[hit + token.NormalizedToken.Length - 1];
-                if (IsBoundary(view.Original, originalStart - 1) && IsBoundary(view.Original, originalEnd + 1))
+                if (IsBoundary(view.Original, originalStart - 1) && EndsAtWordBoundary(view.Original, originalEnd))
                 {
                     matches.Add(new MatchSpan(
                         originalStart,
@@ -139,6 +140,9 @@ public static class IdentityScanner
 
         return [.. matches.OrderBy(x => x.Start).ThenByDescending(x => x.End)];
     }
+
+    private static bool EndsAtWordBoundary(string original, int end) =>
+        IsBoundary(original, end + 1) || (end + 1 < original.Length && char.ToLowerInvariant(original[end + 1]) == 's' && IsBoundary(original, end + 2));
 
     private static bool IsBoundary(string original, int index)
         => index < 0 || index >= original.Length || !char.IsLetterOrDigit(original[index]);

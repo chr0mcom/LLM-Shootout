@@ -89,7 +89,8 @@ public sealed record TurnEvent(
     bool ThoughtTruncated,
     int Attempts,
     int InvalidAnswers,
-    int Refusals) : MatchEvent(At);
+    int Refusals,
+    int TokenLimitHits = 0) : MatchEvent(At);
 
 /// <summary>A fact reported by the game.</summary>
 public sealed record FactEvent(
@@ -99,6 +100,7 @@ public sealed record FactEvent(
     FactAudience Audience,
     Seat? Seat,
     string Text,
+    TemplateRef Template,
     IReadOnlyDictionary<string, string>? Data) : MatchEvent(At);
 
 /// <summary>The game ended.</summary>

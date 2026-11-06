@@ -22,6 +22,7 @@ namespace LlmShootout.Arena.Matches;
 /// <param name="Attempts">Model calls used.</param>
 /// <param name="InvalidAnswers">Number of invalid answers.</param>
 /// <param name="Refusals">Number of refusals.</param>
+/// <param name="TokenLimitHits">Number of answers cut off by the token limit.</param>
 public sealed record TurnResult(
     TurnSubmission Submission,
     bool MessageAllowed,
@@ -32,7 +33,8 @@ public sealed record TurnResult(
     bool ThoughtTruncated,
     int Attempts,
     int InvalidAnswers,
-    int Refusals);
+    int Refusals,
+    int TokenLimitHits);
 
 /// <summary>
 /// Plays one turn of one seat: builds the prompt, calls the player, classifies the answer, and retries with a
@@ -84,7 +86,6 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             state.Hint,
             state.AfterRefusal));
         var request = new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn, context.Plan.Setup.Communication), attempt, rng => SampleAnswer(turn, rng));
-        var started = context.Time.GetTimestamp();
 
         PlayerReply reply;
         try
@@ -105,12 +106,14 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         var parsed = AnswerParser.Parse(reply.Content, reply.Reasoning);
         var evaluation = context.Evaluator.Evaluate(turn, parsed, string.IsNullOrWhiteSpace(reply.Content) ? reply.Reasoning : reply.Content, context.Game, isLast);
         state.LastEvaluation = evaluation;
-        await WriteCallAsync(turn, attempt, messages, reply, parsed, evaluation, started, cancellationToken);
+        var tokenLimit = !evaluation.IsValid && reply.Call?.FinishReason == "length";
+        await WriteCallAsync(turn, attempt, messages, reply, parsed, evaluation, tokenLimit, cancellationToken);
         MatchLog.Classified(logger, turn.TurnId, turn.Seat, attempt, evaluation.Class);
 
         if (!evaluation.IsValid)
         {
-            state.RegisterFailure(evaluation, reply, CorrectionHintBuilder.Build(evaluation.Violations, evaluation.ExtraKeys, _hints), context.Prompts.Arena("answer.empty"));
+            var hint = tokenLimit ? context.Prompts.Arena("hint.length") : CorrectionHintBuilder.Build(evaluation.Violations, evaluation.ExtraKeys, _hints);
+            state.RegisterFailure(evaluation, reply, hint, context.Prompts.Arena("answer.empty"), tokenLimit);
         }
 
         return evaluation;
@@ -133,7 +136,8 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             evaluation.ThoughtTruncated,
             attempts,
             state.InvalidAnswers,
-            state.Refusals);
+            state.Refusals,
+            state.TokenLimitHits);
     }
 
     private Identity.ModelIdentity? OpponentModel(Seat seat) =>
@@ -157,9 +161,9 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             new ModelCallEvent(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, attempt, messages, null, null, null, "technical_error", [], ex.Call, true, ex.Message, ex.RawExchange),
             cancellationToken);
 
-    private Task WriteCallAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, long started, CancellationToken cancellationToken)
+    private Task WriteCallAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, bool tokenLimit, CancellationToken cancellationToken)
     {
-        var info = reply.Call is null ? null : reply.Call with { Latency = reply.Call.Latency == TimeSpan.Zero ? context.Time.GetElapsedTime(started) : reply.Call.Latency };
+        var info = reply.Call;
         var fields = parsed.HasJson ? new ParsedFields(parsed.Thought, parsed.Message, parsed.Move, parsed.FromReasoning, parsed.ExtraKeys) : null;
         var violations = evaluation.Violations.Select(v => $"{v.Key}: {v.Violation}").ToArray();
         return context.Writer.AppendAsync(
@@ -173,7 +177,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
                 reply.Content,
                 reply.Reasoning,
                 fields,
-                evaluation.Class.ToString().ToLowerInvariant(),
+                tokenLimit ? "token_limit" : evaluation.Class.ToString().ToLowerInvariant(),
                 violations,
                 info,
                 reply.Call is { CostUsd: null },
@@ -196,12 +200,18 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
 
         public int Refusals { get; private set; }
 
-        public void RegisterFailure(Evaluation evaluation, PlayerReply reply, string hint, string emptyText)
+        public int TokenLimitHits { get; private set; }
+
+        public void RegisterFailure(Evaluation evaluation, PlayerReply reply, string hint, string emptyText, bool tokenLimit)
         {
             PreviousAnswer = string.IsNullOrWhiteSpace(reply.Content) ? emptyText : reply.Content;
             Hint = hint;
-            AfterRefusal = evaluation.Class == AnswerClass.Refusal;
-            if (AfterRefusal)
+            AfterRefusal = !tokenLimit && evaluation.Class == AnswerClass.Refusal;
+            if (tokenLimit)
+            {
+                TokenLimitHits++;
+            }
+            else if (AfterRefusal)
             {
                 Refusals++;
             }

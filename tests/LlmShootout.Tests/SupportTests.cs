@@ -27,7 +27,7 @@ public class SupportTests
         Assert.Equal(0.05m, meter.TotalUsd);
         Assert.Equal(1, meter.UnknownCalls);
         var ex = Assert.Throws<BudgetExceededException>(meter.EnsureWithinLimit);
-        Assert.Contains("0.05", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("limit 0.05", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]

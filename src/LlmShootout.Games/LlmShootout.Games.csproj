@@ -6,6 +6,9 @@
     <ProjectReference Include="..\LlmShootout.Arena\LlmShootout.Arena.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="SplitOrSteal\Prompts\*.md" WithCulture="false" LogicalName="LlmShootout.Games.SplitOrSteal.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="LlmShootout.Tests" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ namespace LlmShootout.Tests.OpenRouter;
 
 public sealed class FakeOpenRouterHandler : HttpMessageHandler
 {
-    private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> _script = new();
+    private readonly Queue<Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>> _script = new();
 
     public List<string> Requests { get; } = [];
 
@@ -13,7 +13,7 @@ public sealed class FakeOpenRouterHandler : HttpMessageHandler
 
     public FakeOpenRouterHandler Respond(HttpStatusCode status, string body)
     {
-        _script.Enqueue(_ => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") }));
+        _script.Enqueue((_, _) => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") }));
         return this;
     }
 
@@ -21,11 +21,18 @@ public sealed class FakeOpenRouterHandler : HttpMessageHandler
 
     public FakeOpenRouterHandler Hang()
     {
-        _script.Enqueue(async request =>
+        _script.Enqueue(async (_, token) =>
         {
-            await Task.Delay(Timeout.Infinite, CancellationToken.None).WaitAsync(TimeSpan.FromMinutes(1));
+            await Task.Delay(Timeout.Infinite, token);
             return new HttpResponseMessage(HttpStatusCode.OK);
         });
+        return this;
+
+    }
+
+    public FakeOpenRouterHandler Throw(Exception exception)
+    {
+        _script.Enqueue((_, _) => throw exception);
         return this;
     }
 
@@ -67,6 +74,6 @@ public sealed class FakeOpenRouterHandler : HttpMessageHandler
             throw new InvalidOperationException("No response scripted.");
         }
 
-        return await next(request).WaitAsync(cancellationToken);
+        return await next(request, cancellationToken);
     }
 }
