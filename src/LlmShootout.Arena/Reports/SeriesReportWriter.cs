@@ -53,26 +53,26 @@ public static class SeriesReportWriter
     /// <summary>Builds the Markdown report of a series.</summary>
     public static string BuildReport(IGameDefinition definition, SeriesSummary summary, IReadOnlyList<MatchRecord> matches, string language)
     {
-        string T(string key, params (string, string)[] values) => ArenaTemplates.Default.Render(TemplateRef.Of(key, values), language);
+        var t = new ReportText(ArenaTemplates.Default, language);
         var sb = new StringBuilder();
-        sb.AppendLine(T("report.series.title", ("game", definition.DisplayName), ("a", summary.PlayerA), ("b", summary.PlayerB))).AppendLine();
-        sb.AppendLine("## " + T("report.series.overview")).AppendLine().AppendLine("| | |").AppendLine("|---|---|");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.series.stat.matches")} | {summary.Completed} / {summary.Aborted} |");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.series.stat.cost")} | {summary.CostUsd:0.0000} |");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.series.stat.unknown")} | {summary.CostUnknownCalls} |").AppendLine();
+        sb.AppendLine(t.Format("report.series.title", ("game", definition.DisplayName), ("a", summary.PlayerA), ("b", summary.PlayerB))).AppendLine();
+        sb.AppendLine("## " + t["report.series.overview"]).AppendLine().AppendLine("| | |").AppendLine("|---|---|");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.matches"]} | {summary.Completed} / {summary.Aborted} |");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.cost"]} | {summary.CostUsd:0.0000} |");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.unknown"]} | {summary.CostUnknownCalls} |").AppendLine();
 
-        sb.AppendLine("## " + T("report.series.seats")).AppendLine().AppendLine(T("report.series.seats.header"));
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.series.metric.points")} | {summary.PointsTotal[Seat.A]:0.##} | {summary.PointsTotal[Seat.B]:0.##} |");
+        sb.AppendLine("## " + t["report.series.seats"]).AppendLine().AppendLine(t["report.series.seats.header"]);
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.metric.points"]} | {summary.PointsTotal[Seat.A]:0.##} | {summary.PointsTotal[Seat.B]:0.##} |");
         var played = Math.Max(summary.Completed, 1);
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.series.metric.average")} | {summary.PointsTotal[Seat.A] / played:0.##} | {summary.PointsTotal[Seat.B] / played:0.##} |");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.metric.invalid")} | {matches.Sum(m => m.InvalidAnswers(Seat.A))} | {matches.Sum(m => m.InvalidAnswers(Seat.B))} |");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {T("report.metric.refusals")} | {matches.Sum(m => m.Refusals(Seat.A))} | {matches.Sum(m => m.Refusals(Seat.B))} |").AppendLine();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.metric.average"]} | {summary.PointsTotal[Seat.A] / played:0.##} | {summary.PointsTotal[Seat.B] / played:0.##} |");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.metric.invalid"]} | {matches.Sum(m => m.InvalidAnswers(Seat.A))} | {matches.Sum(m => m.InvalidAnswers(Seat.B))} |");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.metric.refusals"]} | {matches.Sum(m => m.Refusals(Seat.A))} | {matches.Sum(m => m.Refusals(Seat.B))} |").AppendLine();
 
-        sb.AppendLine("## " + T("report.series.list")).AppendLine().AppendLine(T("report.series.list.header"));
+        sb.AppendLine("## " + t["report.series.list"]).AppendLine().AppendLine(t["report.series.list.header"]);
         for (var i = 0; i < summary.Entries.Count; i++)
         {
             var e = summary.Entries[i];
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| {i + 1} | [{e.Directory}]({e.Directory}/report.md) | {T(e.Communication ? "report.communication.on" : "report.communication.off")} | {e.Outcome ?? "-"} | {e.CostUsd:0.0000} |");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {i + 1} | [{e.Directory}]({e.Directory}/report.md) | {t[e.Communication ? "report.communication.on" : "report.communication.off"]} | {e.Outcome ?? "-"} | {e.CostUsd:0.0000} |");
         }
 
         foreach (var section in definition.Analyzer?.AnalyzeSeries(matches) ?? [])
