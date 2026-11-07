@@ -35,7 +35,7 @@ public sealed class ModelCatalog(HttpClient http, EndpointOptions options, TimeP
     public static ModelCatalog ForEndpoint(EndpointOptions options, TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var http = new HttpClient { BaseAddress = options.BaseAddress, Timeout = TimeSpan.FromSeconds(30) };
+        var http = new HttpClient { BaseAddress = options.BaseAddress, Timeout = ListTimeout };
         if (options.Kind != EndpointKind.OpenRouter && !string.IsNullOrEmpty(options.ApiKey))
         {
             http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
@@ -43,6 +43,9 @@ public sealed class ModelCatalog(HttpClient http, EndpointOptions options, TimeP
 
         return new ModelCatalog(http, options, time);
     }
+
+    /// <summary>How long one request for the model list may take.</summary>
+    public static TimeSpan ListTimeout { get; } = TimeSpan.FromSeconds(30);
 
     /// <summary>How long a cached list is used without asking the endpoint again.</summary>
     public static TimeSpan CacheLifetime { get; } = TimeSpan.FromHours(1);
@@ -63,7 +66,7 @@ public sealed class ModelCatalog(HttpClient http, EndpointOptions options, TimeP
             await File.WriteAllTextAsync(path, json, cancellationToken);
             return Parse(json, options.Kind);
         }
-        catch (HttpRequestException) when (File.Exists(path))
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && File.Exists(path))
         {
             return Parse(await File.ReadAllTextAsync(path, cancellationToken), options.Kind);
         }
@@ -80,7 +83,7 @@ public sealed class ModelCatalog(HttpClient http, EndpointOptions options, TimeP
         var data = JsonNode.Parse(json)?["data"]?.AsArray() ?? [];
         return
         [
-            .. data.Select(node => node as JsonObject).OfType<JsonObject>().Select(m =>
+            .. data.OfType<JsonObject>().Select(m =>
             {
                 var supported = m["supported_parameters"]?.AsArray().Select(p => p?.ToString()).OfType<string>().ToHashSet(StringComparer.Ordinal) ?? [];
                 return new ModelInfo(
@@ -91,7 +94,7 @@ public sealed class ModelCatalog(HttpClient http, EndpointOptions options, TimeP
                     int.TryParse(m["context_length"]?.ToString(), CultureInfo.InvariantCulture, out var context) ? context : 0,
                     generic || supported.Contains("structured_outputs"),
                     supported.Contains("reasoning"),
-                    supported!);
+                    supported);
             }).Where(m => m.Id.Length > 0),
         ];
     }

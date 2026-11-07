@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Randomness;
@@ -10,8 +11,45 @@ namespace LlmShootout.Games.SplitOrSteal;
 /// </summary>
 public sealed class SplitOrStealGame : IGame
 {
+    /// <summary>The cooperative move.</summary>
+    public const string Split = "split";
+
+    /// <summary>The defecting move.</summary>
+    public const string Steal = "steal";
+
+    /// <summary>Kind of the public fact that reveals a decision, and the key of its data.</summary>
+    public const string DecisionFact = "decision";
+
+    /// <summary>The label of a seat that gave no valid decision.</summary>
+    public const string NoDecision = "no_decision";
+
     /// <summary>The two moves.</summary>
-    public static IReadOnlyList<string> Moves { get; } = ["split", "steal"];
+    public static IReadOnlyList<string> Moves { get; } = [Split, Steal];
+
+    /// <summary>The machine-readable outcomes of a game (<c>GameResult.Outcome</c>). A missing decision has its own outcome per seat.</summary>
+    public static class Outcomes
+    {
+        /// <summary>Both split.</summary>
+        public const string BothSplit = "both_split";
+
+        /// <summary>Both stole.</summary>
+        public const string BothSteal = "both_steal";
+
+        /// <summary>A stole, B split.</summary>
+        public const string AStole = "a_stole";
+
+        /// <summary>B stole, A split.</summary>
+        public const string BStole = "b_stole";
+
+        /// <summary>Neither seat gave a valid decision.</summary>
+        public const string NoDecisionBoth = "no_decision_both";
+
+        /// <summary>A gave no valid decision.</summary>
+        public const string NoDecisionA = "no_decision_a";
+
+        /// <summary>B gave no valid decision.</summary>
+        public const string NoDecisionB = "no_decision_b";
+    }
 
     private readonly SplitOrStealOptions _options;
     private readonly GameSetup _setup;
@@ -106,30 +144,31 @@ public sealed class SplitOrStealGame : IGame
         var half = _options.Pot / 2;
         var (pa, pb, outcome) = (a, b) switch
         {
-            ("split", "split") => (half, half, "both_split"),
-            ("steal", "steal") => (0, 0, "both_steal"),
-            ("steal", "split") => (_options.Pot, 0, "a_stole"),
-            ("split", "steal") => (0, _options.Pot, "b_stole"),
-            (null, null) => (0, 0, "no_decision_both"),
-            (null, "split") => (0, half, "no_decision_a"),
-            (null, "steal") => (0, _options.Pot, "no_decision_a"),
-            ("split", null) => (half, 0, "no_decision_b"),
-            _ => (_options.Pot, 0, "no_decision_b"),
+            (Split, Split) => (half, half, Outcomes.BothSplit),
+            (Steal, Steal) => (0, 0, Outcomes.BothSteal),
+            (Steal, Split) => (_options.Pot, 0, Outcomes.AStole),
+            (Split, Steal) => (0, _options.Pot, Outcomes.BStole),
+            (null, null) => (0, 0, Outcomes.NoDecisionBoth),
+            (null, Split) => (0, half, Outcomes.NoDecisionA),
+            (null, Steal) => (0, _options.Pot, Outcomes.NoDecisionA),
+            (Split, null) => (half, 0, Outcomes.NoDecisionB),
+            (Steal, null) => (_options.Pot, 0, Outcomes.NoDecisionB),
+            _ => throw new UnreachableException($"Check lets only '{Split}' or '{Steal}' through, but the decisions are '{a}' and '{b}'."),
         };
         return new GameResult(
             outcome,
-            new Dictionary<Seat, SeatResult> { [Seat.A] = new(pa, a ?? "no_decision"), [Seat.B] = new(pb, b ?? "no_decision") },
+            new Dictionary<Seat, SeatResult> { [Seat.A] = new(pa, a ?? NoDecision), [Seat.B] = new(pb, b ?? NoDecision) },
             new Dictionary<string, string> { ["pot"] = Text(_options.Pot) });
     }
 
     private static IEnumerable<GameFact> Reveal(Seat seat, string? decision, SeatResult result)
     {
         yield return new GameFact(
-            "decision",
+            DecisionFact,
             FactAudience.Everyone,
             seat,
             TemplateRef.Of(decision is null ? "fact.no_decision" : "fact.decision", ("decision", decision ?? string.Empty)),
-            new Dictionary<string, string> { ["decision"] = decision ?? "no_decision" });
+            new Dictionary<string, string> { [DecisionFact] = decision ?? NoDecision });
         yield return new GameFact(
             "payout",
             FactAudience.Everyone,

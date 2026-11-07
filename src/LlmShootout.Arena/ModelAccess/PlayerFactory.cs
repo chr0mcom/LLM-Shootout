@@ -72,7 +72,7 @@ public sealed class PlayerFactory(
         var resolved = registry.Resolve(name, options) ?? throw new PlayerSpecException(
             $"Unknown endpoint '{name}' in '{spec}'. Configured endpoints: {string.Join(", ", registry.Names.Prepend(EndpointRegistry.OpenRouterName))}. " +
             "Endpoints are defined in shootout.settings.json, see docs/endpoints.md.");
-        var resolvedCatalog = catalogFor?.Invoke(resolved) ?? new ModelCatalog(new HttpClient { BaseAddress = resolved.BaseAddress, Timeout = TimeSpan.FromSeconds(30) }, resolved, time);
+        var resolvedCatalog = catalogFor?.Invoke(resolved) ?? ModelCatalog.ForEndpoint(resolved, time);
         return (resolved, resolvedCatalog, slug);
     }
 

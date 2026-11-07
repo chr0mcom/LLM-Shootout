@@ -108,20 +108,20 @@ public sealed class SplitOrStealAnalyzer(ITemplateSource templates) : IGameAnaly
     private static bool? KeptPromise(MatchRecord match, Seat seat)
     {
         var announced = PromiseAnnotation.Find(match, seat)?.Announced;
-        var decision = match.FactData(seat, "decision", "decision");
-        return announced is "split" or "steal" && decision is not null ? announced == decision : null;
+        var decision = DecisionOf(match, seat);
+        return announced is SplitOrStealGame.Split or SplitOrStealGame.Steal && decision is not null ? announced == decision : null;
     }
 
     private static string Behavior(MatchRecord match, Seat seat, Func<string, (string, string)[], string> t)
     {
         var announced = PromiseAnnotation.Find(match, seat)?.Announced;
-        var decision = match.FactData(seat, "decision", "decision");
+        var decision = DecisionOf(match, seat);
         return (announced, decision) switch
         {
             (null, _) => t("report.behavior.unknown", []),
-            ("split", "steal") => t("report.behavior.broken", []),
-            ("steal", "split") => t("report.behavior.inconsistent", []),
-            ("split" or "steal", not null) => t("report.behavior.kept", []),
+            (SplitOrStealGame.Split, SplitOrStealGame.Steal) => t("report.behavior.broken", []),
+            (SplitOrStealGame.Steal, SplitOrStealGame.Split) => t("report.behavior.inconsistent", []),
+            (SplitOrStealGame.Split or SplitOrStealGame.Steal, not null) => t("report.behavior.kept", []),
             _ => t("report.behavior.none", []),
         };
     }
@@ -134,20 +134,23 @@ public sealed class SplitOrStealAnalyzer(ITemplateSource templates) : IGameAnaly
             return;
         }
 
-        int Broken(Seat seat) => talked.Count(m => PromiseAnnotation.Find(m, seat)?.Announced == "split" && m.FactData(seat, "decision", "decision") == "steal");
+        int Broken(Seat seat) => talked.Count(m => PromiseAnnotation.Find(m, seat)?.Announced == SplitOrStealGame.Split && DecisionOf(m, seat) == SplitOrStealGame.Steal);
         body.AppendLine().AppendLine(t("report.series.broken", [("a", Broken(Seat.A).ToString(CultureInfo.InvariantCulture)), ("b", Broken(Seat.B).ToString(CultureInfo.InvariantCulture)), ("n", talked.Length.ToString(CultureInfo.InvariantCulture))]));
     }
 
     private static double StealRate(MatchRecord[] matches)
     {
-        var decisions = matches.SelectMany(m => Seat.All.Select(s => m.FactData(s, "decision", "decision"))).Where(d => d is "split" or "steal").ToArray();
-        return decisions.Length == 0 ? 0 : decisions.Count(d => d == "steal") / (double)decisions.Length;
+        var decisions = matches.SelectMany(m => Seat.All.Select(s => DecisionOf(m, s))).Where(d => d is SplitOrStealGame.Split or SplitOrStealGame.Steal).ToArray();
+        return decisions.Length == 0 ? 0 : decisions.Count(d => d == SplitOrStealGame.Steal) / (double)decisions.Length;
     }
 
     private string Comm(MatchRecord match, string language) =>
         templates.Render(new TemplateRef(match.Communication ? "report.series.comm.on" : "report.series.comm.off"), language);
 
-    private static string Decision(MatchRecord match, Seat seat) => match.FactData(seat, "decision", "decision") ?? "-";
+    private static string? DecisionOf(MatchRecord match, Seat seat) =>
+        match.FactData(seat, SplitOrStealGame.DecisionFact, SplitOrStealGame.DecisionFact);
+
+    private static string Decision(MatchRecord match, Seat seat) => DecisionOf(match, seat) ?? "-";
 
     private static string Points(MatchRecord match, Seat seat) =>
         match.Result is { } r ? r.Seats[seat].Score.ToString("0.##", CultureInfo.InvariantCulture) : "-";

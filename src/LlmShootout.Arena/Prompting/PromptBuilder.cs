@@ -36,7 +36,7 @@ public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSourc
     public string Arena(string key, params (string Name, string Value)[] values) =>
         arenaTemplates.Render(TemplateRef.Of(key, values), language);
 
-    /// <summary>Renders a reference with the game templates or, for arena keys, the arena templates.</summary>
+    /// <summary>Renders a reference with the templates of the game.</summary>
     public string RenderGame(TemplateRef reference) => gameTemplates.Render(reference, language);
 
     /// <summary>Builds the messages for one model call.</summary>
