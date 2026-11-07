@@ -16,19 +16,19 @@
     {
       "directory": "01-talk-A-first",
       "communication": true,
-      "outcome": "both_split",
+      "outcome": "a_stole",
       "costUsd": 0
     },
     {
       "directory": "02-talk-B-first",
       "communication": true,
-      "outcome": "both_split",
+      "outcome": "a_stole",
       "costUsd": 0
     },
     {
       "directory": "03-silent-A-first",
       "communication": false,
-      "outcome": "a_stole",
+      "outcome": "b_stole",
       "costUsd": 0
     }
   ]

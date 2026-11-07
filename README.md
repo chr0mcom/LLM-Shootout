@@ -63,7 +63,7 @@ Result: both_steal  A: 0 (steal)  B: 0 (steal)  $0.0000
 Debriefing A: ok (1 attempt(s))
 Debriefing B: ok (1 attempt(s))
 
-Report: matches/2026-11-06_split-or-steal_random_vs_random_01/report.md
+Report: matches/2026-11-07_split-or-steal_random_vs_random_01/report.md
 ```
 
 Finished examples (made with random players) are in [`matches/examples/`](matches/examples/).

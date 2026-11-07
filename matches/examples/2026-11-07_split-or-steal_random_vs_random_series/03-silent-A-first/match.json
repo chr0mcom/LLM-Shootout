@@ -1,19 +1,19 @@
 {
   "gameId": "split-or-steal",
-  "startedAt": "2026-11-06T10:35:32.2548268+00:00",
-  "durationSeconds": 0.002322,
+  "startedAt": "2026-11-07T05:03:44.8471875+00:00",
+  "durationSeconds": 0.002601,
   "aborted": false,
   "communication": false,
   "language": "de",
   "seed": 2030,
   "firstSeat": "A",
   "identityRevealed": false,
-  "outcome": "a_stole",
+  "outcome": "b_stole",
   "seats": {
     "A": {
       "player": "random",
-      "score": 100,
-      "label": "steal",
+      "score": 0,
+      "label": "split",
       "turns": 1,
       "invalidAnswers": 0,
       "refusals": 0,
@@ -30,8 +30,8 @@
     },
     "B": {
       "player": "random",
-      "score": 0,
-      "label": "split",
+      "score": 100,
+      "label": "steal",
       "turns": 1,
       "invalidAnswers": 0,
       "refusals": 0,
@@ -52,9 +52,9 @@
   "costUnknownCalls": 0,
   "modelCalls": 4,
   "appVersion": "1.0.0",
-  "gitCommit": "7c83c5b065b3",
+  "gitCommit": "494354425bb4",
   "templateHashes": {
-    "arena": "3905DA6D9D0C325E",
-    "split-or-steal": "774AC66D83D97B9B"
+    "arena": "1288A1E818D22FF5",
+    "split-or-steal": "2BEA4B5A5BCCB04A"
   }
 }
