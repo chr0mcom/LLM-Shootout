@@ -8,7 +8,6 @@ matches/2026-11-20_split-or-steal_gpt-oss-20b_vs_claude-haiku-5.5_01/
 ├─ events.jsonl                  the protocol, one JSON event per line, append-only
 ├─ match.json                    summary: result, key figures, cost, duration
 ├─ report.md                     readable report
-├─ annotation.promise.<judge>.json   derived assessment by a judge model (optional, `shootout annotate`)
 └─ debrief.<timestamp>.jsonl     answers of a repeated debriefing (optional, `shootout debrief`)
 ```
 
@@ -21,7 +20,7 @@ A series is a directory `..._series/` with one match directory per entry of the 
   leaves a valid file that ends with a `match_aborted` event.
 - **Raw data is kept.** The exact prompt, the unchanged answer, the reasoning text if the provider delivered one, the
   requested and delivered model, the OpenRouter generation id, tokens, cost, latency and the raw HTTP exchange (without headers, so without the API key).
-- **Derived data lives elsewhere.** `report.md`, `match.json`, annotations and repeated debriefings are separate
+- **Derived data lives elsewhere.** `report.md`, `match.json` and repeated debriefings are separate
   files. A test checks that `events.jsonl` stays byte-identical.
 - **Readable.** Umlauts are written as they are (not as `ä`), so lines can be quoted.
 
@@ -53,11 +52,11 @@ First line. Everything needed to understand and repeat the match.
 
 ### `model_call`
 
-One call to a player: a turn, a debriefing, or (in the annotation file) a judge.
+One call to a player: a turn or a debriefing.
 
 | Field | Meaning |
 |---|---|
-| `turnId`, `purpose` (`Turn`, `Debrief`, `Judge`), `seat`, `attempt` | which call |
+| `turnId`, `purpose` (`Turn`, `Debrief`), `seat`, `attempt` | which call |
 | `messages` | the complete prompt as sent: `role` and `text` of every message |
 | `rawContent`, `rawReasoning` | the unchanged answer and the reasoning channel |
 | `parsed` | `thought`, `message`, `move`, `fromReasoning`, `extraKeys` as read by the arena (turns only) |
@@ -122,12 +121,6 @@ Numbers only, computed from the protocol: game, date, duration, `aborted`, `outc
 and delivered model, score and label, turns, invalid answers, refusals, token-limit hits, shortened thoughts and
 messages, silences, identity hits, tokens, cost and whether the debriefing was valid. Plus total cost, number of
 calls, number of calls with unknown cost, version, commit and template hashes.
-
-## Annotation files
-
-`annotation.<task>.<judge>.json` contains the judge's name, a note that this is a derived assessment, the time, and
-one entry per question: `key`, `seat`, the parsed `result`, the unchanged `raw` answer and an `error` if the answer
-was unusable. The Split or Steal report reads `announced` from it.
 
 ## Reading a protocol
 

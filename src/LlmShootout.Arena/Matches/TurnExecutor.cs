@@ -71,7 +71,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         return Finish(turn, state, state.LastEvaluation!, SubmissionStatus.Exhausted, max);
     }
 
-    /// <summary>One model call and the judgement of its answer. Returns the evaluation, or null if the call timed out.</summary>
+    /// <summary>One model call and the classification of its answer. Returns the evaluation, or null if the call timed out.</summary>
     private async Task<Evaluation?> TryAttemptAsync(TurnRequest turn, int attempt, bool isLast, TurnState state, CancellationToken cancellationToken)
     {
         var request = BuildRequest(turn, attempt, state);

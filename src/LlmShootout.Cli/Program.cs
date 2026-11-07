@@ -41,7 +41,6 @@ var root = new RootCommand("LLM Shootout: two language models play a game agains
     ReplayCommand.Build(env),
     DerivedCommands.BuildReport(env),
     DerivedCommands.BuildDebrief(env),
-    DerivedCommands.BuildAnnotate(env),
 };
 
 var parse = root.Parse(args);

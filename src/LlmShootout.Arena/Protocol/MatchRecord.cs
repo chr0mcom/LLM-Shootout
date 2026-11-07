@@ -1,17 +1,15 @@
-using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Games;
 
 namespace LlmShootout.Arena.Protocol;
 
-/// <summary>A match as read back from its directory: the protocol events plus any derived files.</summary>
+/// <summary>A match as read back from its directory: the protocol events.</summary>
 public sealed class MatchRecord
 {
-    private MatchRecord(string directory, IReadOnlyList<MatchEvent> events, MatchStartedEvent started, IReadOnlyList<AnnotationFile> annotations)
+    private MatchRecord(string directory, IReadOnlyList<MatchEvent> events, MatchStartedEvent started)
     {
         Directory = directory;
         Events = events;
         Started = started;
-        Annotations = annotations;
     }
 
     /// <summary>The match directory.</summary>
@@ -22,9 +20,6 @@ public sealed class MatchRecord
 
     /// <summary>The first event.</summary>
     public MatchStartedEvent Started { get; }
-
-    /// <summary>Derived judge assessments found next to the protocol.</summary>
-    public IReadOnlyList<AnnotationFile> Annotations { get; }
 
     /// <summary>Id of the game.</summary>
     public string GameId => Started.GameId;
@@ -89,13 +84,6 @@ public sealed class MatchRecord
         var events = ProtocolReader.ReadAll(directory);
         var started = (events.Count > 0 ? events[0] : null) as MatchStartedEvent
             ?? throw new InvalidDataException($"'{directory}': the protocol does not start with a match_started event.");
-        return new MatchRecord(directory, events, started, ReadAnnotations(directory));
+        return new MatchRecord(directory, events, started);
     }
-
-    private static List<AnnotationFile> ReadAnnotations(string directory) =>
-    [
-        .. System.IO.Directory.EnumerateFiles(directory, "annotation.*.json").Order(StringComparer.Ordinal)
-            .Select(path => AnnotationJson.Read(File.ReadAllText(path)))
-            .OfType<AnnotationFile>(),
-    ];
 }

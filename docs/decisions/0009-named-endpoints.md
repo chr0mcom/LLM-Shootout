@@ -31,7 +31,7 @@ match. The key must still never reach a file, a log or a protocol.
 
 ## Consequences
 - A match can mix endpoints; the protocol names each player `<endpoint>:<model>`.
-- `shootout debrief` and `annotate` need the endpoint configuration that the match used.
+- `shootout debrief` needs the endpoint configuration that the match used.
 - A server that ignores some settings is documented in `docs/endpoints.md`; the settings are still recorded as sent.
 - Found on the way: `MaxHttpRetries = 0` was allowed by validation but made the resilience pipeline throw. Zero now means "no retry layer".
 

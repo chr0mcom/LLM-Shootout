@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.Globalization;
-using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
@@ -12,7 +11,7 @@ using Spectre.Console;
 
 namespace LlmShootout.Cli.Commands;
 
-/// <summary>shootout report, debrief and annotate: everything that works on stored matches.</summary>
+/// <summary>shootout report and debrief: everything that works on stored matches.</summary>
 public static class DerivedCommands
 {
     /// <summary>Creates the <c>report</c> command.</summary>
@@ -66,39 +65,6 @@ public static class DerivedCommands
             PrintAnswers(env.Console, events);
             env.Console.WriteLine($"Written to {Path.Combine(record.Directory, file)} (the protocol events.jsonl is unchanged).");
             return events.All(e => e.Valid) ? 0 : ErrorHandling.Aborted;
-        }, ct));
-        return command;
-    }
-
-    /// <summary>Creates the <c>annotate</c> command.</summary>
-    public static Command BuildAnnotate(CliEnvironment env)
-    {
-        var run = new RunOptionSet();
-        var path = new Argument<string>("directory") { Description = "A match directory or a series directory." };
-        var judge = new Option<string>("--judge") { Description = "Judge model: <endpoint>:<model>, openrouter:<slug>, <slug>, random or scripted:<file>.", Required = true };
-        var command = new Command("annotate", "Lets a judge model rate the matches (for example: was a promise made?). The result goes to its own file and is marked as a derived assessment.") { path, judge };
-        command.Options.Add(run.MaxCost);
-        command.Options.Add(run.Temperature);
-        command.Options.Add(run.ReasoningEffort);
-        command.Options.Add(run.MaxOutputTokens);
-        command.Options.Add(run.Timeout);
-
-        command.SetAction((parse, ct) => ErrorHandling.RunAsync(env.Error, async () =>
-        {
-            var settings = run.Read(parse, env.BaseOptions);
-            var directory = parse.GetRequiredValue(path);
-            var player = await env.CreatePlayerAsync(parse.GetRequiredValue(judge), 1, settings.Endpoint, ct);
-            var annotator = new Annotator(new PlayerGateway(new CostMeter(settings.Match.MaxCostUsd)), env.Time);
-            foreach (var matchDirectory in MatchDirectories(directory))
-            {
-                var record = MatchRecord.Load(matchDirectory);
-                var task = CliEnvironment.RequireGame(record.GameId).AnnotationTask
-                    ?? throw new UsageException($"The game '{record.GameId}' has no judge task.");
-                env.Console.WriteLine(await annotator.RunAsync(task, record, player, ct) ?? $"{Path.GetFileName(matchDirectory)}: nothing to rate.");
-            }
-
-            await RebuildAsync(directory, ct);
-            return 0;
         }, ct));
         return command;
     }

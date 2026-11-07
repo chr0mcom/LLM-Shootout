@@ -260,8 +260,6 @@ public static class MatchReportWriter
         {
             sb.AppendLine(t.Format("report.cost_unknown", ("n", s.CostUnknownCalls.ToString(CultureInfo.InvariantCulture)))).AppendLine();
         }
-
-        sb.AppendLine(t["report.derived"]);
     }
 
     private static void SeatRow(StringBuilder sb, string label, MatchSummary s, Func<SeatSummary, string> value) =>

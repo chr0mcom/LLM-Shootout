@@ -8,9 +8,9 @@ The decisions behind this are in [`docs/decisions/`](decisions/).
 
 | Project | Contents |
 |---|---|
-| `LlmShootout.Arena` | Game abstraction (`Games/`), match runner (`Matches/`), prompts and templates (`Prompting/`, `Templates/`, `Prompts/`), answer parsing and validation (`Answers/`), protocol (`Protocol/`), debriefing (`Debriefing/`), series (`Series/`), reports (`Reports/`), judge annotations (`Annotation/`), model access (`ModelAccess/`), identity scanner (`Identity/`), players (`Players/`) |
+| `LlmShootout.Arena` | Game abstraction (`Games/`), match runner (`Matches/`), prompts and templates (`Prompting/`, `Templates/`, `Prompts/`), answer parsing and validation (`Answers/`), protocol (`Protocol/`), debriefing (`Debriefing/`), series (`Series/`), reports (`Reports/`), model access (`ModelAccess/`), identity scanner (`Identity/`), players (`Players/`) |
 | `LlmShootout.Games` | One folder per game: rules, wording templates, debriefing questions, report analysis. Registered in `GameCatalog` |
-| `LlmShootout.Cli` | Commands (`play`, `series`, `games`, `models`, `replay`, `report`, `debrief`, `annotate`), live view, Generic Host setup |
+| `LlmShootout.Cli` | Commands (`play`, `series`, `games`, `models`, `replay`, `report`, `debrief`), live view, Generic Host setup |
 | `LlmShootout.Web` | The web interface: login, starting and following a match live, history, Excel export ([docs/web.md](web.md)) |
 | `LlmShootout.Tests` | Unit tests with fakes, prompt snapshots, process tests of the command line, in-memory tests of the web interface, small test-only games |
 
@@ -21,7 +21,7 @@ flowchart LR
   Web[Web interface<br/>RunManager, live stream] --> Runner
   CLI[Cli commands] --> Series[SeriesRunner]
   CLI --> Runner[MatchRunner]
-  CLI --> Deb2[Debriefer / Annotator<br/>on stored matches]
+  CLI --> Deb2[Debriefer<br/>on stored matches]
   Series --> Runner
   Runner -->|PendingTurns, Check, Apply| Game[(IGame<br/>one per match)]
   Runner --> Exec[TurnExecutor<br/>attempts, hints]
@@ -95,10 +95,10 @@ flowchart LR
   Ev --> Sum[match.json]
   Ev --> Rep[report.md]
   Ev --> Replay[replay]
-  Ev -.->|never modified| Derived[Debrief re-run, judge annotation<br/>separate files]
+  Ev -.->|never modified| Derived[Debrief re-run<br/>separate file]
 ```
 
-Derived data (a re-run debriefing, a judge rating) is written to separate files. `events.jsonl` is never changed
+Derived data (a re-run debriefing) is written to a separate file. `events.jsonl` is never changed
 after the match.
 
 ## Extending: how the planned games map onto the abstraction

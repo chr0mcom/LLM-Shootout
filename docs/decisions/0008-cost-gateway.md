@@ -1,10 +1,10 @@
 # 0008 - Cost metering in one gateway
 
-Status: accepted (2026-11-06)
+Status: accepted (2026-11-06), amended 2026-11-07
 
 ## Context
 The spending limit (default 1 USD per run) must be checked before every model call, and the cost of every call
-booked afterwards, for turns, debriefing and judge alike. The cost is known only from the OpenRouter response.
+booked afterwards, for turns and debriefing alike. The cost is known only from the OpenRouter response.
 
 ## Decision
 `PlayerGateway` is the single door for all player calls. It checks `CostMeter.EnsureWithinLimit()` before the
@@ -23,3 +23,5 @@ readable class.
 
 ## Consequences
 The limit is checked between calls, not within one; a single expensive call can overshoot the limit once.
+
+Amended 2026-11-07: the gateway serves turns and the debriefing; the judge calls are gone (see [0012](0012-judge-infrastructure-removed.md)).

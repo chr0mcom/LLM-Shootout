@@ -30,8 +30,6 @@ public interface IGameDefinition
     /// <summary>Game specific parts of match and series reports. Null (the default) if the generic report is enough.</summary>
     IGameAnalyzer? Analyzer => null;
 
-    /// <summary>A question a judge model can answer about a finished match (for example "was a promise made?"). Null by default.</summary>
-    Annotation.IAnnotationTask? AnnotationTask => null;
 }
 
 /// <summary>Everything that varies between two matches of the same game.</summary>

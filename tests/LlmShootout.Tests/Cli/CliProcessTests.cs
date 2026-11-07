@@ -128,7 +128,7 @@ public sealed class CliProcessTests : IDisposable
     }
 
     [Fact]
-    public async Task A_series_replay_report_debrief_annotate_round_trip_works()
+    public async Task A_series_replay_report_debrief_round_trip_works()
     {
         var (exit, output, _) = await RunAsync("series", "shootouts/split-or-steal.json", "--a", "random", "--b", "random", "--quiet", "--out", _work);
         Assert.Equal(0, exit);
@@ -136,7 +136,6 @@ public sealed class CliProcessTests : IDisposable
         var first = Path.Combine(series, "01-talk-A-first");
 
         Assert.Equal(0, (await RunAsync("replay", first)).Exit);
-        Assert.Equal(0, (await RunAsync("annotate", series, "--judge", "random")).Exit);
         Assert.Equal(0, (await RunAsync("debrief", first)).Exit);
         Assert.Equal(0, (await RunAsync("report", series)).Exit);
         Assert.Contains("Vergleich mit und ohne Kommunikation", File.ReadAllText(Path.Combine(series, "series-report.md")), StringComparison.Ordinal);

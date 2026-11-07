@@ -32,9 +32,6 @@ step "replay"
 "${SHOOTOUT[@]}" replay "$SERIES/01-talk-A-first" --show-thoughts > "$WORK/replay.txt"
 head -n 12 "$WORK/replay.txt"
 
-step "annotate with a random judge"
-"${SHOOTOUT[@]}" annotate "$SERIES" --judge random
-
 step "debrief again"
 "${SHOOTOUT[@]}" debrief "$SERIES/01-talk-A-first"
 

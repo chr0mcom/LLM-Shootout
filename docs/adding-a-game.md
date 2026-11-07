@@ -15,7 +15,7 @@ time, seat A wins if the choices match, seat B wins if they differ. The same cod
 | `IGame` | `<Game>Game.cs` | the rules and the hidden state of one match |
 | Wording | `Prompts/<game>.de.md`, `Prompts/<game>.en.md` | rules, views, instructions, error messages, facts |
 | Registration | `GameCatalog.cs` | one line, so readers can see where games are registered |
-| (optional) `IGameAnalyzer`, `IAnnotationTask` | | game specific report sections and judge questions |
+| (optional) `IGameAnalyzer` | | game specific report sections |
 
 ## Step by step
 
@@ -148,7 +148,7 @@ dotnet run --project src/LlmShootout.Cli -- games
 dotnet run --project src/LlmShootout.Cli -- play matching-pennies --a random --b random
 ```
 
-Prompts, protocol, report, debriefing, series and judge infrastructure work immediately. The debriefing uses the
+Prompts, protocol, report, debriefing and series infrastructure work immediately. The debriefing uses the
 [standard questions](prompt-contract.md#debriefing); add game specific ones in `ExtraQuestions`.
 
 ## How the arena calls your game
@@ -213,4 +213,4 @@ sequenceDiagram
 ## Where to look next
 
 [Split or Steal](games/split-or-steal.md) is the full example: options, phases, simultaneous decisions, an
-exhausted-attempts rule, a game specific debriefing question, report analysis and a judge task.
+exhausted-attempts rule, a game specific debriefing question and report analysis.

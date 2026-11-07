@@ -3,7 +3,7 @@ using LlmShootout.Arena.Players;
 namespace LlmShootout.Arena.Matches;
 
 /// <summary>
-/// The single door through which every call to a player passes (turns, debriefing, judge): checks the spending
+/// The single door through which every call to a player passes (turns and debriefing): checks the spending
 /// limit before the call and books the cost after it. A failed call to a model counts as "cost unknown",
 /// because a cancelled request may still be billed.
 /// </summary>

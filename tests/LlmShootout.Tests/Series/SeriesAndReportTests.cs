@@ -1,6 +1,5 @@
 using System.Text.Json;
 using LlmShootout.Arena;
-using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.Players;
@@ -232,61 +231,5 @@ public sealed class SeriesAndReportTests : IDisposable
 
             Snapshot.Verify($"report-split-or-steal-random.{language}.md", await File.ReadAllTextAsync(Path.Combine(plan.Directory, "report.md"), TestContext.Current.CancellationToken));
         }
-    }
-
-    [Fact]
-    public async Task A_judge_rating_exposes_a_broken_promise_and_a_contradicting_self_report()
-    {
-        var a = new ScriptedPlayer("a").Reply(MatchHarness.Answer("t", "I will split, promise")).Reply(MatchHarness.Answer("t", "split, really")).Reply(MatchHarness.Answer("t", "split")).Reply(MatchHarness.Answer("t", move: "steal"));
-        var b = new ScriptedPlayer("b").Reply(MatchHarness.Answer("t", "ok")).Reply(MatchHarness.Answer("t", "ok")).Reply(MatchHarness.Answer("t", "ok")).Reply(MatchHarness.Answer("t", move: "split"));
-        a.Reply(Debriefing.SplitOrStealMatchTests.DebriefJson(truthful: "true"));
-        b.Reply(Debriefing.SplitOrStealMatchTests.DebriefJson(truthful: "true"));
-        var (outcome, _) = await _harness.RunAsync(_definition, a, b, true, new MatchOptions(), debrief: true);
-        var record = MatchRecord.Load(outcome.Directory);
-        var before = await File.ReadAllBytesAsync(Path.Combine(outcome.Directory, "events.jsonl"), TestContext.Current.CancellationToken);
-
-        var judge = new ScriptedPlayer("judge-model")
-            .Reply("{\"announced\":\"split\",\"quote\":\"I will split, promise\",\"confidence\":0.9}")
-            .Reply("{\"announced\":\"none\",\"quote\":null,\"confidence\":0.8}");
-        var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, record, judge, TestContext.Current.CancellationToken);
-
-        Assert.Equal(before, await File.ReadAllBytesAsync(Path.Combine(outcome.Directory, "events.jsonl"), TestContext.Current.CancellationToken));
-        Assert.Contains("derived assessment", await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken), StringComparison.OrdinalIgnoreCase);
-        var annotated = MatchRecord.Load(outcome.Directory);
-        var report = MatchReportWriter.BuildReport(_definition, annotated);
-        Assert.Contains("Broken word (announced split, decided steal)", report, StringComparison.Ordinal);
-        Assert.Contains("Self-report contradicts behavior", report, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Without_a_judge_the_report_shows_messages_and_decision_side_by_side()
-    {
-        var (outcome, _) = await _harness.RunAsync(_definition, new RandomPlayer(1), new RandomPlayer(2), true);
-        var report = MatchReportWriter.BuildReport(_definition, MatchRecord.Load(outcome.Directory));
-
-        Assert.Contains("There is no judge assessment", report, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task An_unreadable_judge_answer_is_recorded_as_an_error_not_a_crash()
-    {
-        var (outcome, _) = await _harness.RunAsync(_definition, new RandomPlayer(1), new RandomPlayer(2), true);
-        var judge = new ScriptedPlayer("j").Reply("I cannot say.").Fail("HTTP 500");
-
-        var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), judge, TestContext.Current.CancellationToken);
-
-        var file = AnnotationJson.Read(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken))!;
-        Assert.All(file.Entries, e => Assert.NotNull(e.Error));
-    }
-
-    [Fact]
-    public async Task Random_judges_work_without_an_api_key()
-    {
-        var (outcome, _) = await _harness.RunAsync(_definition, new RandomPlayer(1), new RandomPlayer(2), true);
-
-        var path = await new Annotator(new PlayerGateway(_harness.Cost), _harness.Time).RunAsync(_definition.AnnotationTask!, MatchRecord.Load(outcome.Directory), new RandomPlayer(3), TestContext.Current.CancellationToken);
-
-        var file = AnnotationJson.Read(await File.ReadAllTextAsync(path!, TestContext.Current.CancellationToken))!;
-        Assert.All(file.Entries, e => Assert.Equal("unclear", e.Result!["announced"]!.ToString()));
     }
 }

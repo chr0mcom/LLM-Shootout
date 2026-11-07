@@ -1,4 +1,3 @@
-using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Templates;
@@ -11,11 +10,10 @@ public sealed class SplitOrStealDefinition : IGameDefinition
     /// <summary>The id used on the command line and in protocols.</summary>
     public const string GameId = "split-or-steal";
 
-    /// <summary>Creates the definition with its report analysis and judge task.</summary>
+    /// <summary>Creates the definition with its report analysis.</summary>
     public SplitOrStealDefinition()
     {
         Analyzer = new SplitOrStealAnalyzer(Templates);
-        AnnotationTask = new PromiseAnnotation(Templates);
     }
 
     /// <inheritdoc />
@@ -36,9 +34,6 @@ public sealed class SplitOrStealDefinition : IGameDefinition
 
     /// <inheritdoc />
     public IGameAnalyzer? Analyzer { get; }
-
-    /// <inheritdoc />
-    public IAnnotationTask? AnnotationTask { get; }
 
     /// <inheritdoc />
     public IGame Create(GameSetup setup)

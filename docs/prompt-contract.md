@@ -175,9 +175,3 @@ debriefing of the seat is marked `valid: false` with the problems.
 | game specific, for example `announced_truthfully` (+ `_reason`) | see game | see game |
 
 The debriefing can be repeated for a stored protocol (`shootout debrief`); the new answers go to their own file.
-
-## Judge prompts
-
-`shootout annotate` lets a judge model rate a finished match, for example whether a player made a promise in
-their messages ([Split or Steal](games/split-or-steal.md)). The judge sees only the public messages of one
-player. Its answer is validated and stored in `annotation.<task>.<judge>.json`, marked as a derived assessment.

@@ -372,9 +372,6 @@ Bei {n} Aufrufen hat OpenRouter keine Kosten gemeldet; die Kosten sind aus Token
 ## report.cost_unknown
 Bei {n} Aufrufen sind die Kosten unbekannt (zum Beispiel nach einem Timeout). Die Summe ist deshalb eine Untergrenze.
 
-## report.derived
-Abgeleitete Bewertungen stehen in eigenen Dateien (`annotation.*.json`) und ändern das Protokoll nicht.
-
 ## report.series.title
 # Serie {game}: {a} gegen {b}
 

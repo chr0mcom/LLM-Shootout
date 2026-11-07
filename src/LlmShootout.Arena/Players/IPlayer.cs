@@ -28,9 +28,6 @@ public enum CallPurpose
 
     /// <summary>The debriefing after the game.</summary>
     Debrief,
-
-    /// <summary>A judge model rating an existing protocol.</summary>
-    Judge,
 }
 
 /// <summary>

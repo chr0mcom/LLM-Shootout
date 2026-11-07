@@ -372,9 +372,6 @@ OpenRouter reported no cost for {n} calls; the cost is estimated from tokens and
 ## report.cost_unknown
 The cost of {n} calls is unknown (for example after a timeout). The sum is therefore a lower bound.
 
-## report.derived
-Derived assessments live in their own files (`annotation.*.json`) and do not change the protocol.
-
 ## report.series.title
 # Series {game}: {a} vs {b}
 
