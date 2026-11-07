@@ -55,8 +55,8 @@ export OPENROUTER_API_KEY=sk-or-...
 dotnet run --project src/LlmShootout.Cli -- models --filter gpt-oss
 dotnet run --project src/LlmShootout.Cli -- play split-or-steal --a openai/gpt-oss-20b --b anthropic/claude-haiku-5.5
 
-# 5. Play the standard series of three matches
-dotnet run --project src/LlmShootout.Cli -- series shootouts/split-or-steal.json --a openai/gpt-oss-20b --b anthropic/claude-haiku-5.5
+# 5. Play the standard series of two matches (the series files are in shootouts/)
+dotnet run --project src/LlmShootout.Cli -- series shootouts/nim.json --a openai/gpt-oss-20b --b anthropic/claude-haiku-5.5
 ```
 
 Real model calls cost money. The default limit is **1 USD per run** (`--max-cost`); the run stops cleanly when it is reached.
@@ -89,7 +89,7 @@ Debriefing B: ok (1 attempt(s))
 Report: matches/2026-11-07_split-or-steal_random_vs_random_01/report.md
 ```
 
-Finished examples (made with random players) are in [`matches/examples/`](matches/examples/).
+Finished examples of Nim (made with the random player, the optimal player and one scripted player) are in [`matches/examples/`](matches/examples/).
 
 ## Web interface
 

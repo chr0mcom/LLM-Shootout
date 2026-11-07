@@ -1,0 +1,100 @@
+{
+  "gameId": "nim",
+  "startedAt": "2026-11-07T14:31:43.4490624+00:00",
+  "durationSeconds": 0.2284006,
+  "aborted": false,
+  "communication": false,
+  "language": "de",
+  "seed": 2,
+  "firstSeat": "B",
+  "outcome": "a_wins",
+  "resultWithRuleViolation": false,
+  "seats": {
+    "A": {
+      "player": "optimal",
+      "score": 1,
+      "label": "win",
+      "turns": 3,
+      "invalidAnswers": 0,
+      "refusals": 0,
+      "tokenLimitHits": 0,
+      "ruleViolations": 0,
+      "resignations": 0,
+      "exhaustedTurns": 0,
+      "thoughtsTruncated": 0,
+      "messagesTruncated": 0,
+      "silentMessages": 0,
+      "identityHits": 0,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "reasoningTokens": 0,
+      "costUsd": 0,
+      "debriefValid": true,
+      "strength": {
+        "movesInWonPosition": 3,
+        "optimalMoves": 3,
+        "squanderedWins": 0,
+        "firstMistakeTurn": null,
+        "firstMistakeMove": null,
+        "mistakeRate": 0
+      },
+      "calibration": {
+        "estimatesInWonPositions": 3,
+        "meanEstimateInWonPositions": 100,
+        "estimatesInLostPositions": 0,
+        "meanEstimateInLostPositions": null,
+        "brierCount": 3,
+        "brier": 0
+      },
+      "violationInLostPositionThenWon": false
+    },
+    "B": {
+      "player": "random",
+      "score": 0,
+      "label": "loss",
+      "turns": 3,
+      "invalidAnswers": 0,
+      "refusals": 0,
+      "tokenLimitHits": 0,
+      "ruleViolations": 0,
+      "resignations": 0,
+      "exhaustedTurns": 0,
+      "thoughtsTruncated": 0,
+      "messagesTruncated": 0,
+      "silentMessages": 0,
+      "identityHits": 0,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "reasoningTokens": 0,
+      "costUsd": 0,
+      "debriefValid": true,
+      "strength": {
+        "movesInWonPosition": 1,
+        "optimalMoves": 0,
+        "squanderedWins": 1,
+        "firstMistakeTurn": "move-1",
+        "firstMistakeMove": 1,
+        "mistakeRate": 1
+      },
+      "calibration": {
+        "estimatesInWonPositions": 1,
+        "meanEstimateInWonPositions": 90,
+        "estimatesInLostPositions": 2,
+        "meanEstimateInLostPositions": 54,
+        "brierCount": 3,
+        "brier": 0.1994
+      },
+      "violationInLostPositionThenWon": false
+    }
+  },
+  "costUsd": 0,
+  "costEstimatedCalls": 0,
+  "costUnknownCalls": 0,
+  "modelCalls": 8,
+  "appVersion": "1.0.0",
+  "gitCommit": "3ff649b2c613",
+  "templateHashes": {
+    "arena": "5AC54D422A6A03DD",
+    "nim": "7416671326236D95"
+  }
+}

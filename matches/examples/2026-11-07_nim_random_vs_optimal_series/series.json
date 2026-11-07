@@ -1,0 +1,133 @@
+{
+  "gameId": "nim",
+  "playerA": "random",
+  "playerB": "optimal",
+  "matches": 1,
+  "completed": 1,
+  "aborted": 0,
+  "costUsd": 0,
+  "costEstimatedCalls": 0,
+  "costUnknownCalls": 0,
+  "entries": [
+    {
+      "directory": "01-A-first",
+      "firstSeat": "A",
+      "outcome": "b_wins",
+      "costUsd": 0
+    }
+  ],
+  "players": [
+    {
+      "player": "random",
+      "metrics": [
+        {
+          "key": "wins",
+          "label": "Wins",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "mistake_rate",
+          "label": "Mistake rate (mistakes / moves in a won position)",
+          "kind": "Ratio",
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        {
+          "key": "squandered",
+          "label": "Won positions given up",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "rule_violations",
+          "label": "Rule violations",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "resignations",
+          "label": "Resignations",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "forfeits",
+          "label": "Forfeits",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "brier",
+          "label": "Brier score of the estimates",
+          "kind": "Mean",
+          "numerator": 1.7581999999999998,
+          "denominator": 5,
+          "value": 0.35163999999999995
+        }
+      ]
+    },
+    {
+      "player": "optimal",
+      "metrics": [
+        {
+          "key": "wins",
+          "label": "Wins",
+          "kind": "Sum",
+          "numerator": 1,
+          "value": 1
+        },
+        {
+          "key": "mistake_rate",
+          "label": "Mistake rate (mistakes / moves in a won position)",
+          "kind": "Ratio",
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0
+        },
+        {
+          "key": "squandered",
+          "label": "Won positions given up",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "rule_violations",
+          "label": "Rule violations",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "resignations",
+          "label": "Resignations",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "forfeits",
+          "label": "Forfeits",
+          "kind": "Sum",
+          "numerator": 0,
+          "value": 0
+        },
+        {
+          "key": "brier",
+          "label": "Brier score of the estimates",
+          "kind": "Mean",
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

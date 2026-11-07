@@ -38,6 +38,23 @@ JSON
 NIMSERIES="$("${SHOOTOUT[@]}" series "$WORK/nim-series.json" --a random --b optimal --lang en --quiet --out "$WORK")"
 grep -q "Brier score of the estimates" "$NIMSERIES/series-report.md"
 
+step "series: the three Nim series files with the random and the optimal player"
+NIM_SERIES="$("${SHOOTOUT[@]}" series shootouts/nim.json --a random --b optimal --lang en --quiet --out "$WORK")"
+"${SHOOTOUT[@]}" series shootouts/nim-vs-optimal.json --a random --lang en --quiet --out "$WORK" >/dev/null
+"${SHOOTOUT[@]}" series shootouts/nim-misere.json --a optimal --b random --lang en --quiet --out "$WORK" >/dev/null
+test -f "$NIM_SERIES/series-report.md" && test -d "$NIM_SERIES/01-A-first" && test -d "$NIM_SERIES/02-B-first"
+
+step "replay, debrief and report of a Nim series"
+"${SHOOTOUT[@]}" replay "$NIM_SERIES/01-A-first" --show-thoughts > "$WORK/nim-replay.txt"
+head -n 12 "$WORK/nim-replay.txt"
+"${SHOOTOUT[@]}" debrief "$NIM_SERIES/01-A-first"
+"${SHOOTOUT[@]}" report "$NIM_SERIES"
+grep -q "Metrics of random" "$NIM_SERIES/series-report.md"
+
+step "play: Nim with the heaps, the temptation and the resignation as game options"
+MATCH="$("${SHOOTOUT[@]}" play nim --a random --b optimal --seed 11 --lang en --quiet --game-option 'heaps=[1,4,5]' --game-option temptation=pass --game-option allowResign=true --out "$WORK")"
+grep -q '"gameOptions":{"heaps":\[1,4,5\],"temptation":"pass","allowResign":true}' "$MATCH/events.jsonl"
+
 step "play: quiet mode prints only the directory"
 MATCH="$("${SHOOTOUT[@]}" play split-or-steal --a random --b random --communication off --seed 8 --lang en --quiet --out "$WORK")"
 test -f "$MATCH/events.jsonl" && test -f "$MATCH/match.json" && test -f "$MATCH/report.md"
@@ -55,14 +72,10 @@ JSON
 SERIES="$("${SHOOTOUT[@]}" series "$WORK/series.json" --a random --b random --quiet --out "$WORK")"
 test -f "$SERIES/series.json" && test -f "$SERIES/series-report.md"
 
-step "replay"
+step "replay, debrief and report of a Split or Steal series"
 "${SHOOTOUT[@]}" replay "$SERIES/01-A-first" --show-thoughts > "$WORK/replay.txt"
 head -n 12 "$WORK/replay.txt"
-
-step "debrief again"
 "${SHOOTOUT[@]}" debrief "$SERIES/01-A-first"
-
-step "report"
 "${SHOOTOUT[@]}" report "$SERIES"
 
 step "play: the optimal player is refused for a game that cannot name the best move"

@@ -1,0 +1,12 @@
+{
+  // Standard series of the Nim episode: the same two models play two matches on the heaps 3, 4 and 5.
+  // The models stay on their seats and swap the starting seat. Pass them with --a and --b.
+  // The game has no messages between players by default; the setting is written out here for clarity.
+  "game": "nim",
+  "seed": 2027,
+  "language": "de",
+  "matches": [
+    { "communication": false, "firstSeat": "A", "options": { "heaps": [3, 4, 5] } },
+    { "communication": false, "firstSeat": "B", "options": { "heaps": [3, 4, 5] } }
+  ]
+}
