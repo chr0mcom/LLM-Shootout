@@ -30,11 +30,27 @@ public interface IGameDefinition
     /// <summary>Game specific parts of match and series reports. Null (the default) if the generic report is enough.</summary>
     IGameAnalyzer? Analyzer => null;
 
+    /// <summary>
+    /// Whether messages between players are on when nobody asks for a setting: a command line option, a series file or
+    /// a request of the web interface decides first. The default is off; a game that is played with messages says so here.
+    /// </summary>
+    bool DefaultCommunication => false;
+}
+
+/// <summary>Resolves the setting for messages between players in one place for the command line, series files and the web interface.</summary>
+public static class GameDefinitionExtensions
+{
+    /// <summary>The requested setting if there is one, otherwise <see cref="IGameDefinition.DefaultCommunication"/> of the game.</summary>
+    public static bool ResolveCommunication(this IGameDefinition definition, bool? requested)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return requested ?? definition.DefaultCommunication;
+    }
 }
 
 /// <summary>Everything that varies between two matches of the same game.</summary>
 /// <param name="Seed">Seed for all random decisions of the game.</param>
-/// <param name="Communication">True if players may talk to each other.</param>
+/// <param name="Communication">True if messages between players are on. Already resolved: see <see cref="GameDefinitionExtensions.ResolveCommunication"/>.</param>
 /// <param name="Language">Prompt language, <c>de</c> or <c>en</c>.</param>
 /// <param name="FirstSeat">The seat that starts when the game has an order.</param>
 /// <param name="Options">Game specific options from the series file (pot size, rounds, roles), or null for defaults.</param>

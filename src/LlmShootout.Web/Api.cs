@@ -57,7 +57,7 @@ internal static class Api
     private static async Task<IResult> ConfigAsync(IPlayerSource players, IOptions<WebOptions> web, RunManager runs, CancellationToken cancellationToken) =>
         Results.Ok(new
         {
-            games = GameCatalog.All.Select(g => new { id = g.Id, name = g.DisplayName }),
+            games = GameCatalog.All.Select(g => new { id = g.Id, name = g.DisplayName, defaultCommunication = g.DefaultCommunication }),
             players = await players.SuggestionsAsync(cancellationToken),
             maxCostCapUsd = web.Value.MaxCostCapUsd,
             defaultMaxCostUsd = web.Value.DefaultMaxCostUsd,

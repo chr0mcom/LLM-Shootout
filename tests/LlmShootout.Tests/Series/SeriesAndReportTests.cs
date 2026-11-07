@@ -155,6 +155,21 @@ public sealed class SeriesAndReportTests : IDisposable
     }
 
     [Fact]
+    public async Task A_series_file_without_a_message_setting_uses_the_default_of_the_game()
+    {
+        var file = WriteSeries(
+            "defaults.json",
+            """{ "game": "split-or-steal", "seed": 5, "matches": [ { "firstSeat": "A" }, { "communication": false }, { "communication": true } ] }""");
+        var directory = Path.Combine(_harness.Directory, "defaults");
+        var plan = new SeriesPlan(_definition, file, new RandomPlayer(1), new RandomPlayer(2), "en", new MatchOptions(), directory);
+
+        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
+
+        Assert.Equal([null, false, true], file.Matches.Select(m => m.Communication));
+        Assert.Equal([true, false, true], summary.Entries.Select(e => MatchRecord.Load(Path.Combine(directory, e.Directory)).Communication));
+    }
+
+    [Fact]
     public async Task A_match_of_a_series_does_not_depend_on_the_matches_before_it()
     {
         var (summary, directory) = await RunSeriesAsync("en");
@@ -163,7 +178,7 @@ public sealed class SeriesAndReportTests : IDisposable
         var seed = file.Seed + 2;
         var alone = new MatchPlan(
             _definition,
-            new GameSetup(seed, second.Communication, "en", second.FirstSeat ?? Seat.A, second.Options),
+            new GameSetup(seed, _definition.ResolveCommunication(second.Communication), "en", second.FirstSeat ?? Seat.A, second.Options),
             new Dictionary<Seat, IPlayer> { [Seat.A] = new RandomPlayer(seed + SeriesRunner.RandomSeedOffsetA), [Seat.B] = new RandomPlayer(seed + SeriesRunner.RandomSeedOffsetB) },
             new MatchOptions(),
             Path.Combine(_harness.Directory, "alone"));

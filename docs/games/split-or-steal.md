@@ -43,6 +43,9 @@ In a series file, per match (`"options": { ... }`), or on the command line with 
 
 Wrong or unknown options are rejected with a message, before anything is played.
 
+Messages between players are on by default for this game (`DefaultCommunication`). `--communication off` on the command line, `"communication": false`
+in a match of a series file, or the box of the web interface switches them off; an explicit value always wins over the default of the game.
+
 ## Report
 
 The general report of a match shows the course of the match, the decisions, the points and the counters of the arena: invalid

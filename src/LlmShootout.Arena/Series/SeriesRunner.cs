@@ -72,7 +72,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
         var first = match.FirstSeat ?? (new SeededRng(seed).NextBool(0.5) ? Seat.A : Seat.B);
         return new MatchPlan(
             plan.Definition,
-            new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
+            new GameSetup(seed, plan.Definition.ResolveCommunication(match.Communication), plan.Language, first, match.Options),
             new Dictionary<Seat, IPlayer> { [Seat.A] = Fresh(plan.PlayerA, seed + RandomSeedOffsetA), [Seat.B] = Fresh(plan.PlayerB, seed + RandomSeedOffsetB) },
             plan.Options,
             MatchPaths.SeriesMatch(plan.Directory, number, first));

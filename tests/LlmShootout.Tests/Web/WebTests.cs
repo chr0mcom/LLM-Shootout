@@ -190,6 +190,29 @@ public sealed class WebTests : IDisposable
         [.. stream.Split('\n').Where(l => l.StartsWith("data: {\"type\"", StringComparison.Ordinal))];
 
     [Fact]
+    public async Task The_configuration_names_the_default_of_the_messages_setting_of_every_game()
+    {
+        var config = await JsonOf(await _factory.NewClient(signedIn: true).GetAsync("/api/config", Token));
+
+        Assert.True(config["games"]![0]!["defaultCommunication"]!.GetValue<bool>());
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task A_request_resolves_the_messages_setting_from_its_value_or_the_default_of_the_game(bool? requested, bool expected)
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var request = new JsonObject { ["game"] = "split-or-steal", ["a"] = "random", ["b"] = "random", ["seed"] = 7, ["communication"] = requested };
+
+        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", request, Token));
+        var stream = await (await client.GetAsync($"/api/runs/{run["id"]}/stream", Token)).Content.ReadAsStringAsync(Token);
+
+        Assert.Contains($"\"communication\":{(expected ? "true" : "false")}", ProtocolLines(stream)[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_match_streams_from_its_start_to_its_end()
     {
         var (_, stream) = await PlayRandomMatchAsync(_factory.NewClient(signedIn: true));

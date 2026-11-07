@@ -16,13 +16,14 @@ public static class InfoCommands
         var command = new Command("games", "Lists the available games.");
         command.SetAction(_ =>
         {
-            var table = new Table().AddColumns("Id", "Name", "Summary");
+            var table = new Table().AddColumns("Id", "Name", "Messages", "Summary");
             foreach (var game in GameCatalog.All)
             {
-                table.AddRow(Markup.Escape(game.Id), Markup.Escape(game.DisplayName), Markup.Escape(game.Summary));
+                table.AddRow(Markup.Escape(game.Id), Markup.Escape(game.DisplayName), game.DefaultCommunication ? "on" : "off", Markup.Escape(game.Summary));
             }
 
             env.Console.Write(table);
+            env.Console.WriteLine("Messages: the default of the setting for messages between players; --communication on|off overrides it.");
             env.Console.WriteLine("Prompt languages: " + string.Join(", ", ArenaTemplates.Languages));
             return 0;
         });

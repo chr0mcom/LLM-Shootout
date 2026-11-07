@@ -11,7 +11,7 @@ time, seat A wins if the choices match, seat B wins if they differ. The same cod
 
 | Piece | File | Purpose |
 |---|---|---|
-| `IGameDefinition` | `<Game>Definition.cs` | id, name, wording templates, creates games, extra debriefing questions |
+| `IGameDefinition` | `<Game>Definition.cs` | id, name, wording templates, creates games, extra debriefing questions, default of the setting for messages between players (`DefaultCommunication`, off unless the game says otherwise) |
 | `IGame` | `<Game>Game.cs` | the rules and the hidden state of one match |
 | Wording | `Prompts/<game>.de.md`, `Prompts/<game>.en.md` | rules, views, instructions, error messages, facts |
 | Registration | `GameCatalog.cs` | one line, so readers can see where games are registered |

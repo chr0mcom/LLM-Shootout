@@ -17,7 +17,7 @@ public sealed class LiveView(IAnsiConsole console, bool showThoughts, CostMeter?
         switch (matchEvent)
         {
             case MatchStartedEvent s:
-                Line($"[bold]{Markup.Escape(s.GameId)}[/]  A: {Markup.Escape(s.Players[Arena.Games.Seat.A].Name)}  vs  B: {Markup.Escape(s.Players[Arena.Games.Seat.B].Name)}  [dim](seed {s.Seed}, communication {(s.Communication ? "on" : "off")}, {s.Language})[/]");
+                Line($"[bold]{Markup.Escape(s.GameId)}[/]  A: {Markup.Escape(s.Players[Arena.Games.Seat.A].Name)}  vs  B: {Markup.Escape(s.Players[Arena.Games.Seat.B].Name)}  [dim](seed {s.Seed}, messages {(s.Communication ? "on" : "off")}, {s.Language})[/]");
                 break;
             case ModelCallEvent { Purpose: Arena.Players.CallPurpose.Turn } c when c.Class != CallClass.Valid:
                 Line($"  [yellow]![/] {c.Seat} attempt {c.Attempt}: {c.Class}{Detail(c)}");

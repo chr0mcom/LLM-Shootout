@@ -253,7 +253,7 @@ class Arena {
       h('span', { class: 'game' }, words(this.game.gameId)),
       h('span', { class: 'clock' }, clock((end - this.startedAt) / 1000)),
       h('span', {}, `seed ${this.game.seed}, ${this.game.language}`),
-      h('span', {}, this.game.communication ? 'talking allowed' : 'silent'),
+      h('span', {}, this.game.communication ? 'messages on' : 'messages off'),
       h('span', {}, `first: seat ${this.game.firstSeat}`),
       h('span', {}, money(total)));
   }
@@ -392,9 +392,18 @@ async function loadHistory() {
   markHistory();
 }
 
+let games = [];
+
+function applyGameDefaults() {
+  const game = games.find((g) => g.id === $('#game').value);
+  if (game) $('#start').elements.communication.checked = game.defaultCommunication;
+}
+
 async function loadConfig() {
   const config = await (await api('/api/config')).json();
-  $('#game').replaceChildren(...config.games.map((g) => h('option', { value: g.id }, g.name)));
+  games = config.games;
+  $('#game').replaceChildren(...games.map((g) => h('option', { value: g.id }, g.name)));
+  applyGameDefaults();
   $('#players').replaceChildren(...config.players.map((p) => h('option', { value: p })));
   $('#maxCost').value = config.defaultMaxCostUsd;
   setRunState(config.current);
@@ -450,6 +459,7 @@ function safeDecode(text) {
 async function main() {
   const config = await loadConfig();
   await loadHistory();
+  $('#game').addEventListener('change', applyGameDefaults);
   $('#start').addEventListener('submit', (e) => { e.preventDefault(); startMatch(e.target); });
   $('#cancelButton').addEventListener('click', async () => { if (current) await api(`/api/runs/${current.id}/cancel`, { method: 'POST' }); });
   const wanted = safeDecode(location.hash.slice(1));

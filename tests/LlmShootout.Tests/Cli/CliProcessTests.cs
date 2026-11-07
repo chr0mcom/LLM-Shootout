@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using LlmShootout.Arena.Protocol;
 
 namespace LlmShootout.Tests.Cli;
 
@@ -55,6 +56,29 @@ public sealed class CliProcessTests : IDisposable
 
         Assert.Equal(0, exit);
         Assert.Contains("split-or-steal", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Games_shows_the_default_of_the_messages_setting()
+    {
+        var (_, output, _) = await RunAsync("games");
+
+        Assert.Matches(@"split-or-steal\s+│\s+Split or Steal\s+│\s+on\b", output);
+        Assert.Contains("messages between players", output, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData("on", true)]
+    [InlineData("off", false)]
+    public async Task Play_resolves_the_messages_setting_from_the_option_or_the_default_of_the_game(string? option, bool expected)
+    {
+        string[] args = ["play", "split-or-steal", "--a", "random", "--b", "random", "--seed", "3", "--lang", "en", "--quiet", "--out", _work];
+
+        var (exit, output, _) = await RunAsync(option is null ? args : [.. args, "--communication", option]);
+
+        Assert.Equal(0, exit);
+        Assert.Equal(expected, MatchRecord.Load(output.Trim()).Communication);
     }
 
     [Fact]

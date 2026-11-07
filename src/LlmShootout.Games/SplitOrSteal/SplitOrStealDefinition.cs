@@ -20,6 +20,9 @@ public sealed class SplitOrStealDefinition : IGameDefinition
     public string Summary => "Two players choose simultaneously between two options; the payout depends on both choices.";
 
     /// <inheritdoc />
+    public bool DefaultCommunication => true;
+
+    /// <inheritdoc />
     public ITemplateSource Templates { get; } = MarkdownTemplates.FromResources(
         typeof(SplitOrStealDefinition).Assembly,
         "LlmShootout.Games.SplitOrSteal.split-or-steal",

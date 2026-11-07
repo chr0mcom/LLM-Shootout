@@ -11,7 +11,7 @@ Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (A
 
 ## What you see
 
-- **New match** (left): game, the two players, prompt language, whether they may talk, whether they are asked
+- **New match** (left): game, the two players, prompt language, whether there are messages between players (the box starts with the default of the selected game), whether they are asked
   afterwards, who starts, a seed, and the spending limit. A player is `random`, `<endpoint>:<model>` such as
   `ollama:llama3.2`, or an OpenRouter slug. The fields suggest every model that the configured endpoints
   offer; you can type anything else.

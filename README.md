@@ -69,7 +69,7 @@ No OpenRouter account? Any OpenAI-compatible API works as a named endpoint, and 
 The output of `play split-or-steal --a random --b random --seed 7 --lang en`:
 
 ```text
-split-or-steal  A: random  vs  B: random  (seed 7, communication on, en)
+split-or-steal  A: random  vs  B: random  (seed 7, messages on, en)
 A: Let us see what happens.
 B: Trust me.
 A: Let us see what happens.
@@ -123,7 +123,7 @@ A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slu
 
 | Option | Meaning |
 |---|---|
-| `--communication on\|off` | may the players talk (`play`, default on) |
+| `--communication on\|off` | messages between players (`play`); without it the default of the game applies, `shootout games` shows it |
 | `--seed <n>`, `--first-seat A\|B` | reproducibility (`play`); a series takes its seed from the file |
 | `--lang de\|en` | prompt language (default `de`) |
 | `--game-option key=value` | game specific option, repeatable (for example `pot=1000`; `play` only, a series takes them from the file) |

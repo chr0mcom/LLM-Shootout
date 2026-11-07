@@ -21,7 +21,7 @@ public static class PlayCommand
     {
         var run = new RunOptionSet();
         var game = new Argument<string>("game") { Description = "Game id, see: shootout games" };
-        var communication = new Option<string>("--communication") { Description = "Players may talk: on (default) or off.", DefaultValueFactory = _ => "on" };
+        var communication = new Option<string?>("--communication") { Description = "Messages between players: on or off. Default: the setting of the game, see: shootout games." };
         communication.AcceptOnlyFromAmong("on", "off");
         var seed = new Option<long?>("--seed") { Description = "Seed for all random decisions. Default: derived from the clock; it is printed and stored." };
         var first = new Option<string?>("--first-seat") { Description = "Seat that starts, A or B. Default: the seed decides." };
@@ -42,7 +42,7 @@ public static class PlayCommand
             var firstSeat = parse.GetValue(first) is { } f ? ParseSeat(f) : new SeededRng(matchSeed).NextBool(0.5) ? Seat.A : Seat.B;
             var setup = new GameSetup(
                 matchSeed,
-                parse.GetRequiredValue(communication) == "on",
+                definition.ResolveCommunication(parse.GetValue(communication) is { } requested ? requested == "on" : null),
                 settings.Language ?? ArenaTemplates.DefaultLanguage,
                 firstSeat,
                 RunOptionSet.ParseGameOptions(parse.GetValue(gameOption)));
