@@ -15,7 +15,8 @@ time, seat A wins if the choices match, seat B wins if they differ. The same cod
 | `IGame` | `<Game>Game.cs` | the rules and the hidden state of one match |
 | Wording | `Prompts/<game>.de.md`, `Prompts/<game>.en.md` | rules, views, instructions, error messages, facts |
 | Registration | `GameCatalog.cs` | one line, so readers can see where games are registered |
-| (optional) `IGameAnalyzer` | | game specific report sections and the metrics that the series report summarizes per player (`SeriesMetrics`) |
+| (optional) `IGameAnalyzer` | `<Game>Analyzer.cs` | game specific report sections and the metrics that the series report summarizes per player (`SeriesMetrics`) |
+| (optional) `IGameOracle` | on the game class | rates the position before every move and names the best moves; the arena then rates every move, and the player type `optimal` can play the game (see "A game with an oracle") |
 
 ## Step by step
 
@@ -195,6 +196,7 @@ sequenceDiagram
 | Options (pot, rounds) | parse `GameSetup.Options` in `Create`; throw `GameOptionsException` with a helpful message. The options arrive as JSON from a series file, from `--game-option key=value` (the value is JSON if it can be read as JSON: `1000` is a number, `true` a boolean, `[1,4,5]` an array, `pass` text, `"1"` the text 1; so `1.5` is a number, `007`, `+5` and `True` are text) and from the field *Game options* of the web interface; check the type of every value |
 | Randomness (hidden number, dice) | `new SeededRng(setup.Seed)`; never `Random`. A match must be reproducible from its seed |
 | Numbers per player over a series | return `SeriesMetric`s from `IGameAnalyzer.SeriesMetrics`: a `Sum`, a `Ratio` of two counts (sum of the numerators over the sum of the denominators, shown in percent) or a `Mean` (the same division, shown as a plain number, for averages such as the Brier score); a denominator of 0 shows as "n/a". The series report summarizes exactly these, per player over both seats. Without metrics it has no table per player. The general counts (rejected answers, rule violations, resignations, exhausted turns) and, for a game with an oracle, the figures for play strength and calibration (`Strength`, `Calibration`, each a `Fraction` with its number where it is a mean or a rate) come from `PlayMetrics.For(match, seat)`; use it instead of counting events again |
+| A question of the debriefing that only this game asks | return a `DebriefingQuestion` from `ExtraQuestions(setup)` (the setup decides whether it is asked, as with `used_pass` in Nim) and word it in both template files (Nim uses the keys `debrief.q.<key>`). Players without a model answer with the neutral standard; set `SampleAnswer` (a JSON literal such as `"false"`) where that standard would contradict what the player did |
 | A random player | implement `SampleLegalMove` so that it always returns a legal move; the random player and the `random` debriefing rely on it |
 
 ## A game with an oracle
@@ -214,10 +216,21 @@ interface on the game ([ADR 0019](decisions/0019-oracle-rates-every-move.md), [A
    and 50 in a drawn or unknown position, so the meaning you name should be "your chance of winning in percent". The reports then show the calibration.
 5. **Test it.** Compare `Assess` with an independent search for small positions, play `optimal` against `RandomPlayer` from both seats and check that it
    never gives up a won position (`TakeAwayGame` and `OptimalPlayerTests` show both), and check that a game without the interface is refused
-   when a player of the type `optimal` is chosen: the match is rejected when it is set up, before any directory is created or any model is called.
+   when a player of the type `optimal` is chosen: the match is rejected when it is set up (`MatchPreflight.Ensure`), before any directory is created or any model is called.
 
 A game without `IGameOracle` needs none of this. Its reports have no section for play strength, and `optimal` is refused with the message
 `Player 'optimal' needs a game that can name the best move; '<id>' cannot.`
+
+### Checklist for a game with an oracle
+
+- [ ] `IGameOracle` is implemented on the game class (not on the definition); `Assess` is pure, uses a memo for a search, and returns `Won`, `Lost`, `Drawn` or `Unknown` for the seat to move
+- [ ] The best moves are regular moves in the normalized form of `Check`, in a fixed order; the list is empty in a lost or unknown position
+- [ ] `ChooseMove` decides ties only with the given `rng`, has a documented fixed move for a lost position, and never returns a resignation or a forbidden action
+- [ ] A resignation and a forbidden action are not rated as mistakes; they are not among the best moves and are counted as rule compliance
+- [ ] A turn that asks for an `estimate` names its meaning ("your chance of winning in percent"), so that the calibration and the Brier score can be computed
+- [ ] The game declares `SeriesMetrics` for the figures that the series report summarizes (wins, mistake rate, and so on); a denominator of 0 shows as "n/a", never as 0
+- [ ] Tests: `Assess` against independent references for small positions, `optimal` against `RandomPlayer` from both seats, a match through the arena with the `oracle` facts, and the invariant that no analysis fact reaches a prompt or a debriefing
+- [ ] The documentation page of the game says how the oracle works, which move `optimal` plays in a lost position, and which figures are not applicable when
 
 ## Checklist
 
@@ -240,5 +253,6 @@ A game without `IGameOracle` needs none of this. Its reports have no section for
 
 ## Where to look next
 
-[Split or Steal](games/split-or-steal.md) is the full example: options, phases, simultaneous decisions, an
-exhausted-attempts rule, a game specific debriefing question and report analysis.
+[Nim](games/nim.md) is the full example of a game with an oracle: validated options, an exact oracle, the player `optimal`, an accepted but forbidden action,
+the self-assessment, game specific debriefing questions, an analyzer and series metrics. [Split or Steal](games/split-or-steal.md) shows simultaneous decisions, a phase of messages
+and an exhausted-attempts rule in a game without an oracle.

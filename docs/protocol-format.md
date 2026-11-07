@@ -4,7 +4,7 @@ Every match writes a directory. The protocol is the single source of truth: repo
 debriefings are computed from it, and nothing computed later ever changes it.
 
 ```text
-matches/2026-11-20_split-or-steal_gpt-oss-20b_vs_claude-haiku-5.5_01/
+matches/2026-11-20_nim_gpt-oss-20b_vs_optimal_01/
 ├─ events.jsonl                  the protocol, one JSON event per line, append-only
 ├─ match.json                    summary: result, key figures, cost, duration
 ├─ report.md                     readable report
@@ -12,7 +12,7 @@ matches/2026-11-20_split-or-steal_gpt-oss-20b_vs_claude-haiku-5.5_01/
 ```
 
 A series is a directory `..._series/` with one match directory per entry of the series file (`01-A-first`,
-`02-B-first`, `03-A-first`: the number and the seat that starts), plus `series.json` and `series-report.md`.
+`02-B-first`: the number and the seat that starts), plus `series.json` and `series-report.md`.
 
 ## Guarantees
 
@@ -39,7 +39,7 @@ message that names both versions. Readers must ignore unknown fields. `ProtocolV
 | 2 | The self-assessment of a turn: `estimate` in `turn` events (and in `model_call.parsed`), and the kind of an accepted move: `moveKind` in `turn` events, plus the analysis fact `rule_violation`. Version 1 events have none; a missing `moveKind` reads as a regular move. |
 
 Naming: property names are camelCase; enum values are written by name (`Turn`, `Everyone`, `A`); keys of
-dictionaries are written unchanged (`A`, `B`, `rules_followed`, `split-or-steal`).
+dictionaries are written unchanged (`A`, `B`, `rules_followed`, `nim`).
 
 ## Events
 
@@ -76,7 +76,7 @@ One call to a player: a turn or a debriefing.
 | `rawExchange` | request and response body of the last HTTP attempt, without headers |
 
 ```json
-{"type":"model_call","turnId":"talk-1","purpose":"Turn","seat":"A","attempt":1,"messages":[{"role":"System","text":"..."},{"role":"User","text":"..."}],"rawContent":"{\"thought\":\"...\",\"message\":\"Let us split.\",\"move\":null}","parsed":{"thought":"...","message":"Let us split.","fromReasoning":false,"extraKeys":[]},"class":"valid","violations":[],"costUnknown":false,"at":"2026-11-06T10:14:10.3674841+00:00","schemaVersion":1}
+{"type":"model_call","turnId":"move-1","purpose":"Turn","seat":"A","attempt":1,"messages":[{"role":"System","text":"..."},{"role":"User","text":"..."}],"rawContent":"{\"thought\":\"...\",\"move\":\"3:1\",\"estimate\":75}","parsed":{"thought":"...","move":"3:1","estimate":"75","fromReasoning":false,"extraKeys":[]},"class":"valid","violations":[],"costUnknown":false,"at":"2026-11-06T10:14:10.3674841+00:00","schemaVersion":2}
 ```
 
 ### `message`
@@ -84,7 +84,7 @@ One call to a player: a turn or a debriefing.
 A public message became visible. `text` is absent for silence.
 
 ```json
-{"type":"message","turnId":"talk-1","seat":"A","text":"Let us split.","silent":false,"truncated":false,"identityHits":[],"at":"...","schemaVersion":1}
+{"type":"message","turnId":"move-1","seat":"A","text":"Your move.","silent":false,"truncated":false,"identityHits":[],"at":"...","schemaVersion":2}
 ```
 
 `identityHits` entries look like `opponent:Provider:ChatGPT` (`self`, `opponent` or `ambiguous`; the marker type comes from the scanner).
@@ -102,7 +102,7 @@ The arena accepts it at once, without a correction hint and without using up ano
 is neither: the player never delivered an acceptable move, and the turn has no `moveKind`.
 
 ```json
-{"type":"turn","turnId":"guess-1","kind":"guess","seat":"A","move":"10","status":"played","thought":"...","thoughtTruncated":false,"attempts":1,"invalidAnswers":0,"refusals":0,"tokenLimitHits":0,"estimate":73,"at":"...","schemaVersion":2}
+{"type":"turn","turnId":"move-1","kind":"take","seat":"A","move":"3:1","status":"played","thought":"Random move.","thoughtTruncated":false,"attempts":1,"invalidAnswers":0,"refusals":0,"tokenLimitHits":0,"estimate":75,"at":"...","schemaVersion":2}
 ```
 
 ### `fact`
@@ -144,7 +144,7 @@ oracle existed; every figure that depends on it is "not applicable" there. The f
 ```
 
 ```json
-{"type":"fact","turnId":"decide","kind":"decision","audience":"Everyone","seat":"A","text":"Decision (Seat A): split","template":{"key":"fact.decision","values":{"decision":"split"}},"data":{"decision":"split"},"at":"...","schemaVersion":1}
+{"type":"fact","turnId":"move-1","kind":"take","audience":"Everyone","seat":"A","text":"Move (Seat A): 1 from heap 3. Heaps now: 3, 4, 4","template":{"key":"fact.take","values":{"heap":"3","count":"1","heaps":"3, 4, 4"}},"data":{"heap":"3","count":"1","heaps_after":"3,4,4"},"at":"...","schemaVersion":2}
 ```
 
 ### `match_finished`

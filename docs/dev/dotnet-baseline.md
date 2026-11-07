@@ -34,7 +34,7 @@ CS9282), so `Seat.All` reads a field of the enclosing class; and the analyzer ru
 
 Older features used on purpose: collection expressions (`[]`, `[.. items]`) throughout; primary constructors for
 services (`TurnExecutor`, `PromptBuilder`, `Debriefer`, `PlayerGateway`) and positional records for events and results;
-file-scoped namespaces; list, property and tuple patterns (`SplitOrStealGame.Resolve`, `LiveView.Handle`,
+file-scoped namespaces; list, property and tuple patterns (`NimGame.Play`, `NimGame.Check`, `LiveView.Handle`,
 `ChatClientFactory.IsRetryable`); `[GeneratedRegex]` (`MarkdownTemplates`); `[LoggerMessage]` (`MatchLog`);
 `TimeProvider` (`MatchRunner`, tests use `FakeTimeProvider`); `AsyncLocal` for the per-call capture (`CallCapture`).
 
@@ -111,9 +111,12 @@ Analyzers: the built-in .NET analyzers at `AnalysisLevel` `latest-recommended` w
 |---|---|
 | `System.Text.Json` source generation with polymorphic events (`[JsonPolymorphic]`, `[JsonDerivedType]`) | `Protocol/MatchEvents.cs`, `Protocol/ProtocolJson.cs` |
 | `System.Text.Json` strict reading (`RespectRequiredConstructorParameters`, `UnmappedMemberHandling.Disallow`) | `Series/SeriesFile.cs` |
-| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `ModelAccess/ChatClientFactory.cs`, `OpenRouter/ChatPlayer.cs` |
-| `Microsoft.Extensions.Http.Resilience` (`ResilienceHandler`, custom pipeline) | `OpenRouter/ChatClientFactory.cs` |
+| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `ModelAccess/ChatClientFactory.cs`, `ModelAccess/ChatPlayer.cs` |
+| `Microsoft.Extensions.Http.Resilience` (`ResilienceHandler`, custom pipeline) | `ModelAccess/ChatClientFactory.cs` |
 | Generic Host, options pattern with validation (`ValidateDataAnnotations`), logging to stderr | `src/LlmShootout.Cli/Program.cs` |
-| `DelegatingHandler` for request rewriting and raw capture | `OpenRouter/EndpointRequestHandler.cs`, `OpenRouter/RawCaptureHandler.cs` |
+| `DelegatingHandler` for request rewriting and raw capture | `ModelAccess/EndpointRequestHandler.cs`, `ModelAccess/RawCaptureHandler.cs` |
 | Central Package Management, `.slnx`, Microsoft.Testing.Platform runner | `Directory.Packages.props`, `LlmShootout.slnx`, `global.json` |
 | `dotnet test --coverlet` (coverlet.MTP) | `scripts/coverage.sh` |
+| `JsonNode` for game options, read and checked by the game (`GameOptionsException`) | `Games/Nim/NimOptions.cs`, `Series/SeriesFile.cs` |
+| An exact oracle with a thread-safe memo (`ConcurrentDictionary`, keyed by the sorted heaps) shared by all matches of a variant | `Games/Nim/NimOracle.cs` |
+| A default interface member for an optional capability (`IGameAnalyzer.SeriesMetrics`) | `Arena/Games/IGameAnalyzer.cs` |
