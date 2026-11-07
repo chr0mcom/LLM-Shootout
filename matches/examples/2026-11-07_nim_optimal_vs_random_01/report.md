@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Datum | 2026-11-07 14:31 UTC |
+| Datum | 2026-11-07 14:55 UTC |
 | Seed | 2 |
 | Sprache der Prompts | de |
 | Nachrichten zwischen den Spielern | aus |
@@ -12,7 +12,7 @@
 | Ausgang | a_wins |
 | Dauer | 00:00:00 |
 | Kosten | 0.0000 |
-| Version | 1.0.0 (3ff649b2c613) |
+| Version | 1.0.0 (339342359cdd) |
 
 ## Ergebnis
 
