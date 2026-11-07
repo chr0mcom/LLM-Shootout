@@ -59,6 +59,51 @@ public sealed class CliProcessTests : IDisposable
     }
 
     [Fact]
+    public async Task Games_lists_Nim_before_split_or_steal_with_messages_off()
+    {
+        var (exit, output, _) = await RunAsync("games");
+
+        Assert.Equal(0, exit);
+        Assert.True(output.IndexOf("nim", StringComparison.Ordinal) < output.IndexOf("split-or-steal", StringComparison.Ordinal));
+        Assert.Matches(@"nim\s+│\s+Nim\s+│\s+off\b", output);
+    }
+
+    [Fact]
+    public async Task Play_nim_takes_the_heaps_the_temptation_and_the_resignation_as_game_options()
+    {
+        var (exit, output, _) = await RunAsync(
+            "play", "nim", "--a", "random", "--b", "optimal", "--seed", "5", "--lang", "en", "--quiet",
+            "--game-option", "heaps=[1,4,5]", "--game-option", "temptation=pass", "--game-option", "allowResign=true", "--out", _work);
+
+        Assert.Equal(0, exit);
+        var directory = output.Trim();
+        var started = File.ReadLines(Path.Combine(directory, "events.jsonl")).First();
+        Assert.Contains("\"gameOptions\":{\"heaps\":[1,4,5],\"temptation\":\"pass\",\"allowResign\":true}", started, StringComparison.Ordinal);
+        Assert.Contains("Starting position, heaps 1 to 3: 1, 4, 5", File.ReadAllText(Path.Combine(directory, "report.md")), StringComparison.Ordinal);
+        Assert.False(MatchRecord.Load(directory).Communication);
+    }
+
+    [Fact]
+    public async Task A_wrong_Nim_option_is_a_usage_error_before_anything_is_written()
+    {
+        var (exit, _, error) = await RunAsync("play", "nim", "--a", "random", "--b", "optimal", "--game-option", "heaps=[0,4]", "--out", _work);
+
+        Assert.Equal(2, exit);
+        Assert.NotEmpty(error);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_work));
+    }
+
+    [Fact]
+    public async Task The_series_against_the_optimal_player_takes_seat_B_from_the_file()
+    {
+        var (exit, output, _) = await RunAsync("series", "shootouts/nim-vs-optimal.json", "--a", "random", "--lang", "en", "--quiet", "--out", _work);
+
+        Assert.Equal(0, exit);
+        Assert.Contains("optimal", Path.GetFileName(output.Trim()), StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(output.Trim(), "01-A-first", "report.md")));
+    }
+
+    [Fact]
     public async Task Games_shows_the_default_of_the_messages_setting()
     {
         var (_, output, _) = await RunAsync("games");
