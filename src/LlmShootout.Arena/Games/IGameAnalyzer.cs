@@ -14,6 +14,9 @@ public interface IGameAnalyzer
     /// <summary>Sections for the report of one match.</summary>
     IReadOnlyList<ReportSection> AnalyzeMatch(MatchRecord match);
 
-    /// <summary>Sections for the report of a series, for example the comparison with and without communication.</summary>
-    IReadOnlyList<ReportSection> AnalyzeSeries(IReadOnlyList<MatchRecord> matches);
+    /// <summary>
+    /// The numbers the series report summarizes per player. The default is none, and then the series report has no
+    /// table per player.
+    /// </summary>
+    IReadOnlyList<SeriesMetric> SeriesMetrics => [];
 }

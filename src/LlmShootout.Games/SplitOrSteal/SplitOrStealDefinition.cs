@@ -13,7 +13,7 @@ public sealed class SplitOrStealDefinition : IGameDefinition
     /// <summary>Creates the definition with its report analysis.</summary>
     public SplitOrStealDefinition()
     {
-        Analyzer = new SplitOrStealAnalyzer(Templates);
+        Analyzer = new SplitOrStealAnalyzer();
     }
 
     /// <inheritdoc />

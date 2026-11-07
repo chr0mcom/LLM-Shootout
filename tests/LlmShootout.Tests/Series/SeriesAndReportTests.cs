@@ -7,6 +7,7 @@ using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Reports;
 using LlmShootout.Arena.Series;
 using LlmShootout.Games.SplitOrSteal;
+using LlmShootout.Tests.TestGames;
 using Microsoft.Extensions.Time.Testing;
 
 namespace LlmShootout.Tests.Series;
@@ -18,12 +19,27 @@ public sealed class SeriesAndReportTests : IDisposable
 
     public void Dispose() => _harness.Dispose();
 
-    private static string StandardSeries => Path.Combine(Snapshot.RepositoryRoot, "shootouts", "split-or-steal.json");
+    private SeriesFile StandardSeries() => WriteSeries(
+        "standard.json",
+        """
+        { "game": "split-or-steal", "seed": 2027, "matches": [
+            { "communication": true, "firstSeat": "A" },
+            { "communication": true, "firstSeat": "B" },
+            { "communication": false, "firstSeat": "A" } ] }
+        """);
+
+    private SeriesFile WriteSeries(string name, string json)
+    {
+        Directory.CreateDirectory(_harness.Directory);
+        var path = Path.Combine(_harness.Directory, name);
+        File.WriteAllText(path, json);
+        return SeriesFile.Load(path);
+    }
 
     private async Task<(SeriesSummary Summary, string Directory)> RunSeriesAsync(string language = "de")
     {
         var directory = Path.Combine(_harness.Directory, Guid.NewGuid().ToString("N"));
-        var file = SeriesFile.Load(StandardSeries);
+        var file = StandardSeries();
         var plan = new SeriesPlan(_definition, file, new RandomPlayer(1), new RandomPlayer(2), language, new MatchOptions(), directory);
         var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
         return (summary, directory);
@@ -35,7 +51,8 @@ public sealed class SeriesAndReportTests : IDisposable
         var (summary, directory) = await RunSeriesAsync();
 
         Assert.Equal((3, 3, 0), (summary.Matches, summary.Completed, summary.Aborted));
-        Assert.Equal(["01-talk-A-first", "02-talk-B-first", "03-silent-A-first"], summary.Entries.Select(e => e.Directory));
+        Assert.Equal(["01-A-first", "02-B-first", "03-A-first"], summary.Entries.Select(e => e.Directory));
+        Assert.Equal([Seat.A, Seat.B, Seat.A], summary.Entries.Select(e => e.FirstSeat));
         foreach (var entry in summary.Entries)
         {
             Assert.True(File.Exists(Path.Combine(directory, entry.Directory, "events.jsonl")));
@@ -43,12 +60,84 @@ public sealed class SeriesAndReportTests : IDisposable
             Assert.True(File.Exists(Path.Combine(directory, entry.Directory, "report.md")));
         }
 
-        var report = await File.ReadAllTextAsync(Path.Combine(directory, "series-report.md"), TestContext.Current.CancellationToken);
-        Assert.Contains("Vergleich mit und ohne Kommunikation", report, StringComparison.Ordinal);
-        Assert.Contains("| mit | 2 |", report, StringComparison.Ordinal);
-        Assert.Contains("| ohne | 1 |", report, StringComparison.Ordinal);
         using var json = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(directory, "series.json"), TestContext.Current.CancellationToken));
         Assert.Equal(3, json.RootElement.GetProperty("entries").GetArrayLength());
+        Assert.Equal("A", json.RootElement.GetProperty("entries")[0].GetProperty("firstSeat").GetString());
+        Assert.False(json.RootElement.TryGetProperty("pointsTotal", out _));
+        Assert.Equal(0, json.RootElement.GetProperty("players").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task A_game_without_declared_metrics_gets_overview_and_list_but_no_table_per_player()
+    {
+        var (_, directory) = await RunSeriesAsync();
+
+        var report = await File.ReadAllTextAsync(Path.Combine(directory, "series-report.md"), TestContext.Current.CancellationToken);
+
+        Assert.Contains("## Überblick", report, StringComparison.Ordinal);
+        Assert.Contains("| Nr | Verzeichnis | Startsitz | Ausgang | Kosten (USD) |", report, StringComparison.Ordinal);
+        Assert.Contains("[01-A-first](01-A-first/report.md)", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("Kennzahlen", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("Punkte", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("ungültig", report, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Kommunikation", report, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_series_report_summarizes_the_declared_metrics_per_player_over_both_seats()
+    {
+        var file = WriteSeries("guess.json", "{ \"game\": \"number-guess\", \"seed\": 31, \"matches\": [ { \"firstSeat\": \"A\" }, { \"firstSeat\": \"B\" } ] }");
+        var directory = Path.Combine(_harness.Directory, "guess");
+        var plan = new SeriesPlan(new NumberGuessDefinition(), file, new NamedRandomPlayer("alpha", 1), new NamedRandomPlayer("beta", 2), "en", new MatchOptions { Debrief = false }, directory);
+
+        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
+
+        var records = summary.Entries.Select(e => MatchRecord.Load(Path.Combine(directory, e.Directory))).ToArray();
+        Assert.Equal(["alpha", "beta"], summary.Players.Select(p => p.Player));
+        foreach (var player in summary.Players)
+        {
+            var seats = records.SelectMany(r => Seat.All.Where(s => r.Started.Players[s].Name == player.Player).Select(s => (Record: r, Seat: s))).ToArray();
+            var guesses = seats.Sum(x => x.Record.Turns(x.Seat).Count());
+            var hits = seats.Sum(x => x.Record.Result!.Seats[x.Seat].Score);
+            Assert.Equal(["guesses", "hit-rate", "never"], player.Metrics.Select(m => m.Key));
+            Assert.Equal((double)guesses, player.Metrics[0].Value);
+            Assert.Equal(hits / guesses, player.Metrics[1].Value);
+            Assert.Equal((hits, (double)guesses), (player.Metrics[1].Numerator, player.Metrics[1].Denominator!.Value));
+            Assert.Null(player.Metrics[2].Value);
+        }
+    }
+
+    [Fact]
+    public async Task A_metric_without_a_denominator_is_not_applicable_in_report_and_json()
+    {
+        var file = WriteSeries("guess-na.json", "{ \"game\": \"number-guess\", \"seed\": 31, \"matches\": [ { \"firstSeat\": \"A\" } ] }");
+        var directory = Path.Combine(_harness.Directory, "guess-na");
+        var plan = new SeriesPlan(new NumberGuessDefinition(), file, new NamedRandomPlayer("alpha", 1), new NamedRandomPlayer("beta", 2), "en", new MatchOptions { Debrief = false }, directory);
+
+        await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
+
+        var report = await File.ReadAllTextAsync(Path.Combine(directory, "series-report.md"), TestContext.Current.CancellationToken);
+        Assert.Contains("## Metrics of alpha", report, StringComparison.Ordinal);
+        Assert.Contains("| Never measurable | n/a | 0 / 0 |", report, StringComparison.Ordinal);
+        using var json = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(directory, "series.json"), TestContext.Current.CancellationToken));
+        var never = json.RootElement.GetProperty("players")[0].GetProperty("metrics")[2];
+        Assert.Equal("never", never.GetProperty("key").GetString());
+        Assert.Equal(JsonValueKind.Null, never.GetProperty("value").ValueKind);
+    }
+
+    [Fact]
+    public async Task Rebuilding_a_series_report_gives_the_same_report()
+    {
+        var file = WriteSeries("guess-rebuild.json", "{ \"game\": \"number-guess\", \"seed\": 31, \"matches\": [ { \"firstSeat\": \"A\" }, { \"firstSeat\": \"B\" } ] }");
+        var directory = Path.Combine(_harness.Directory, "guess-rebuild");
+        var definition = new NumberGuessDefinition();
+        var plan = new SeriesPlan(definition, file, new NamedRandomPlayer("alpha", 1), new NamedRandomPlayer("beta", 2), "en", new MatchOptions { Debrief = false }, directory);
+        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
+        var records = summary.Entries.Select(e => MatchRecord.Load(Path.Combine(directory, e.Directory))).ToArray();
+
+        var rebuilt = SeriesReportWriter.Summarize(definition, "alpha", "beta", records, "en");
+
+        Assert.Equal(await File.ReadAllTextAsync(Path.Combine(directory, "series-report.md"), TestContext.Current.CancellationToken), SeriesReportWriter.BuildReport(definition, rebuilt, "en"));
     }
 
     [Fact]
@@ -69,7 +158,7 @@ public sealed class SeriesAndReportTests : IDisposable
     public async Task A_match_of_a_series_does_not_depend_on_the_matches_before_it()
     {
         var (summary, directory) = await RunSeriesAsync("en");
-        var file = SeriesFile.Load(StandardSeries);
+        var file = StandardSeries();
         var second = file.Matches[1];
         var seed = file.Seed + 2;
         var alone = new MatchPlan(
@@ -95,7 +184,7 @@ public sealed class SeriesAndReportTests : IDisposable
 
         var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
 
-        Assert.All(summary.Entries, e => Assert.Matches("^0[123]-talk-[AB]-first$", e.Directory));
+        Assert.All(summary.Entries, e => Assert.Matches("^0[123]-[AB]-first$", e.Directory));
         Assert.Equal(3, summary.Matches);
     }
 
@@ -109,7 +198,7 @@ public sealed class SeriesAndReportTests : IDisposable
             costly.Reply(MatchHarness.Answer("t", "hi", "split"), info: MatchHarness.Info(0.02m));
         }
 
-        var plan = new SeriesPlan(_definition, SeriesFile.Load(StandardSeries), costly, new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(harness.Directory, "s"));
+        var plan = new SeriesPlan(_definition, StandardSeries(), costly, new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(harness.Directory, "s"));
         var summary = await new SeriesRunner(new MatchRunner(harness.Cost, harness.Time), harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
 
         Assert.True(summary.Matches < 3);
@@ -163,7 +252,7 @@ public sealed class SeriesAndReportTests : IDisposable
             costly.Reply(MatchHarness.Answer("t", "hi", "split"), info: MatchHarness.Info(0.03m));
         }
 
-        var plan = new SeriesPlan(_definition, SeriesFile.Load(StandardSeries), costly, new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(harness.Directory, "s"));
+        var plan = new SeriesPlan(_definition, StandardSeries(), costly, new RandomPlayer(2), "en", new MatchOptions { Debrief = false }, Path.Combine(harness.Directory, "s"));
         var summary = await new SeriesRunner(new MatchRunner(harness.Cost, harness.Time), harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
 
         Assert.True(harness.Cost.IsExhausted);
@@ -232,4 +321,16 @@ public sealed class SeriesAndReportTests : IDisposable
             Snapshot.Verify($"report-split-or-steal-random.{language}.md", await File.ReadAllTextAsync(Path.Combine(plan.Directory, "report.md"), TestContext.Current.CancellationToken));
         }
     }
+}
+
+/// <summary>A random player with its own name, so that a series has two different players.</summary>
+internal sealed class NamedRandomPlayer(string name, long seed) : IPlayer
+{
+    private readonly RandomPlayer _inner = new(seed);
+
+    public string Name => name;
+
+    public LlmShootout.Arena.Identity.ModelIdentity? Model => null;
+
+    public Task<PlayerReply> RespondAsync(PlayerCall request, CancellationToken cancellationToken) => _inner.RespondAsync(request, cancellationToken);
 }

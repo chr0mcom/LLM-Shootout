@@ -56,23 +56,3 @@ Entscheidung ({who}): keine gültige Entscheidung
 
 ## fact.payout
 Auszahlung ({who}): {points} Punkte
-
-## report.series.title
-Serie: Zusagen, Entscheidungen und Kommunikation
-
-## report.series.matches
-| Partie | Kommunikation | Beginnt | Entscheidung A | Entscheidung B | Punkte A | Punkte B | Ergebnis |
-|---|---|---|---|---|---|---|---|
-
-## report.series.comparison.title
-Vergleich mit und ohne Kommunikation
-
-## report.series.comparison.header
-| Kommunikation | Partien | steal-Quote | beide split | Ø Punkte A | Ø Punkte B |
-|---|---|---|---|---|---|
-
-## report.series.comm.on
-mit
-
-## report.series.comm.off
-ohne

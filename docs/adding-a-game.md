@@ -15,7 +15,7 @@ time, seat A wins if the choices match, seat B wins if they differ. The same cod
 | `IGame` | `<Game>Game.cs` | the rules and the hidden state of one match |
 | Wording | `Prompts/<game>.de.md`, `Prompts/<game>.en.md` | rules, views, instructions, error messages, facts |
 | Registration | `GameCatalog.cs` | one line, so readers can see where games are registered |
-| (optional) `IGameAnalyzer` | | game specific report sections |
+| (optional) `IGameAnalyzer` | | game specific report sections and the metrics that the series report summarizes per player (`SeriesMetrics`) |
 
 ## Step by step
 
@@ -191,6 +191,7 @@ sequenceDiagram
 | Roles (code maker, code breaker) | read them from `GameSetup.Options` in `Create`, so a rematch with swapped roles is configuration |
 | Options (pot, rounds) | parse `GameSetup.Options` in `Create`; throw `GameOptionsException` with a helpful message |
 | Randomness (hidden number, dice) | `new SeededRng(setup.Seed)`; never `Random`. A match must be reproducible from its seed |
+| Numbers per player over a series | return `SeriesMetric`s from `IGameAnalyzer.SeriesMetrics`: a `Sum`, or a `Ratio` of two counts (sum of the numerators over the sum of the denominators; a denominator of 0 shows as "n/a"). The series report summarizes exactly these, per player over both seats. Without metrics it has no table per player |
 | A random player | implement `SampleLegalMove` so that it always returns a legal move; the random player and the `random` debriefing rely on it |
 
 ## Checklist

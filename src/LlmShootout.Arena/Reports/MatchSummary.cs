@@ -57,11 +57,26 @@ public sealed record SeriesSummary(
     decimal CostUsd,
     int CostEstimatedCalls,
     int CostUnknownCalls,
-    IReadOnlyDictionary<Seat, double> PointsTotal,
-    IReadOnlyList<SeriesEntry> Entries);
+    IReadOnlyList<SeriesEntry> Entries,
+    IReadOnlyList<SeriesPlayer> Players);
 
 /// <summary>One match of a series.</summary>
-public sealed record SeriesEntry(string Directory, bool Communication, string? Outcome, decimal CostUsd);
+public sealed record SeriesEntry(string Directory, Seat FirstSeat, string? Outcome, decimal CostUsd);
+
+/// <summary>The metrics the game declares for one player, summed over all matches and both seats.</summary>
+public sealed record SeriesPlayer(string Player, IReadOnlyList<SeriesMetricValue> Metrics);
+
+/// <summary>
+/// One metric of one player. <c>Value</c> is always written; it is null, shown as "n/a", if nothing could be measured
+/// (for a ratio: the denominator is 0).
+/// </summary>
+public sealed record SeriesMetricValue(
+    string Key,
+    string Label,
+    MetricKind Kind,
+    double Numerator,
+    double? Denominator,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] double? Value);
 
 /// <summary>Source-generated JSON for summaries: camelCase, indented, enums as text, readable umlauts, dictionary keys unchanged.</summary>
 [JsonSerializable(typeof(MatchSummary))]

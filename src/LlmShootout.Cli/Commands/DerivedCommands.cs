@@ -125,8 +125,9 @@ public static class DerivedCommands
         if (!File.Exists(Path.Combine(path, ProtocolFiles.Events)) && File.Exists(Path.Combine(path, SeriesReportWriter.SummaryFile)))
         {
             var first = records[0];
-            var summary = SeriesReportWriter.Summarize(first.GameId, first.Started.Players[Seat.A].Name, first.Started.Players[Seat.B].Name, records);
-            await SeriesReportWriter.WriteAsync(CliEnvironment.RequireGame(first.GameId), path, summary, records, first.Started.Language, cancellationToken);
+            var definition = CliEnvironment.RequireGame(first.GameId);
+            var summary = SeriesReportWriter.Summarize(definition, first.Started.Players[Seat.A].Name, first.Started.Players[Seat.B].Name, records, first.Started.Language);
+            await SeriesReportWriter.WriteAsync(definition, path, summary, first.Started.Language, cancellationToken);
         }
     }
 

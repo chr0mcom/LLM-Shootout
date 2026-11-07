@@ -56,23 +56,3 @@ Decision ({who}): no valid decision
 
 ## fact.payout
 Payout ({who}): {points} points
-
-## report.series.title
-Series: promises, decisions and communication
-
-## report.series.matches
-| Match | Communication | Starts | Decision A | Decision B | Points A | Points B | Outcome |
-|---|---|---|---|---|---|---|---|
-
-## report.series.comparison.title
-Comparison with and without communication
-
-## report.series.comparison.header
-| Communication | Matches | steal rate | both split | Avg points A | Avg points B |
-|---|---|---|---|---|---|
-
-## report.series.comm.on
-with
-
-## report.series.comm.off
-without

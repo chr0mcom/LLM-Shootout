@@ -15,9 +15,9 @@ public static class MatchPaths
     public static string Series(string baseDirectory, DateTimeOffset date, string gameId, string playerA, string playerB) =>
         FirstFree(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}_series", i => i == 1 ? string.Empty : $"-{i}");
 
-    /// <summary>The directory of match <paramref name="number"/> (1-based) inside a series directory.</summary>
-    public static string SeriesMatch(string seriesDirectory, int number, bool communication, Seat firstSeat) =>
-        Path.Combine(seriesDirectory, string.Create(CultureInfo.InvariantCulture, $"{number:00}-{(communication ? "talk" : "silent")}-{firstSeat}-first"));
+    /// <summary>The directory of match <paramref name="number"/> (1-based) inside a series directory, for example <c>01-A-first</c>.</summary>
+    public static string SeriesMatch(string seriesDirectory, int number, Seat firstSeat) =>
+        Path.Combine(seriesDirectory, string.Create(CultureInfo.InvariantCulture, $"{number:00}-{firstSeat}-first"));
 
     /// <summary>Makes a player name usable in a file name: <c>openrouter:openai/gpt-4o</c> and <c>ollama:gpt-4o</c> become <c>gpt-4o</c>.</summary>
     public static string Slug(string player)

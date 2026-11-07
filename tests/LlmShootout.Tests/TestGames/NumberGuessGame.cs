@@ -1,6 +1,7 @@
 using System.Globalization;
 using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
+using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Randomness;
 using LlmShootout.Arena.Templates;
 
@@ -30,6 +31,12 @@ public sealed class NumberGuessDefinition : IGameDefinition
             {move} is outside 1 to 100
             ## fact.guess
             {who} guessed {guess}: {hint}.
+            ## metric.guesses
+            Guesses
+            ## metric.hit_rate
+            Hits per guess
+            ## metric.never
+            Never measurable
             """,
     });
 
@@ -37,7 +44,20 @@ public sealed class NumberGuessDefinition : IGameDefinition
 
     public IReadOnlyList<DebriefingQuestion> ExtraQuestions(GameSetup setup) => [];
 
-    public IGameAnalyzer? Analyzer => null;
+    public IGameAnalyzer? Analyzer { get; } = new NumberGuessAnalyzer();
+}
+
+/// <summary>Test analyzer: declares one sum, one ratio and one ratio without a denominator for the series report.</summary>
+public sealed class NumberGuessAnalyzer : IGameAnalyzer
+{
+    public IReadOnlyList<SeriesMetric> SeriesMetrics { get; } =
+    [
+        new("guesses", TemplateRef.Of("metric.guesses"), MetricKind.Sum, (match, seat) => new Fraction(match.Turns(seat).Count())),
+        new("hit-rate", TemplateRef.Of("metric.hit_rate"), MetricKind.Ratio, (match, seat) => match.Result is { } result ? new Fraction(result.Seats[seat].Score, match.Turns(seat).Count()) : null),
+        new("never", TemplateRef.Of("metric.never"), MetricKind.Ratio, (_, _) => new Fraction(0, 0)),
+    ];
+
+    public IReadOnlyList<ReportSection> AnalyzeMatch(MatchRecord match) => [];
 }
 
 public sealed class NumberGuessGame(GameSetup setup) : IGame

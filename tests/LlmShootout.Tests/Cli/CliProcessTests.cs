@@ -127,18 +127,25 @@ public sealed class CliProcessTests : IDisposable
         Assert.DoesNotContain("   at ", error, StringComparison.Ordinal);
     }
 
+    private string SeriesFilePath()
+    {
+        var path = Path.Combine(_work, "series.json");
+        File.WriteAllText(path, """{ "game": "split-or-steal", "seed": 2027, "language": "de", "matches": [ { "firstSeat": "A" }, { "firstSeat": "B", "communication": false } ] }""");
+        return path;
+    }
+
     [Fact]
     public async Task A_series_replay_report_debrief_round_trip_works()
     {
-        var (exit, output, _) = await RunAsync("series", "shootouts/split-or-steal.json", "--a", "random", "--b", "random", "--quiet", "--out", _work);
+        var (exit, output, _) = await RunAsync("series", SeriesFilePath(), "--a", "random", "--b", "random", "--quiet", "--out", _work);
         Assert.Equal(0, exit);
         var series = output.Trim();
-        var first = Path.Combine(series, "01-talk-A-first");
+        var first = Path.Combine(series, "01-A-first");
 
         Assert.Equal(0, (await RunAsync("replay", first)).Exit);
         Assert.Equal(0, (await RunAsync("debrief", first)).Exit);
         Assert.Equal(0, (await RunAsync("report", series)).Exit);
-        Assert.Contains("Vergleich mit und ohne Kommunikation", File.ReadAllText(Path.Combine(series, "series-report.md")), StringComparison.Ordinal);
+        Assert.Contains("## Überblick", File.ReadAllText(Path.Combine(series, "series-report.md")), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -154,7 +161,7 @@ public sealed class CliProcessTests : IDisposable
     [Fact]
     public async Task A_series_that_ends_early_exits_with_3()
     {
-        var (exit, _, error) = await RunAsync("series", "shootouts/split-or-steal.json", "--a", "random", "--b", "random", "--max-cost", "0", "--quiet", "--out", _work);
+        var (exit, _, error) = await RunAsync("series", SeriesFilePath(), "--a", "random", "--b", "random", "--max-cost", "0", "--quiet", "--out", _work);
 
         Assert.Equal(3, exit);
         Assert.Contains("ended early", error, StringComparison.Ordinal);

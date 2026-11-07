@@ -11,8 +11,8 @@ matches/2026-11-20_split-or-steal_gpt-oss-20b_vs_claude-haiku-5.5_01/
 └─ debrief.<timestamp>.jsonl     answers of a repeated debriefing (optional, `shootout debrief`)
 ```
 
-A series is a directory `..._series/` with one match directory per entry of the series file (`01-talk-A-first`,
-`02-talk-B-first`, `03-silent-A-first`), plus `series.json` and `series-report.md`.
+A series is a directory `..._series/` with one match directory per entry of the series file (`01-A-first`,
+`02-B-first`, `03-A-first`: the number and the seat that starts), plus `series.json` and `series-report.md`.
 
 ## Guarantees
 
@@ -122,12 +122,28 @@ and delivered model, score and label, turns, invalid answers, refusals, token-li
 messages, silences, identity hits, tokens, cost and whether the debriefing was valid. Plus total cost, number of
 calls, number of calls with unknown cost, version, commit and template hashes.
 
+## series.json
+
+Numbers only, computed from the match protocols of the series: `gameId`, `playerA`, `playerB`, the number of matches,
+completed and aborted matches, total cost with the number of estimated and unknown calls, `entries` and `players`.
+
+- `entries`: one object per match with `directory`, `firstSeat`, `outcome` (absent for an aborted match) and `costUsd`.
+- `players`: one object per player name that took part, over both seats, with `metrics`. It is empty unless the game declares
+  series metrics (see [Adding a game](adding-a-game.md)). Every metric has `key`, `label`, `kind` (`Sum` or `Ratio`),
+  `numerator`, `denominator` (only for a ratio) and `value`. A ratio is the sum of all numerators divided by the sum of all
+  denominators. `value` is always written; it is `null` ("n/a" in the report) if nothing could be measured, for example
+  when the denominator is 0.
+
+`series-report.md` shows the same: an overview, the list of matches with the starting seat, outcome and cost, and one table
+per player that contains exactly the metrics of the game. A game without declared metrics has no table per player.
+`shootout report <series directory>` rebuilds both files from the match directories.
+
 ## Reading a protocol
 
 In C#:
 
 ```csharp
-var match = MatchRecord.Load("matches/.../01-talk-A-first");
+var match = MatchRecord.Load("matches/.../01-A-first");
 foreach (var message in match.Messages(Seat.A)) Console.WriteLine(message.Text);
 Console.WriteLine(match.Result?.Outcome);
 ```

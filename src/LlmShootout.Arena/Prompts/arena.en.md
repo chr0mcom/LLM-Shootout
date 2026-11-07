@@ -381,6 +381,9 @@ The cost of {n} calls is unknown (for example after a timeout). The sum is there
 ## report.series.overview
 Overview
 
+## report.series.stat.game
+Game
+
 ## report.series.stat.matches
 Matches (completed / aborted)
 
@@ -390,22 +393,19 @@ Total cost (USD)
 ## report.series.stat.unknown
 Calls with unknown cost
 
-## report.series.seats
-Metrics per seat
+## report.series.player
+Metrics of {player}
 
-## report.series.seats.header
-| Metric | Seat A | Seat B |
+## report.series.metrics.header
+| Metric | Value | Basis |
 |---|---|---|
 
-## report.series.metric.points
-Points total
-
-## report.series.metric.average
-Points on average
+## report.series.na
+n/a
 
 ## report.series.list
 Matches
 
 ## report.series.list.header
-| No | Directory | Communication | Outcome | Cost (USD) |
+| No | Directory | First seat | Outcome | Cost (USD) |
 |---|---|---|---|---|

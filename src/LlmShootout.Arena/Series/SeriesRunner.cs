@@ -61,8 +61,8 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             }
         }
 
-        var summary = SeriesReportWriter.Summarize(plan.Definition.Id, plan.PlayerA.Name, plan.PlayerB.Name, records);
-        await SeriesReportWriter.WriteAsync(plan.Definition, plan.Directory, summary, records, plan.Language, cancellationToken);
+        var summary = SeriesReportWriter.Summarize(plan.Definition, plan.PlayerA.Name, plan.PlayerB.Name, records, plan.Language);
+        await SeriesReportWriter.WriteAsync(plan.Definition, plan.Directory, summary, plan.Language, cancellationToken);
         return summary;
     }
 
@@ -75,7 +75,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
             new Dictionary<Seat, IPlayer> { [Seat.A] = Fresh(plan.PlayerA, seed + RandomSeedOffsetA), [Seat.B] = Fresh(plan.PlayerB, seed + RandomSeedOffsetB) },
             plan.Options,
-            MatchPaths.SeriesMatch(plan.Directory, number, match.Communication, first));
+            MatchPaths.SeriesMatch(plan.Directory, number, first));
     }
 
     /// <summary>Random players are created anew for every match from the match seed, so a match does not depend on the matches before it.</summary>

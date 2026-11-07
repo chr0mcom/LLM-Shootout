@@ -381,6 +381,9 @@ Bei {n} Aufrufen sind die Kosten unbekannt (zum Beispiel nach einem Timeout). Di
 ## report.series.overview
 Überblick
 
+## report.series.stat.game
+Spiel
+
 ## report.series.stat.matches
 Partien (abgeschlossen / abgebrochen)
 
@@ -390,22 +393,19 @@ Gesamtkosten (USD)
 ## report.series.stat.unknown
 Aufrufe mit unbekannten Kosten
 
-## report.series.seats
-Kennzahlen pro Sitz
+## report.series.player
+Kennzahlen von {player}
 
-## report.series.seats.header
-| Kennzahl | Sitz A | Sitz B |
+## report.series.metrics.header
+| Kennzahl | Wert | Grundlage |
 |---|---|---|
 
-## report.series.metric.points
-Punkte gesamt
-
-## report.series.metric.average
-Punkte im Schnitt
+## report.series.na
+n/a
 
 ## report.series.list
 Partien
 
 ## report.series.list.header
-| Nr | Verzeichnis | Kommunikation | Ausgang | Kosten (USD) |
+| Nr | Verzeichnis | Startsitz | Ausgang | Kosten (USD) |
 |---|---|---|---|---|

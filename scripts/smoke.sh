@@ -29,11 +29,11 @@ SERIES="$("${SHOOTOUT[@]}" series shootouts/split-or-steal.json --a random --b r
 test -f "$SERIES/series.json" && test -f "$SERIES/series-report.md"
 
 step "replay"
-"${SHOOTOUT[@]}" replay "$SERIES/01-talk-A-first" --show-thoughts > "$WORK/replay.txt"
+"${SHOOTOUT[@]}" replay "$SERIES/01-A-first" --show-thoughts > "$WORK/replay.txt"
 head -n 12 "$WORK/replay.txt"
 
 step "debrief again"
-"${SHOOTOUT[@]}" debrief "$SERIES/01-talk-A-first"
+"${SHOOTOUT[@]}" debrief "$SERIES/01-A-first"
 
 step "report"
 "${SHOOTOUT[@]}" report "$SERIES"

@@ -16,11 +16,17 @@ public static class SeriesReportWriter
     public const string ReportFile = "series-report.md";
 
     /// <summary>Collects the numbers of a series from its matches.</summary>
-    public static SeriesSummary Summarize(string gameId, string playerA, string playerB, IReadOnlyList<MatchRecord> matches)
+    public static SeriesSummary Summarize(
+        IGameDefinition definition,
+        string playerA,
+        string playerB,
+        IReadOnlyList<MatchRecord> matches,
+        string language)
     {
+        ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(matches);
         return new SeriesSummary(
-            gameId,
+            definition.Id,
             playerA,
             playerB,
             matches.Count,
@@ -29,57 +35,98 @@ public static class SeriesReportWriter
             matches.Sum(r => r.CostUsd),
             matches.Sum(r => r.CostEstimatedCalls),
             matches.Sum(r => r.CostUnknownCalls),
-            Seat.All.ToDictionary(seat => seat, seat => matches.Sum(r => r.Result?.Seats[seat].Score ?? 0)),
-            [.. matches.Select(r => new SeriesEntry(Path.GetFileName(r.Directory), r.Communication, r.Result?.Outcome, r.CostUsd))]);
+            [.. matches.Select(r => new SeriesEntry(Path.GetFileName(r.Directory), r.Started.FirstSeat, r.Result?.Outcome, r.CostUsd))],
+            PlayerMetrics(definition, matches, language));
     }
 
     /// <summary>Writes both files into the series directory.</summary>
-    public static async Task WriteAsync(
-        IGameDefinition definition,
-        string directory,
-        SeriesSummary summary,
-        IReadOnlyList<MatchRecord> matches,
-        string language,
-        CancellationToken cancellationToken)
+    public static async Task WriteAsync(IGameDefinition definition, string directory, SeriesSummary summary, string language, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(summary);
-        ArgumentNullException.ThrowIfNull(matches);
         Directory.CreateDirectory(directory);
         await File.WriteAllTextAsync(Path.Combine(directory, SummaryFile), SummaryJson.Write(summary), cancellationToken);
-        await File.WriteAllTextAsync(Path.Combine(directory, ReportFile), BuildReport(definition, summary, matches, language), cancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(directory, ReportFile), BuildReport(definition, summary, language), cancellationToken);
     }
 
-    /// <summary>Builds the Markdown report of a series.</summary>
-    public static string BuildReport(IGameDefinition definition, SeriesSummary summary, IReadOnlyList<MatchRecord> matches, string language)
+    /// <summary>Builds the Markdown report of a series: overview, list of matches, and one table per player for the metrics the game declares.</summary>
+    public static string BuildReport(IGameDefinition definition, SeriesSummary summary, string language)
     {
+        ArgumentNullException.ThrowIfNull(definition);
+        ArgumentNullException.ThrowIfNull(summary);
         var t = new ReportText(ArenaTemplates.Default, language);
         var sb = new StringBuilder();
         sb.AppendLine(t.Format("report.series.title", ("game", definition.DisplayName), ("a", summary.PlayerA), ("b", summary.PlayerB))).AppendLine();
+        AppendOverview(sb, t, definition, summary);
+        AppendMatches(sb, t, summary);
+        foreach (var player in summary.Players)
+        {
+            AppendPlayer(sb, t, player);
+        }
+
+        return sb.ToString().TrimEnd() + "\n";
+    }
+
+    private static void AppendOverview(StringBuilder sb, ReportText t, IGameDefinition definition, SeriesSummary summary)
+    {
         sb.AppendLine("## " + t["report.series.overview"]).AppendLine().AppendLine("| | |").AppendLine("|---|---|");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.game"]} | {MarkdownTable.Cell(definition.DisplayName)} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.matches"]} | {summary.Completed} / {summary.Aborted} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.cost"]} | {summary.CostUsd:0.0000} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.unknown"]} | {summary.CostUnknownCalls} |").AppendLine();
+    }
 
-        sb.AppendLine("## " + t["report.series.seats"]).AppendLine().AppendLine(t["report.series.seats.header"]);
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.metric.points"]} | {summary.PointsTotal[Seat.A]:0.##} | {summary.PointsTotal[Seat.B]:0.##} |");
-        var played = Math.Max(summary.Completed, 1);
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.metric.average"]} | {summary.PointsTotal[Seat.A] / played:0.##} | {summary.PointsTotal[Seat.B] / played:0.##} |");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.metric.invalid"]} | {matches.Sum(m => m.InvalidAnswers(Seat.A))} | {matches.Sum(m => m.InvalidAnswers(Seat.B))} |");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.metric.refusals"]} | {matches.Sum(m => m.Refusals(Seat.A))} | {matches.Sum(m => m.Refusals(Seat.B))} |").AppendLine();
-
+    private static void AppendMatches(StringBuilder sb, ReportText t, SeriesSummary summary)
+    {
         sb.AppendLine("## " + t["report.series.list"]).AppendLine().AppendLine(t["report.series.list.header"]);
         for (var i = 0; i < summary.Entries.Count; i++)
         {
             var e = summary.Entries[i];
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| {i + 1} | [{e.Directory}]({e.Directory}/report.md) | {t[e.Communication ? "report.communication.on" : "report.communication.off"]} | {e.Outcome ?? "-"} | {e.CostUsd:0.0000} |");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {i + 1} | [{e.Directory}]({e.Directory}/report.md) | {e.FirstSeat} | {e.Outcome ?? "-"} | {e.CostUsd:0.0000} |");
         }
+    }
 
-        foreach (var section in definition.Analyzer?.AnalyzeSeries(matches) ?? [])
+    private static void AppendPlayer(StringBuilder sb, ReportText t, SeriesPlayer player)
+    {
+        sb.AppendLine().AppendLine("## " + t.Format("report.series.player", ("player", player.Player))).AppendLine().AppendLine(t["report.series.metrics.header"]);
+        foreach (var metric in player.Metrics)
         {
-            sb.AppendLine().AppendLine("## " + section.Title).AppendLine().AppendLine(section.Markdown);
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {MarkdownTable.Cell(metric.Label)} | {Value(t, metric)} | {Basis(metric)} |");
         }
+    }
 
-        return sb.ToString().TrimEnd() + "\n";
+    private static string Value(ReportText t, SeriesMetricValue metric) => metric switch
+    {
+        { Value: null } => t["report.series.na"],
+        { Kind: MetricKind.Ratio } => metric.Value.Value.ToString("P1", CultureInfo.InvariantCulture),
+        _ => metric.Value.Value.ToString("0.##", CultureInfo.InvariantCulture),
+    };
+
+    private static string Basis(SeriesMetricValue metric) => metric.Denominator is { } denominator
+        ? string.Create(CultureInfo.InvariantCulture, $"{metric.Numerator:0.##} / {denominator:0.##}")
+        : "-";
+
+    /// <summary>One entry per player name that took part in the series, with every metric the game declares. Empty if the game declares none.</summary>
+    private static List<SeriesPlayer> PlayerMetrics(IGameDefinition definition, IReadOnlyList<MatchRecord> matches, string language)
+    {
+        var metrics = definition.Analyzer?.SeriesMetrics ?? [];
+        var names = metrics.Count == 0 ? [] : matches.SelectMany(m => Seat.All.Select(seat => m.Started.Players[seat].Name)).Distinct(StringComparer.Ordinal);
+        return [.. names.Select(name => new SeriesPlayer(name, [.. metrics.Select(metric => Combine(definition, metric, name, matches, language))]))];
+    }
+
+    private static SeriesMetricValue Combine(IGameDefinition definition, SeriesMetric metric, string player, IReadOnlyList<MatchRecord> matches, string language)
+    {
+        var parts = matches
+            .SelectMany(m => Seat.All.Where(seat => m.Started.Players[seat].Name == player).Select(seat => metric.Measure(m, seat)))
+            .OfType<Fraction>()
+            .ToArray();
+        var numerator = parts.Sum(p => p.Numerator);
+        var denominator = parts.Sum(p => p.Denominator);
+        var (shownDenominator, value) = metric.Kind switch
+        {
+            MetricKind.Ratio => ((double?)denominator, denominator == 0 ? null : (double?)(numerator / denominator)),
+            _ => (null, parts.Length == 0 ? null : (double?)numerator),
+        };
+        return new SeriesMetricValue(metric.Key, definition.Templates.Render(metric.Label, language), metric.Kind, numerator, shownDenominator, value);
     }
 }
