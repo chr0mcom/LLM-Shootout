@@ -23,8 +23,12 @@ will have a local server or a company proxy. The key must still never reach a fi
   safe behavior is the default; "free" must be stated.
 - A model list that an endpoint cannot deliver does not stop a match; the first call reports an unknown model.
 - Every endpoint caches its model list in its own file.
-- `EndpointOptions`, `PlayerFactory` and the namespace keep their names. They now describe "the connection to one
-  endpoint", defaulting to OpenRouter. Renaming them would touch every test and article snippet without changing behavior.
+- The code that talks to a model is not called after OpenRouter any more: the namespace is `LlmShootout.Arena.ModelAccess`, the
+  options are `EndpointOptions`, the HTTP builder `ChatClientFactory`, the request handler `EndpointRequestHandler`, the response
+  fields `CompletionFields`. The first version of this change kept the old names to avoid touching every test and snippet; the
+  article-readiness review pointed out that `OpenRouterOptions` configuring a local gateway reads wrongly in print, and no article
+  had appeared yet, so the rename was made. `EndpointKind.OpenRouter`, the configuration section `OpenRouter` and the variable
+  `OPENROUTER_API_KEY` keep their names, so no setting of a user changes.
 
 ## Consequences
 - A match can mix endpoints; the protocol names each player `<endpoint>:<model>`.
