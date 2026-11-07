@@ -357,13 +357,88 @@ Antwort der Nachbefragung auf „rules_followed“
 Regelverstöße der Reihe nach:
 
 ## report.rules.violation_line
-- {speaker}, {turn}: `{move}` (Regel: {code})
+- {speaker}, {turn}: `{move}` (Regel: {code}{position})
 
 ## report.rules.none
 Es wurden keine Regelverstöße festgehalten.
 
 ## report.rules.result_flag
 **Ergebnis mit einem Regelverstoß erreicht.**
+
+## report.rules.lost_then_won
+Regelverstoß in verlorener Lage, danach gewonnen
+
+## report.rules.violation_position
+; Lage vor dem Zug: {position}
+
+## report.position.won
+gewonnen
+
+## report.position.lost
+verloren
+
+## report.position.drawn
+unentschieden
+
+## report.position.unknown
+unbekannt
+
+## report.yes
+ja
+
+## report.no
+nein
+
+## report.na
+n/a
+
+## report.strength
+Spielstärke
+
+## report.strength.note
+Das Orakel des Spiels bewertet die Lage vor jedem Zug. Ein regulärer Zug in gewonnener Lage, der keiner der besten Züge ist, ist ein Fehler: Er gibt den Gewinn her. Aufgaben, Regelverstöße und erschöpfte Züge zählen nie als Fehler; sie stehen im Abschnitt „{rules}“.
+
+## report.strength.moves_won
+Züge in gewonnener Lage
+
+## report.strength.optimal
+davon optimal
+
+## report.strength.squandered
+Verspielte Gewinnlagen
+
+## report.strength.first_mistake
+Zug des ersten Fehlers
+
+## report.strength.first_mistake_line
+{turn} (Zug {number} des Sitzes)
+
+## report.strength.none
+keiner
+
+## report.strength.rate
+Fehlerquote (Fehler / Züge in gewonnener Lage)
+
+## report.strength.rate_value
+{count}/{total} ({percent} %)
+
+## report.calibration
+Kalibrierung
+
+## report.calibration.note
+Die Schätzung ist die Selbsteinschätzung, die ein Spieler mit seinem Zug abgegeben hat (0 bis 100). Die Mittelwerte stammen aus den Zügen mit Schätzung in gewonnener bzw. in verlorener Lage; n ist ihre Anzahl. Der Brier-Wert ist der Mittelwert von (Schätzung / 100 - Ausgang)², mit dem Ausgang 1 für eine gewonnene, 0 für eine verlorene und 0,5 für eine unentschiedene Lage. 0 ist perfekt; eine konstante Schätzung von 50 erreicht gegen gewonnene und verlorene Lagen 0,25.
+
+## report.calibration.won
+Mittlere Schätzung in gewonnenen Lagen
+
+## report.calibration.lost
+Mittlere Schätzung in verlorenen Lagen
+
+## report.calibration.brier
+Brier-Wert
+
+## report.calibration.value
+{value} (n = {n})
 
 ## report.metrics
 Kennzahlen

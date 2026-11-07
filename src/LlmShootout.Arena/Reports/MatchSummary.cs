@@ -5,9 +5,36 @@ using LlmShootout.Arena.Games;
 namespace LlmShootout.Arena.Reports;
 
 /// <summary>
+/// How a seat played in the positions it could win (<see cref="PlayMetrics.Strength"/>). A rate or a turn that does not exist is written as
+/// <c>null</c>: "not applicable", never 0.
+/// </summary>
+public sealed record StrengthSummary(
+    int MovesInWonPosition,
+    int OptimalMoves,
+    int SquanderedWins,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] string? FirstMistakeTurn,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] int? FirstMistakeMove,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] double? MistakeRate);
+
+/// <summary>
+/// How the estimates of a seat fit its positions (<see cref="PlayMetrics.Calibration"/>). Each mean comes with the number of
+/// estimates behind it; a mean without any is written as <c>null</c>: "not applicable", never 0.
+/// </summary>
+public sealed record CalibrationSummary(
+    int EstimatesInWonPositions,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] double? MeanEstimateInWonPositions,
+    int EstimatesInLostPositions,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] double? MeanEstimateInLostPositions,
+    int BrierCount,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] double? Brier);
+
+/// <summary>
 /// Numbers of one seat in one match. <c>InvalidAnswers</c>, <c>Refusals</c> and <c>TokenLimitHits</c> count rejected answers,
 /// <c>RuleViolations</c> accepted moves that the rules forbid, <c>Resignations</c> given-up games, and <c>ExhaustedTurns</c> turns
 /// without an acceptable move after all attempts; the last three are separate from each other and from the rejected answers.
+/// <c>Strength</c> and <c>Calibration</c> are <c>null</c> if the protocol has no ratings by an oracle (the game has none, or the
+/// protocol is older): not applicable. <c>ViolationInLostPositionThenWon</c> is true if the seat broke a rule in a lost position
+/// and won, and <c>null</c> if it broke rules but the position is not recorded.
 /// </summary>
 public sealed record SeatSummary(
     string Player,
@@ -30,7 +57,10 @@ public sealed record SeatSummary(
     int CompletionTokens,
     int ReasoningTokens,
     decimal CostUsd,
-    bool? DebriefValid);
+    bool? DebriefValid,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] StrengthSummary? Strength,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] CalibrationSummary? Calibration,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] bool? ViolationInLostPositionThenWon);
 
 /// <summary>
 /// The content of <c>match.json</c>: everything the report shows, as numbers. <c>ResultWithRuleViolation</c> is true if the game

@@ -74,8 +74,33 @@ public static class MatchReportWriter
             infos.Sum(i => i.CompletionTokens ?? 0),
             infos.Sum(i => i.ReasoningTokens ?? 0),
             infos.Sum(i => i.CostUsd ?? i.EstimatedCostUsd ?? 0m),
-            match.Debriefs.LastOrDefault(d => d.Seat == seat)?.Valid);
+            match.Debriefs.LastOrDefault(d => d.Seat == seat)?.Valid,
+            Summarize(play.Strength),
+            Summarize(play.Calibration),
+            play.ViolationInLostPositionThenWon);
     }
+
+    private static StrengthSummary? Summarize(StrengthMetrics? strength) => strength is null
+        ? null
+        : new StrengthSummary(
+            strength.MovesInWonPosition,
+            strength.OptimalMoves,
+            strength.SquanderedWins,
+            strength.FirstMistake?.TurnId,
+            strength.FirstMistake?.MoveNumber,
+            strength.MistakeRate?.Value);
+
+    private static CalibrationSummary? Summarize(CalibrationMetrics? calibration) => calibration is null
+        ? null
+        : new CalibrationSummary(
+            Count(calibration.EstimateInWonPositions),
+            calibration.EstimateInWonPositions?.Value,
+            Count(calibration.EstimateInLostPositions),
+            calibration.EstimateInLostPositions?.Value,
+            Count(calibration.Brier),
+            calibration.Brier?.Value);
+
+    private static int Count(Fraction? fraction) => (int)(fraction?.Denominator ?? 0);
 
     /// <summary>Builds the Markdown report.</summary>
     public static string BuildReport(IGameDefinition definition, MatchRecord match)
@@ -94,6 +119,7 @@ public static class MatchReportWriter
             sb.AppendLine().AppendLine("## " + section.Title).AppendLine().AppendLine(section.Markdown);
         }
 
+        PlayStrengthSection.Append(sb, match, t);
         RuleComplianceSection.Append(sb, match, t);
         AppendThoughts(sb, match, t);
         AppendMetrics(sb, summary, t);

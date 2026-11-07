@@ -31,6 +31,12 @@ rates a move only after it has been applied, when the position before it is gone
   id and seat from the `turn` event, the kind of move and the estimate. `MoveVerdict.Squandered` means a regular move in a won position that
   was not one of the best moves. A protocol without `oracle` facts (an older one, or a game without an oracle) has no verdicts, and every figure
   that is computed from them is "not applicable", never 0.
+- **One class computes the figures.** `PlayMetrics.For(match, seat)` adds to its counts: regular moves in a won position, the optimal ones among
+  them, the won positions given up (a regular move in a won position that is not a best move: the mistakes), the first mistake, and the mistake
+  rate as a `Fraction`; the mean estimate in won and in lost positions and the Brier score (the mean of `(estimate / 100 - y)²` with `y` 1 for won,
+  0 for lost, 0.5 for drawn; unknown positions are left out). A resignation, a rule violation and an exhausted turn are never mistakes. A figure
+  whose denominator is 0 is not applicable (`null`), never 0, and a protocol without `oracle` facts has no figures at all. `match.json`, the report
+  sections "Play strength" and "Calibration" and the sheet of the Excel export read from it.
 - **A test game proves the interface.** `TakeAwayGame` (one heap, take 1 to 3, the last stone wins) implements it: the position is lost exactly
   when the heap is a multiple of 4. An option lets it take other numbers, so that a position can have several best moves.
 

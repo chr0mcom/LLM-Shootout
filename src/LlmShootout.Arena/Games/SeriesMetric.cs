@@ -15,7 +15,11 @@ public enum MetricKind
 /// <summary>A count and the number it is measured against. For a <see cref="MetricKind.Sum"/> only the numerator counts.</summary>
 /// <param name="Numerator">What happened.</param>
 /// <param name="Denominator">What could have happened.</param>
-public readonly record struct Fraction(double Numerator, double Denominator = 1);
+public readonly record struct Fraction(double Numerator, double Denominator = 1)
+{
+    /// <summary>The numerator divided by the denominator. Only meaningful for a denominator above 0; a value without a basis is represented by a missing fraction.</summary>
+    public double Value => Numerator / Denominator;
+}
 
 /// <summary>
 /// A number that a game declares for the summary of a series. The series report summarizes exactly these metrics

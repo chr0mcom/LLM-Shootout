@@ -53,7 +53,7 @@ public sealed class RuleComplianceReportTests : IDisposable
         var a = PlayMetrics.For(match, Seat.A);
         var b = PlayMetrics.For(match, Seat.B);
 
-        Assert.Equal(new RuleViolationRecord("move-1", "pass", "pass"), Assert.Single(a.Violations));
+        Assert.Equal(new RuleViolationRecord("move-1", "pass", "pass", PositionValue.Won), Assert.Single(a.Violations));
         Assert.Equal((1, 0, 0, 0), (a.RuleViolations, a.Resignations, a.ExhaustedTurns, a.RejectedAnswers));
         Assert.Equal((0, 0, 0), (b.RuleViolations, b.Resignations, b.ExhaustedTurns));
     }
@@ -124,7 +124,8 @@ public sealed class RuleComplianceReportTests : IDisposable
         Assert.Contains("| Resignations | 0 | 0 |", report, StringComparison.Ordinal);
         Assert.Contains("| Exhausted turns (no acceptable move in any attempt) | 0 | 0 |", report, StringComparison.Ordinal);
         Assert.Contains("| Debriefing answer to \"rules_followed\" | true | false |", report, StringComparison.Ordinal);
-        Assert.Contains("- Seat A, move-1: `pass` (rule: pass)", report, StringComparison.Ordinal);
+        Assert.Contains("- Seat A, move-1: `pass` (rule: pass; position before the move: won)", report, StringComparison.Ordinal);
+        Assert.Contains("| Rule violation in a lost position, then won | no | no |", report, StringComparison.Ordinal);
         Assert.Contains("**Result reached with a rule violation.**", report, StringComparison.Ordinal);
     }
 

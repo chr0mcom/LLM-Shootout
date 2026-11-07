@@ -9,6 +9,8 @@ namespace LlmShootout.Web.Matches;
 /// <summary>Turns a stored match into the sheets of an Excel workbook: overview, transcript, debriefing, calls and raw answers.</summary>
 internal static class MatchExport
 {
+    private const string NotApplicable = "n/a";
+
     public static byte[] ToWorkbook(MatchRecord match) => XlsxWriter.Write(
     [
         Overview(match),
@@ -47,7 +49,9 @@ internal static class MatchExport
             rows.Add(Row($"Seat {seat}: result", result?.Label));
             rows.Add(Row($"Seat {seat}: invalid answers", match.InvalidAnswers(seat)));
             rows.Add(Row($"Seat {seat}: refusals", match.Refusals(seat)));
-            rows.Add(Row($"Seat {seat}: rule violations", PlayMetrics.For(match, seat).RuleViolations));
+            var play = PlayMetrics.For(match, seat);
+            rows.Add(Row($"Seat {seat}: rule violations", play.RuleViolations));
+            rows.AddRange(StrengthRows(seat, play));
         }
 
         rows.Add(Row("Model calls", match.Calls.Count()));
@@ -55,6 +59,32 @@ internal static class MatchExport
         rows.Add(Row("Application version", $"{match.Started.AppVersion} {match.Started.GitCommit}".Trim()));
         return new Sheet("Match", ["Item", "Value"], rows, [30, 60]);
     }
+
+    private static IEnumerable<List<object?>> StrengthRows(Seat seat, PlayMetrics play)
+    {
+        var strength = play.Strength;
+        var calibration = play.Calibration;
+        yield return Row($"Seat {seat}: moves in a won position", Count(strength?.MovesInWonPosition));
+        yield return Row($"Seat {seat}: optimal moves in a won position", Count(strength?.OptimalMoves));
+        yield return Row($"Seat {seat}: won positions given up", Count(strength?.SquanderedWins));
+        yield return Row($"Seat {seat}: turn of the first mistake", FirstMistake(strength));
+        yield return Row($"Seat {seat}: mistake rate", Round(strength?.MistakeRate?.Value));
+        yield return Row($"Seat {seat}: mean estimate in won positions", Round(calibration?.EstimateInWonPositions?.Value));
+        yield return Row($"Seat {seat}: mean estimate in lost positions", Round(calibration?.EstimateInLostPositions?.Value));
+        yield return Row($"Seat {seat}: Brier score", Round(calibration?.Brier?.Value));
+        yield return Row($"Seat {seat}: rule violation in a lost position, then won", play.ViolationInLostPositionThenWon switch { true => "yes", false => "no", null => NotApplicable });
+    }
+
+    private static string FirstMistake(StrengthMetrics? strength) => strength switch
+    {
+        null or { MovesInWonPosition: 0 } => NotApplicable,
+        { FirstMistake: null } => "none",
+        { FirstMistake: { } first } => first.TurnId,
+    };
+
+    private static object Count(int? value) => value is { } v ? v : NotApplicable;
+
+    private static object Round(double? value) => value is { } v ? Math.Round(v, 4) : NotApplicable;
 
     internal static Sheet Transcript(MatchRecord match)
     {

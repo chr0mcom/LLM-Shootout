@@ -357,13 +357,88 @@ Debriefing answer to "rules_followed"
 Rule violations in order:
 
 ## report.rules.violation_line
-- {speaker}, {turn}: `{move}` (rule: {code})
+- {speaker}, {turn}: `{move}` (rule: {code}{position})
 
 ## report.rules.none
 No rule violations were recorded.
 
 ## report.rules.result_flag
 **Result reached with a rule violation.**
+
+## report.rules.lost_then_won
+Rule violation in a lost position, then won
+
+## report.rules.violation_position
+; position before the move: {position}
+
+## report.position.won
+won
+
+## report.position.lost
+lost
+
+## report.position.drawn
+drawn
+
+## report.position.unknown
+unknown
+
+## report.yes
+yes
+
+## report.no
+no
+
+## report.na
+n/a
+
+## report.strength
+Play strength
+
+## report.strength.note
+The oracle of the game rates the position before every move. A regular move in a won position that is not one of the best moves is a mistake: it gives the win up. Resignations, rule violations and exhausted turns are never counted as mistakes; they are shown in the section "{rules}".
+
+## report.strength.moves_won
+Moves in a won position
+
+## report.strength.optimal
+of them optimal
+
+## report.strength.squandered
+Won positions given up
+
+## report.strength.first_mistake
+Turn of the first mistake
+
+## report.strength.first_mistake_line
+{turn} (turn {number} of the seat)
+
+## report.strength.none
+none
+
+## report.strength.rate
+Mistake rate (mistakes / moves in a won position)
+
+## report.strength.rate_value
+{count}/{total} ({percent} %)
+
+## report.calibration
+Calibration
+
+## report.calibration.note
+The estimate is the self-assessment that a player gave with its move (0 to 100). The means are taken over the turns with an estimate in a won or in a lost position; n is their number. The Brier score is the mean of (estimate / 100 - outcome)², with the outcome 1 for a won, 0 for a lost and 0.5 for a drawn position. 0 is perfect; a constant estimate of 50 scores 0.25 against won and lost positions.
+
+## report.calibration.won
+Mean estimate in won positions
+
+## report.calibration.lost
+Mean estimate in lost positions
+
+## report.calibration.brier
+Brier score
+
+## report.calibration.value
+{value} (n = {n})
 
 ## report.metrics
 Metrics

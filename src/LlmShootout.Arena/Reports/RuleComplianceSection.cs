@@ -8,7 +8,9 @@ namespace LlmShootout.Arena.Reports;
 /// <summary>
 /// The report section "Rule compliance", the same for every game: rejected answers, rule violations, resignations and
 /// exhausted turns per player, the answer to <c>rules_followed</c> next to the counted behavior, and the mark of a result
-/// that was reached with a rule violation. It shows only what the protocol contains: an older protocol has no kinds of move.
+/// that was reached with a rule violation. If the game has an oracle, it also names the position before each violation and
+/// whether a seat broke a rule in a lost position and then won. It shows only what the protocol contains: an older protocol has
+/// no kinds of move.
 /// </summary>
 internal static class RuleComplianceSection
 {
@@ -29,6 +31,11 @@ internal static class RuleComplianceSection
         }
 
         Row(sb, t["report.rules.exhausted"], play, p => p.ExhaustedTurns);
+        if (recorded && match.RecordsOracle)
+        {
+            TextRow(sb, t["report.rules.lost_then_won"], play, p => Answer(p.ViolationInLostPositionThenWon, t));
+        }
+
         AppendDebriefAnswer(sb, match, t);
         sb.AppendLine();
         AppendViolations(sb, play, recorded, t);
@@ -65,12 +72,25 @@ internal static class RuleComplianceSection
         sb.AppendLine(t["report.rules.violation_list"]);
         foreach (var (seat, v) in violations)
         {
-            sb.AppendLine(t.Format("report.rules.violation_line", ("speaker", t.Format("who.seat", ("seat", seat.ToString()))), ("turn", v.TurnId), ("move", v.Move), ("code", v.Code)));
+            sb.AppendLine(t.Format("report.rules.violation_line", ("speaker", t.Format("who.seat", ("seat", seat.ToString()))), ("turn", v.TurnId), ("move", v.Move), ("code", v.Code), ("position", Position(v, t))));
         }
 
         sb.AppendLine();
     }
 
+    private static string Position(RuleViolationRecord violation, ReportText t) =>
+        violation.Position is { } position ? t.Format("report.rules.violation_position", ("position", t[$"report.position.{OracleFact.Name(position)}"])) : string.Empty;
+
+    private static string Answer(bool? value, ReportText t) => value switch
+    {
+        true => t["report.yes"],
+        false => t["report.no"],
+        null => t["report.na"],
+    };
+
     private static void Row(StringBuilder sb, string label, Dictionary<Seat, PlayMetrics> play, Func<PlayMetrics, int> value) =>
+        TextRow(sb, label, play, p => value(p).ToString(CultureInfo.InvariantCulture));
+
+    private static void TextRow(StringBuilder sb, string label, Dictionary<Seat, PlayMetrics> play, Func<PlayMetrics, string> value) =>
         sb.AppendLine(CultureInfo.InvariantCulture, $"| {label} | {value(play[Seat.A])} | {value(play[Seat.B])} |");
 }
