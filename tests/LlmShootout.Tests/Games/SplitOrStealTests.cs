@@ -82,7 +82,7 @@ public sealed class SplitOrStealTests
     }
 
     [Fact]
-    public void Without_communication_the_game_starts_with_the_decision()
+    public void Without_messages_the_game_starts_with_the_decision()
     {
         Assert.Equal("decide", Create(communication: false).PendingTurns[0].TurnId);
     }

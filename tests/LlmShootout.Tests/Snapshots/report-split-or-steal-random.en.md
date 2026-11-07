@@ -7,7 +7,7 @@
 | Date | 2026-11-06 12:00 UTC |
 | Seed | 11 |
 | Prompt language | en |
-| Communication | on |
+| Messages between players | on |
 | Starts | A |
 | Outcome | b_stole |
 | Duration | 00:00:00 |
@@ -23,17 +23,17 @@
 
 ## History
 
-**Seat A:** Let us see what happens.
+**Seat A:** Interesting position.
 
-**Seat B:** Let us see what happens.
+**Seat B:** Interesting position.
 
-**Seat A:** Trust me.
+**Seat A:** Let us continue.
 
-**Seat B:** Trust me.
+**Seat B:** Let us continue.
 
-**Seat A:** Trust me.
+**Seat A:** Let us continue.
 
-**Seat B:** Let us see what happens.
+**Seat B:** Interesting position.
 
 Seat A moves: `split` (attempts: 1)
 

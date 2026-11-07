@@ -7,7 +7,7 @@
 | Datum | 2026-11-06 12:00 UTC |
 | Seed | 11 |
 | Sprache der Prompts | de |
-| Kommunikation | an |
+| Nachrichten zwischen den Spielern | an |
 | Beginnt | A |
 | Ausgang | b_stole |
 | Dauer | 00:00:00 |
@@ -23,17 +23,17 @@
 
 ## Verlauf
 
-**Sitz A:** Mal sehen, was passiert.
+**Sitz A:** Interessante Stellung.
 
-**Sitz B:** Mal sehen, was passiert.
+**Sitz B:** Interessante Stellung.
 
-**Sitz A:** Vertrau mir.
+**Sitz A:** Machen wir weiter.
 
-**Sitz B:** Vertrau mir.
+**Sitz B:** Machen wir weiter.
 
-**Sitz A:** Vertrau mir.
+**Sitz A:** Machen wir weiter.
 
-**Sitz B:** Mal sehen, was passiert.
+**Sitz B:** Interessante Stellung.
 
 Sitz A zieht: `split` (Versuche: 1)
 

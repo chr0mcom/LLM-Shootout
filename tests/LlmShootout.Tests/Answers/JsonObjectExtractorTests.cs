@@ -55,7 +55,7 @@ public sealed class JsonObjectExtractorTests
     [Fact]
     public void An_unbalanced_quote_in_the_prose_before_the_object_does_not_hide_it()
     {
-        const string text = "He wrote \"trust me. Answer: {\"move\":\"split\"}";
+        const string text = "He wrote \"my answer follows. Answer: {\"move\":\"split\"}";
 
         Assert.True(JsonObjectExtractor.TryExtract(text, out var json));
         Assert.Equal("{\"move\":\"split\"}", json);

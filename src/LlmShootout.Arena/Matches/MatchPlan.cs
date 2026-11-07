@@ -5,7 +5,7 @@ namespace LlmShootout.Arena.Matches;
 
 /// <summary>Everything needed to run one match.</summary>
 /// <param name="Definition">The game.</param>
-/// <param name="Setup">Seed, communication, language, options.</param>
+/// <param name="Setup">Seed, messages setting, language, options.</param>
 /// <param name="Players">One player per seat.</param>
 /// <param name="Options">Settings independent of the game.</param>
 /// <param name="Directory">Where the protocol is written.</param>

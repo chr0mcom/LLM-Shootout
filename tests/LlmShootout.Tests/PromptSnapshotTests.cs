@@ -30,7 +30,7 @@ public sealed class PromptSnapshotTests : IDisposable
     [Theory]
     [InlineData("de")]
     [InlineData("en")]
-    public async Task The_prompts_of_a_match_with_communication_stay_stable(string language)
+    public async Task The_prompts_of_a_match_with_messages_stay_stable(string language)
     {
         var a = Player(
             MatchHarness.Answer("Ich bleibe fair.", "Lass uns teilen.", null),
@@ -55,7 +55,7 @@ public sealed class PromptSnapshotTests : IDisposable
     }
 
     [Fact]
-    public async Task The_prompt_without_communication_has_no_trace_of_messages()
+    public async Task The_prompt_without_messages_has_no_trace_of_messages()
     {
         var a = Player(MatchHarness.Answer("t", null, "split"));
         var b = Player(MatchHarness.Answer("t", null, "split"));

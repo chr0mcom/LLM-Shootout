@@ -8,7 +8,7 @@ public static class ResponseSchema
 {
     /// <summary>
     /// Schema for <c>{thought, message, move}</c>. All keys are present; unused ones are null. Without
-    /// communication the <c>message</c> key does not exist at all.
+    /// messages between players the <c>message</c> key does not exist at all.
     /// </summary>
     public static JsonNode ForTurn(TurnRequest turn, bool communication = true)
     {

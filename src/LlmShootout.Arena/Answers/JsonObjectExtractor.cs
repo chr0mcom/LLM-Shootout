@@ -1,4 +1,4 @@
-// Adapted from AiBehavior.PublicGoods (MIT, same author), originally ReasoningJsonRecovery.
+// Adapted from an earlier project by the same author (MIT).
 using System.Text.Json;
 using System.Text.Json.Nodes;
 

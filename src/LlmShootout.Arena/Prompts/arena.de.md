@@ -119,9 +119,9 @@ höchstens {max} Wörter
 Zufälliger Zug.
 
 ## sample.messages
-Ich spiele fair.
-Mal sehen, was passiert.
-Vertrau mir.
+Du bist dran.
+Interessante Stellung.
+Machen wir weiter.
 
 ## debrief.system
 Das Spiel ist beendet. Du wirst jetzt zu deinem Verhalten im Spiel gegen deinen Gegner befragt.
@@ -244,7 +244,7 @@ Seed
 Sprache der Prompts
 
 ## report.label.communication
-Kommunikation
+Nachrichten zwischen den Spielern
 
 ## report.label.first_seat
 Beginnt

@@ -73,7 +73,7 @@ public sealed class SeriesFileException : Exception
 
 /// <summary>
 /// Source-generated JSON settings for series files: camelCase, comments and trailing commas allowed, unknown fields
-/// are errors (so that <c>"communicaton": false</c> is noticed), and <c>game</c>, <c>seed</c> and <c>matches</c> are required.
+/// are errors (so that <c>"firstSet": "A"</c> is noticed), and <c>game</c>, <c>seed</c> and <c>matches</c> are required.
 /// </summary>
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

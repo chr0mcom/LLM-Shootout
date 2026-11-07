@@ -1,4 +1,4 @@
-// Adapted from AiBehavior.PublicGoods (MIT, same author).
+// Adapted from an earlier project by the same author (MIT).
 namespace LlmShootout.Arena.Randomness;
 
 /// <summary>

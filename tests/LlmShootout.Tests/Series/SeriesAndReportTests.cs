@@ -208,7 +208,7 @@ public sealed class SeriesAndReportTests : IDisposable
     [Theory]
     [InlineData("{ \"matches\": [] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"matches\": [ {} ] }", "is not valid")]
-    [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"communicaton\": false } ] }", "is not valid")]
+    [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"firstSet\": \"A\" } ] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"revealIdentity\": true } ] }", "revealIdentity")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"mathces\": [] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [] }", "at least one entry")]

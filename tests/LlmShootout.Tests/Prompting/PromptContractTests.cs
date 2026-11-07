@@ -17,7 +17,7 @@ public sealed class PromptContractTests : IDisposable
         string.Join("\n", player.Calls.SelectMany(c => c.Messages).Select(m => m.Text));
 
     [Fact]
-    public async Task Without_communication_prompts_and_schema_do_not_mention_messages()
+    public async Task Without_messages_prompts_and_schema_do_not_mention_messages()
     {
         var a = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "10"));
         var b = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "10"));
@@ -29,7 +29,7 @@ public sealed class PromptContractTests : IDisposable
     }
 
     [Fact]
-    public async Task With_communication_prompts_and_schema_contain_the_message_field()
+    public async Task With_messages_prompts_and_schema_contain_the_message_field()
     {
         var a = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "10"));
 

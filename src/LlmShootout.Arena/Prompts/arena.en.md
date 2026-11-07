@@ -119,9 +119,9 @@ at most {max} words
 Random move.
 
 ## sample.messages
-I will play fair.
-Let us see what happens.
-Trust me.
+Your move.
+Interesting position.
+Let us continue.
 
 ## debrief.system
 The game is over. You are now asked about your behavior in the game against your opponent.
@@ -244,7 +244,7 @@ Seed
 Prompt language
 
 ## report.label.communication
-Communication
+Messages between players
 
 ## report.label.first_seat
 Starts
