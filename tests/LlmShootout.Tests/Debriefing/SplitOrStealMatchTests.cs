@@ -41,7 +41,7 @@ public sealed class SplitOrStealMatchTests : IDisposable
         return debrief is null ? player : player.Reply(debrief);
     }
 
-    private static string[] Said(string who) => [$"{who} says hello", $"{who} promises to split", $"{who} again: split"];
+    private static string[] Said(string who) => [$"{who} says hello", $"{who} writes a second note", $"{who} writes a third note"];
 
     private static string Prompts(ScriptedPlayer player, int from) =>
         string.Join("\n", player.Calls.Skip(from).SelectMany(c => c.Messages).Select(m => m.Text));

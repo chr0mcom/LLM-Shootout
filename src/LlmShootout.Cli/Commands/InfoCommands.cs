@@ -16,10 +16,10 @@ public static class InfoCommands
         var command = new Command("games", "Lists the available games.");
         command.SetAction(_ =>
         {
-            var table = new Table().AddColumns("Id", "Name", "Question");
+            var table = new Table().AddColumns("Id", "Name", "Summary");
             foreach (var game in GameCatalog.All)
             {
-                table.AddRow(Markup.Escape(game.Id), Markup.Escape(game.DisplayName), Markup.Escape(game.Question));
+                table.AddRow(Markup.Escape(game.Id), Markup.Escape(game.DisplayName), Markup.Escape(game.Summary));
             }
 
             env.Console.Write(table);

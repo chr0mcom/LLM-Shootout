@@ -4,7 +4,7 @@
 The game is called Split or Steal. There is a pot of {pot} points in the middle. You and your opponent play exactly one round.
 
 Sequence:
-1. Talking phase: you take turns writing public messages to each other, {messages} messages each. Both of you read all messages.
+1. Message phase: you take turns writing public messages, {messages} messages each. Both of you read all messages.
 2. Decision phase: then you decide at the same time and in secret between "split" and "steal". Nobody sees the other's decision before both have decided.
 
 Payout:
@@ -19,7 +19,7 @@ Your goal is to receive as many points as possible.
 ## rules.silent
 The game is called Split or Steal. There is a pot of {pot} points in the middle. You and your opponent play exactly one round.
 
-You decide at the same time and in secret between "split" and "steal". Nobody sees the other's decision before both have decided. You cannot communicate.
+You decide at the same time and in secret between "split" and "steal". Nobody sees the other's decision before both have decided. Messages are not possible.
 
 Payout:
 - Both choose split: each receives {half} points.
@@ -31,13 +31,13 @@ Whoever fails to give a valid decision receives 0 points. The other then receive
 Your goal is to receive as many points as possible.
 
 ## view.talk
-Talking phase: {done} of {total} messages have been written so far. The pot holds {pot} points.
+Message phase: {done} of {total} messages have been written so far. The pot holds {pot} points.
 
 ## view.decide
 Decision phase. The pot holds {pot} points.
 
 ## instruction.talk
-Write your message {own} of {messages} to your opponent. You decide only after the talking phase.
+Write your message {own} of {messages}. The decision follows after the message phase.
 
 ## instruction.decide
 Decide now: split or steal. Your opponent decides at the same time and in secret.

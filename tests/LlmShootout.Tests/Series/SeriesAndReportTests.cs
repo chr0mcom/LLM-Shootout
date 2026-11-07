@@ -267,20 +267,11 @@ public sealed class SeriesAndReportTests : IDisposable
     }
 
     [Fact]
-    public void The_shipped_series_files_are_valid()
-    {
-        foreach (var name in new[] { "split-or-steal.json", "split-or-steal-rematch.json" })
-        {
-            var file = SeriesFile.Load(Path.Combine(Snapshot.RepositoryRoot, "shootouts", name));
-            Assert.Equal("split-or-steal", file.Game);
-            Assert.Equal(3, file.Matches.Count);
-        }
-    }
-
-    [Fact]
     public void A_rematch_with_changed_conditions_is_only_configuration()
     {
-        var rematch = SeriesFile.Load(Path.Combine(Snapshot.RepositoryRoot, "shootouts", "split-or-steal-rematch.json"));
+        var rematch = WriteSeries(
+            "rematch.json",
+            """{ "game": "split-or-steal", "seed": 4054, "matches": [ { "firstSeat": "A", "options": { "pot": 1000, "messagesPerPlayer": 5 } } ] }""");
 
         Assert.Equal(1000, rematch.Matches[0].Options!["pot"]!.GetValue<int>());
         var game = _definition.Create(new GameSetup(1, true, "de", Seat.A, rematch.Matches[0].Options));

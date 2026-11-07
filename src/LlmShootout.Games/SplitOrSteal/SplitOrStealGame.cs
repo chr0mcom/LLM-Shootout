@@ -6,15 +6,15 @@ using LlmShootout.Arena.Randomness;
 namespace LlmShootout.Games.SplitOrSteal;
 
 /// <summary>
-/// One match of Split or Steal. With communication, the players first exchange messages in turns; then both decide
+/// One match of Split or Steal. With messages, the players first write them in turns; then both decide
 /// at the same time and in secret between <c>split</c> and <c>steal</c>.
 /// </summary>
 public sealed class SplitOrStealGame : IGame
 {
-    /// <summary>The cooperative move.</summary>
+    /// <summary>The move that shares the pot.</summary>
     public const string Split = "split";
 
-    /// <summary>The defecting move.</summary>
+    /// <summary>The move that takes the whole pot if the other player shares it.</summary>
     public const string Steal = "steal";
 
     /// <summary>Kind of the public fact that reveals a decision, and the key of its data.</summary>

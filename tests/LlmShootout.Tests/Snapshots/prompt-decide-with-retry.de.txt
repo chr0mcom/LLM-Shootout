@@ -7,7 +7,7 @@ Alle Texte, die du selbst schreibst, schreibst du auf Deutsch. Zugwerte schreibs
 Das Spiel heißt Split or Steal. In der Mitte liegt ein Topf mit 100 Punkten. Du und dein Gegner spielt genau eine Runde.
 
 Ablauf:
-1. Gesprächsphase: Ihr schreibt euch abwechselnd öffentliche Nachrichten, jeder genau 3 Nachrichten. Beide lesen alle Nachrichten.
+1. Nachrichtenphase: Ihr schreibt abwechselnd öffentliche Nachrichten, jeder genau 3 Nachrichten. Beide lesen alle Nachrichten.
 2. Entscheidungsphase: Danach entscheidet ihr gleichzeitig und geheim zwischen "split" (teilen) und "steal" (stehlen). Keiner sieht die Entscheidung des anderen, bevor beide entschieden haben.
 
 Auszahlung:

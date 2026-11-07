@@ -5,7 +5,7 @@ namespace LlmShootout.Games.SplitOrSteal;
 
 /// <summary>Options of Split or Steal. All have defaults, so a series file may omit them.</summary>
 /// <param name="Pot">Points in the pot. Must be even and at least 2.</param>
-/// <param name="MessagesPerPlayer">Messages each player may send in the talking phase (only with communication).</param>
+/// <param name="MessagesPerPlayer">Messages each player may send in the message phase (only with messages).</param>
 public sealed record SplitOrStealOptions(int Pot = SplitOrStealOptions.DefaultPot, int MessagesPerPlayer = SplitOrStealOptions.DefaultMessagesPerPlayer)
 {
     /// <summary>Points in the pot unless an option says otherwise.</summary>

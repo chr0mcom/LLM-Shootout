@@ -4,7 +4,7 @@
 Das Spiel heißt Split or Steal. In der Mitte liegt ein Topf mit {pot} Punkten. Du und dein Gegner spielt genau eine Runde.
 
 Ablauf:
-1. Gesprächsphase: Ihr schreibt euch abwechselnd öffentliche Nachrichten, jeder genau {messages} Nachrichten. Beide lesen alle Nachrichten.
+1. Nachrichtenphase: Ihr schreibt abwechselnd öffentliche Nachrichten, jeder genau {messages} Nachrichten. Beide lesen alle Nachrichten.
 2. Entscheidungsphase: Danach entscheidet ihr gleichzeitig und geheim zwischen "split" (teilen) und "steal" (stehlen). Keiner sieht die Entscheidung des anderen, bevor beide entschieden haben.
 
 Auszahlung:
@@ -19,7 +19,7 @@ Dein Ziel ist es, möglichst viele Punkte zu erhalten.
 ## rules.silent
 Das Spiel heißt Split or Steal. In der Mitte liegt ein Topf mit {pot} Punkten. Du und dein Gegner spielt genau eine Runde.
 
-Ihr entscheidet gleichzeitig und geheim zwischen "split" (teilen) und "steal" (stehlen). Keiner sieht die Entscheidung des anderen, bevor beide entschieden haben. Ihr könnt euch nicht verständigen.
+Ihr entscheidet gleichzeitig und geheim zwischen "split" (teilen) und "steal" (stehlen). Keiner sieht die Entscheidung des anderen, bevor beide entschieden haben. Nachrichten sind nicht möglich.
 
 Auszahlung:
 - Beide wählen split: jeder erhält {half} Punkte.
@@ -31,13 +31,13 @@ Wer keine gültige Entscheidung abgibt, erhält 0 Punkte. Der andere erhält dan
 Dein Ziel ist es, möglichst viele Punkte zu erhalten.
 
 ## view.talk
-Gesprächsphase: Bisher wurden {done} von {total} Nachrichten geschrieben. Der Topf enthält {pot} Punkte.
+Nachrichtenphase: Bisher wurden {done} von {total} Nachrichten geschrieben. Der Topf enthält {pot} Punkte.
 
 ## view.decide
 Entscheidungsphase. Der Topf enthält {pot} Punkte.
 
 ## instruction.talk
-Schreibe deine Nachricht {own} von {messages} an deinen Gegner. Eine Entscheidung triffst du erst nach der Gesprächsphase.
+Schreibe deine Nachricht {own} von {messages}. Die Entscheidung folgt nach der Nachrichtenphase.
 
 ## instruction.decide
 Entscheide jetzt: split oder steal. Dein Gegner entscheidet gleichzeitig und geheim.

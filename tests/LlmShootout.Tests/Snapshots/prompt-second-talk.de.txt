@@ -7,7 +7,7 @@ Alle Texte, die du selbst schreibst, schreibst du auf Deutsch. Zugwerte schreibs
 Das Spiel heißt Split or Steal. In der Mitte liegt ein Topf mit 100 Punkten. Du und dein Gegner spielt genau eine Runde.
 
 Ablauf:
-1. Gesprächsphase: Ihr schreibt euch abwechselnd öffentliche Nachrichten, jeder genau 3 Nachrichten. Beide lesen alle Nachrichten.
+1. Nachrichtenphase: Ihr schreibt abwechselnd öffentliche Nachrichten, jeder genau 3 Nachrichten. Beide lesen alle Nachrichten.
 2. Entscheidungsphase: Danach entscheidet ihr gleichzeitig und geheim zwischen "split" (teilen) und "steal" (stehlen). Keiner sieht die Entscheidung des anderen, bevor beide entschieden haben.
 
 Auszahlung:
@@ -21,13 +21,13 @@ Dein Ziel ist es, möglichst viele Punkte zu erhalten.
 
 === User ===
 ### Aktuelle Lage
-Gesprächsphase: Bisher wurden 1 von 6 Nachrichten geschrieben. Der Topf enthält 100 Punkte.
+Nachrichtenphase: Bisher wurden 1 von 6 Nachrichten geschrieben. Der Topf enthält 100 Punkte.
 
 ### Bisheriger Verlauf
 Dein Gegner: Lass uns teilen.
 
 ### Deine Aufgabe jetzt
-Schreibe deine Nachricht 1 von 3 an deinen Gegner. Eine Entscheidung triffst du erst nach der Gesprächsphase.
+Schreibe deine Nachricht 1 von 3. Die Entscheidung folgt nach der Nachrichtenphase.
 
 Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder danach:
 {"thought": ..., "message": ..., "move": ...}

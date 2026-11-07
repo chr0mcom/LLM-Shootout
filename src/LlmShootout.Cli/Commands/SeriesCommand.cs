@@ -15,7 +15,7 @@ public static class SeriesCommand
     public static Command Build(CliEnvironment env)
     {
         var run = new RunOptionSet();
-        var file = new Argument<string>("file") { Description = "Series file, for example shootouts/split-or-steal.json" };
+        var file = new Argument<string>("file") { Description = "Series file (JSON) with the game, the seed and the matches" };
         var command = new Command("series", "Plays all matches of a series file with the same two players.") { file };
         foreach (var option in run.All)
         {

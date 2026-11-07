@@ -24,8 +24,13 @@ step "play: quiet mode prints only the directory"
 MATCH="$("${SHOOTOUT[@]}" play split-or-steal --a random --b random --communication off --seed 8 --lang en --quiet --out "$WORK")"
 test -f "$MATCH/events.jsonl" && test -f "$MATCH/match.json" && test -f "$MATCH/report.md"
 
-step "series: the standard series"
-SERIES="$("${SHOOTOUT[@]}" series shootouts/split-or-steal.json --a random --b random --quiet --out "$WORK")"
+step "series: a temporary series file"
+cat > "$WORK/series.json" <<'JSON'
+{ "game": "split-or-steal", "seed": 2027, "matches": [
+    { "firstSeat": "A" },
+    { "firstSeat": "B", "communication": false } ] }
+JSON
+SERIES="$("${SHOOTOUT[@]}" series "$WORK/series.json" --a random --b random --quiet --out "$WORK")"
 test -f "$SERIES/series.json" && test -f "$SERIES/series-report.md"
 
 step "replay"

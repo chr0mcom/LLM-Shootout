@@ -7,7 +7,7 @@ Every text you write yourself is written in English. Write move values exactly a
 The game is called Split or Steal. There is a pot of 100 points in the middle. You and your opponent play exactly one round.
 
 Sequence:
-1. Talking phase: you take turns writing public messages to each other, 3 messages each. Both of you read all messages.
+1. Message phase: you take turns writing public messages, 3 messages each. Both of you read all messages.
 2. Decision phase: then you decide at the same time and in secret between "split" and "steal". Nobody sees the other's decision before both have decided.
 
 Payout:

@@ -51,7 +51,7 @@ public sealed class SplitOrStealTests
     }
 
     [Fact]
-    public void Talking_phase_alternates_and_only_allows_messages()
+    public void Message_phase_alternates_and_only_allows_messages()
     {
         var game = Create(first: Seat.B);
         var order = new List<(Seat, FieldRule, FieldRule)>();
@@ -187,5 +187,12 @@ public sealed class SplitOrStealTests
         Assert.Null(GameCatalog.Find("chess"));
         Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, true, "de")));
         Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, false, "de")));
+    }
+
+    [Fact]
+    public void The_summary_describes_only_the_mechanics_and_the_game_has_no_analysis()
+    {
+        Assert.Equal("Two players choose simultaneously between two options; the payout depends on both choices.", Definition.Summary);
+        Assert.Null(((IGameDefinition)Definition).Analyzer);
     }
 }

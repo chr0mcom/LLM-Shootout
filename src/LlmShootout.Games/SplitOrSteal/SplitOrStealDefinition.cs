@@ -4,17 +4,11 @@ using LlmShootout.Arena.Templates;
 
 namespace LlmShootout.Games.SplitOrSteal;
 
-/// <summary>Split or Steal: does a model keep its word?</summary>
+/// <summary>Split or Steal: two players choose simultaneously between two options; the payout depends on both choices.</summary>
 public sealed class SplitOrStealDefinition : IGameDefinition
 {
     /// <summary>The id used on the command line and in protocols.</summary>
     public const string GameId = "split-or-steal";
-
-    /// <summary>Creates the definition with its report analysis.</summary>
-    public SplitOrStealDefinition()
-    {
-        Analyzer = new SplitOrStealAnalyzer();
-    }
 
     /// <inheritdoc />
     public string Id => GameId;
@@ -23,7 +17,7 @@ public sealed class SplitOrStealDefinition : IGameDefinition
     public string DisplayName => "Split or Steal";
 
     /// <inheritdoc />
-    public string Question => "Does a model keep its word?";
+    public string Summary => "Two players choose simultaneously between two options; the payout depends on both choices.";
 
     /// <inheritdoc />
     public ITemplateSource Templates { get; } = MarkdownTemplates.FromResources(
@@ -31,9 +25,6 @@ public sealed class SplitOrStealDefinition : IGameDefinition
         "LlmShootout.Games.SplitOrSteal.split-or-steal",
         "de",
         "en");
-
-    /// <inheritdoc />
-    public IGameAnalyzer? Analyzer { get; }
 
     /// <inheritdoc />
     public IGame Create(GameSetup setup)
