@@ -27,13 +27,19 @@ Seat A moves: `pass` (attempts: 1)
 
 Seat A played `pass` in move-1. The rules forbid it (code: pass). *(analysis, never in a prompt)*
 
+Oracle, seat A, move-1: position won, move `pass`, optimal: n/a. Best moves: 1. *(analysis, never in a prompt)*
+
 Seat A passes.
 
 Seat B moves: `3` (attempts: 1)
 
+Oracle, seat B, move-2: position won, move `3`, optimal: false. Best moves: 1. *(analysis, never in a prompt)*
+
 Seat B takes 3. 2 stones are left.
 
 Seat A moves: `2` (attempts: 1)
+
+Oracle, seat A, move-3: position won, move `2`, optimal: true. Best moves: 2. *(analysis, never in a prompt)*
 
 Seat A takes 2. 0 stones are left.
 

@@ -108,14 +108,36 @@ is neither: the player never delivered an acceptable move, and the turn has no `
 ### `fact`
 
 Something the game reports. `audience` is `Everyone`, `Seat` (only the named seat sees it in a prompt) or
-`Analysis` (never in a prompt, for example a Nim oracle verdict). `text` is the neutral wording ("Seat A"),
+`Analysis` (never in a prompt, for example the rating of a move by an oracle). `text` is the neutral wording ("Seat A"),
 `template` the key and values so that it can be reworded for a viewer, `data` machine readable details. Facts of a round are filed under the `turnId` of the turn of their seat; hidden starting state (dice, a drawn code) comes from `IGame.Start()` and has `turnId` `start`.
 
-The arena itself writes one fact: `rule_violation`, with the audience `Analysis`, for every turn whose `moveKind` is `RuleViolation`.
+The arena itself writes facts: first `rule_violation`, with the audience `Analysis`, for every turn whose `moveKind` is `RuleViolation`.
 It sits right after the `turn` event (and its `message` event) and before the facts of the game for that round, has the acting seat
 as `seat` and the `turnId` of the turn, and carries the `data` keys `code` (the name of the broken rule, chosen by the game), `move`
 and `turn`. It is never rendered into a prompt or into a debriefing. What the opponent may learn about the move is a separate, neutral
 fact that the game itself reports (for example "Seat A passes.", with the audience `Everyone`).
+
+If the game has an oracle (`IGameOracle`), the `data` of a rule violation also has the key `value`: the position before the move
+(`won`, `lost`, `drawn` or `unknown`).
+
+A game with an oracle gets a second arena fact: `oracle`, with the audience `Analysis`, for every turn with the status `played` and a move.
+It follows the `turn` event (and a `rule_violation` fact of the same turn) and precedes the facts of the game for that round. Its `data`:
+
+| Key | Meaning |
+|---|---|
+| `value` | the position before the move for the seat that moved: `won`, `lost`, `drawn` or `unknown` |
+| `move` | the move as the game normalized it |
+| `best` | all best moves separated by commas, at most 20; empty in a lost or unknown position |
+| `optimal` | `true` or `false` for a regular move in a won or drawn position, otherwise `n/a` (lost or unknown position, resignation, rule violation) |
+| `rated` | `false` for a resignation and a rule violation, otherwise `true` |
+| `turn` | the turn id |
+
+A turn that ended `exhausted` has no `oracle` fact, and neither has a protocol of a game without an oracle or one written before the
+oracle existed; every figure that depends on it is "not applicable" there. The fact is never rendered into a prompt or a debriefing.
+
+```json
+{"type":"fact","turnId":"move-1","kind":"oracle","audience":"Analysis","seat":"A","text":"Oracle, seat A, move-1: position won, move `1`, optimal: true. Best moves: 1.","template":{"key":"fact.oracle","values":{"seat":"A","turn":"move-1","value":"won","move":"1","optimal":"true","best":"1"}},"data":{"value":"won","move":"1","best":"1","optimal":"true","rated":"true","turn":"move-1"},"at":"...","schemaVersion":2}
+```
 
 ```json
 {"type":"fact","turnId":"move-1","kind":"rule_violation","audience":"Analysis","seat":"A","text":"Seat A played `pass` in move-1. The rules forbid it (code: pass).","template":{"key":"fact.rule_violation","values":{"seat":"A","turn":"move-1","move":"pass","code":"pass"}},"data":{"code":"pass","move":"pass","turn":"move-1"},"at":"...","schemaVersion":2}

@@ -125,6 +125,9 @@ eine ganze Zahl von 0 bis 100
 ## fact.rule_violation
 Sitz {seat} hat in {turn} `{move}` gespielt. Die Regeln verbieten es (Code: {code}).
 
+## fact.oracle
+Orakel, Sitz {seat}, {turn}: Lage {value}, Zug `{move}`, optimal: {optimal}. Beste Züge: {best}.
+
 ## sample.thought
 Zufälliger Zug.
 

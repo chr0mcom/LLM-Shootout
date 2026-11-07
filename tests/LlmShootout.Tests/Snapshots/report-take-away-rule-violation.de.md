@@ -27,13 +27,19 @@ Sitz A zieht: `pass` (Versuche: 1)
 
 Sitz A hat in move-1 `pass` gespielt. Die Regeln verbieten es (Code: pass). *(Analyse, nie im Prompt)*
 
+Orakel, Sitz A, move-1: Lage won, Zug `pass`, optimal: n/a. Beste Züge: 1. *(Analyse, nie im Prompt)*
+
 Sitz A setzt aus.
 
 Sitz B zieht: `3` (Versuche: 1)
 
+Orakel, Sitz B, move-2: Lage won, Zug `3`, optimal: false. Beste Züge: 1. *(Analyse, nie im Prompt)*
+
 Sitz B nimmt 3. Es bleiben 2 Steine.
 
 Sitz A zieht: `2` (Versuche: 1)
+
+Orakel, Sitz A, move-3: Lage won, Zug `2`, optimal: true. Beste Züge: 2. *(Analyse, nie im Prompt)*
 
 Sitz A nimmt 2. Es bleiben 0 Steine.
 

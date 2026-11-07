@@ -2,6 +2,8 @@
 
 Status: accepted (2026-11-07)
 
+Amended 2026-11-07: the fact `rule_violation` also carries `value`, the position before the move, if the game has an oracle ([ADR 0019](0019-oracle-rates-every-move.md)).
+
 ## Context
 The series focuses on game strength and rule compliance. Until now the arena knew one kind of rule problem: an invalid move. `Check`
 rejects it, the player gets a correction hint and tries again, and after the last attempt the turn is `exhausted`. That measures whether a

@@ -94,7 +94,7 @@ public sealed class RuleViolationTests : IDisposable
 
         var fact = Assert.Single(events.OfType<FactEvent>(), f => f.Kind == "rule_violation");
         Assert.Equal((FactAudience.Analysis, Seat.A, "move-1"), (fact.Audience, fact.Seat, fact.TurnId));
-        Assert.Equal(new Dictionary<string, string> { ["code"] = "pass", ["move"] = "pass", ["turn"] = "move-1" }, fact.Data);
+        Assert.Equal(new Dictionary<string, string> { ["code"] = "pass", ["move"] = "pass", ["turn"] = "move-1", ["value"] = "won" }, fact.Data);
         Assert.Equal("Seat A played `pass` in move-1. The rules forbid it (code: pass).", fact.Text);
         var order = events.Select(e => e switch
         {

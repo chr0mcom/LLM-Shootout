@@ -18,8 +18,8 @@ means the game is over. The arena asks every listed seat against the same state,
 `TurnRequest` has a `TurnId` and a `Kind` (`talk`, `decide`, `offer`, `respond`, ...). `Check` returns a
 normalized move or a stable error code plus a template for the correction hint. After exhausted attempts the arena
 reports `SubmissionStatus.Exhausted` and the game decides what follows (default move, loss, skipped turn).
-`Apply` returns `GameFact`s with an audience (everyone, one seat, analysis only). Oracle verdicts of Nim are
-analysis facts: they reach the protocol but never a prompt.
+`Apply` returns `GameFact`s with an audience (everyone, one seat, analysis only). Analysis facts reach the protocol but never a prompt.
+Amended 2026-11-07: the rating of moves by an oracle is not done in `Apply`; the arena writes it ([ADR 0019](0019-oracle-rates-every-move.md)).
 Game options come as JSON from series files; `IGameDefinition.Create` validates them
 (`GameOptionsException`), including role assignment. A rematch with swapped roles is therefore configuration.
 Game specific report sections come from an optional `IGameAnalyzer` that reads only protocol events.

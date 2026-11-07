@@ -125,6 +125,9 @@ a whole number from 0 to 100
 ## fact.rule_violation
 Seat {seat} played `{move}` in {turn}. The rules forbid it (code: {code}).
 
+## fact.oracle
+Oracle, seat {seat}, {turn}: position {value}, move `{move}`, optimal: {optimal}. Best moves: {best}.
+
 ## sample.thought
 Random move.
 

@@ -87,6 +87,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
     private async Task PlayRoundAsync(MatchContext context, TurnExecutor executor, CancellationToken cancellationToken)
     {
         var turns = context.Game.PendingTurns.ToArray();
+        var assessments = Assess(context.Game, turns);
         var results = new List<TurnResult>(turns.Length);
         foreach (var turn in turns)
         {
@@ -98,7 +99,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             await RecordTurnAsync(context, turn, result, cancellationToken);
         }
 
-        await RecordRuleViolationsAsync(context, turns, results, cancellationToken);
+        await RecordAnalysisAsync(context, turns, results, assessments, cancellationToken);
         var resolution = context.Game.Apply([.. results.Select(r => r.Submission)]);
         await RecordFactsAsync(context, turns[0].TurnId, resolution.Facts, turns, cancellationToken);
     }
@@ -112,15 +113,33 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         }
     }
 
-    /// <summary>Records an accepted move that the rules forbid, after the turns and before the game applies them.</summary>
-    private async Task RecordRuleViolationsAsync(MatchContext context, TurnRequest[] turns, List<TurnResult> results, CancellationToken cancellationToken)
+    /// <summary>Asks the oracle of the game, if it has one, about every pending turn before anybody has moved.</summary>
+    private static PositionAssessment?[] Assess(IGame game, TurnRequest[] turns) =>
+        [.. turns.Select(turn => (game as IGameOracle)?.Assess(turn))];
+
+    /// <summary>
+    /// Records what the arena itself knows about the moves of the round, after the turns and before the game applies them:
+    /// a rule violation, and the rating of every played move if the game has an oracle.
+    /// </summary>
+    private async Task RecordAnalysisAsync(MatchContext context, TurnRequest[] turns, List<TurnResult> results, PositionAssessment?[] assessments, CancellationToken cancellationToken)
     {
-        foreach (var (turn, result) in turns.Zip(results).Where(pair => pair.Second.Submission.Kind == MoveKind.RuleViolation))
+        for (var i = 0; i < turns.Length; i++)
         {
-            var fact = ArenaFacts.RuleViolation(turn, result.Submission.Move!, result.ViolationCode!);
-            await AppendFactAsync(context, turn.TurnId, fact, context.Prompts.RenderArena(fact.Description), cancellationToken);
+            var (turn, submission) = (turns[i], results[i].Submission);
+            if (submission.Kind == MoveKind.RuleViolation)
+            {
+                await AppendArenaFactAsync(context, turn, ArenaFacts.RuleViolation(turn, submission.Move!, results[i].ViolationCode!, assessments[i]?.Value), cancellationToken);
+            }
+
+            if (assessments[i] is { } assessment && submission is { Status: SubmissionStatus.Played, Move: { } move })
+            {
+                await AppendArenaFactAsync(context, turn, ArenaFacts.Oracle(turn, assessment, move, submission.Kind), cancellationToken);
+            }
         }
     }
+
+    private Task AppendArenaFactAsync(MatchContext context, TurnRequest turn, GameFact fact, CancellationToken cancellationToken) =>
+        AppendFactAsync(context, turn.TurnId, fact, context.Prompts.RenderArena(fact.Description), cancellationToken);
 
     private async Task AppendFactAsync(MatchContext context, string turnId, GameFact fact, string text, CancellationToken cancellationToken)
     {

@@ -69,6 +69,25 @@ public sealed class MatchRecord
     /// <summary>Refusals of a seat.</summary>
     public int Refusals(Seat seat) => Turns(seat).Sum(t => t.Refusals);
 
+    /// <summary>
+    /// The ratings of the moves of a seat by the oracle of the game, in order, each with the kind of move and the estimate of
+    /// its turn. Empty if the game has no oracle or the protocol is older than the oracle.
+    /// </summary>
+    public IEnumerable<MoveVerdict> Verdicts(Seat seat)
+    {
+        var turns = Turns(seat).ToLookup(t => t.TurnId);
+        return Facts
+            .Where(f => f.Kind == OracleFact.Kind && f.Seat == seat)
+            .Select(fact =>
+            {
+                var turn = turns[fact.TurnId].FirstOrDefault();
+                return MoveVerdict.From(fact) with { Kind = turn?.MoveKind ?? MoveKind.Regular, Estimate = turn?.Estimate };
+            });
+    }
+
+    /// <summary>True if the protocol contains ratings of moves by an oracle.</summary>
+    public bool RecordsOracle => Facts.Any(f => f.Kind == OracleFact.Kind);
+
     /// <summary>A value from the data of the first fact of a kind about a seat (for example the decision of Split or Steal), or null.</summary>
     public string? FactData(Seat seat, string kind, string key) =>
         Facts.FirstOrDefault(f => f.Kind == kind && f.Seat == seat)?.Data?.GetValueOrDefault(key);
