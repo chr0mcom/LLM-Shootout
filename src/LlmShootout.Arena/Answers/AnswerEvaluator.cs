@@ -27,7 +27,9 @@ public sealed record Evaluation(
     bool Silent,
     string? Move,
     IReadOnlyList<FieldViolation> Violations,
-    IReadOnlyList<string> ExtraKeys)
+    IReadOnlyList<string> ExtraKeys,
+    int? Estimate = null,
+    FieldViolation? DiscardedEstimate = null)
 {
     /// <summary>True if the answer can be used as it is.</summary>
     public bool IsValid => Class == AnswerClass.Valid;
@@ -37,8 +39,10 @@ public sealed record Evaluation(
 public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
 {
     /// <summary>
-    /// Evaluates an answer. In the <paramref name="isLastAttempt"/> the evaluation salvages the message only: a long
-    /// message is shortened and a missing required message becomes silence. Thought and move rules always apply.
+    /// Evaluates an answer. In the <paramref name="isLastAttempt"/> the evaluation salvages the message and the estimate:
+    /// a long message is shortened, a missing required message becomes silence, and a missing or unusable estimate is
+    /// discarded and reported in <see cref="Evaluation.DiscardedEstimate"/> instead of rejecting the answer, so that a
+    /// formal slip cannot change the outcome of a game. Thought and move rules always apply.
     /// </summary>
     public Evaluation Evaluate(TurnRequest turn, ParsedAnswer answer, string? rawText, IGame game, bool isLastAttempt)
     {
@@ -50,9 +54,10 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
         var (thought, thoughtCut) = CheckThought(turn, answer, violations);
         var (message, messageCut, silent) = CheckMessage(turn, answer, violations, isLastAttempt);
         var move = CheckMove(turn, answer, game, violations);
+        var (estimate, discarded) = CheckEstimate(turn, answer, violations, isLastAttempt);
 
         var cls = !answer.HasJson || violations.Count > 0 ? ClassifyFailure(rawText) : AnswerClass.Valid;
-        return new Evaluation(cls, thought, thoughtCut, message, messageCut, silent, move, violations, answer.ExtraKeys);
+        return new Evaluation(cls, thought, thoughtCut, message, messageCut, silent, move, violations, answer.ExtraKeys, estimate, discarded);
     }
 
     private AnswerClass ClassifyFailure(string? rawText) =>
@@ -136,6 +141,50 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
 
         violations.Add(new FieldViolation("move", prompts.RenderGame(check.Reason!), check.Allowed ?? AllowedFrom(turn), check.ErrorCode));
         return null;
+    }
+
+    private (int? Value, FieldViolation? Discarded) CheckEstimate(TurnRequest turn, ParsedAnswer answer, List<FieldViolation> violations, bool last)
+    {
+        if (!answer.HasJson)
+        {
+            return (null, null);
+        }
+
+        var text = answer.Estimate;
+        if (turn.Estimate == FieldRule.Forbidden)
+        {
+            AddPresenceViolation("estimate", turn.Estimate, text, violations);
+            return (null, null);
+        }
+
+        if (text is null && turn.Estimate == FieldRule.Optional)
+        {
+            return (null, null);
+        }
+
+        if (text is not null && TryReadEstimate(text) is { } value)
+        {
+            return (value, null);
+        }
+
+        var allowed = prompts.Arena("allowed.estimate");
+        var violation = text is null
+            ? new FieldViolation("estimate", prompts.Arena("violation.missing"), allowed)
+            : new FieldViolation("estimate", prompts.Arena("violation.estimate", ("value", text)), allowed);
+        if (last)
+        {
+            return (null, violation);
+        }
+
+        violations.Add(violation);
+        return (null, null);
+    }
+
+    private static int? TryReadEstimate(string text)
+    {
+        const NumberStyles style = NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint;
+        var isNumber = decimal.TryParse(text, style, CultureInfo.InvariantCulture, out var number);
+        return isNumber && number == decimal.Truncate(number) && number is >= 0 and <= 100 ? (int)number : null;
     }
 
     private static string AllowedFrom(TurnRequest turn) =>

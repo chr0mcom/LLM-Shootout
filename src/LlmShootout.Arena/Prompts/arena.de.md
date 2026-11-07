@@ -73,6 +73,12 @@ Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder
 ## field.move.forbidden
 - "move": null (in diesem Zug wird kein Zug gemacht)
 
+## field.estimate.required
+- "estimate": {meaning} Eine ganze Zahl von 0 bis 100.
+
+## field.estimate.optional
+- "estimate": {meaning} Eine ganze Zahl von 0 bis 100, oder null.
+
 ## retry.invalid
 Deine letzte Antwort war nicht gültig.
 {hint}
@@ -107,8 +113,14 @@ darf in diesem Zug nicht gesetzt werden, verwende null
 ## violation.too_long
 ist zu lang ({count} Wörter)
 
+## violation.estimate
+"{value}" ist nicht verwendbar
+
 ## allowed.max_words
 höchstens {max} Wörter
+
+## allowed.estimate
+eine ganze Zahl von 0 bis 100
 
 ## sample.thought
 Zufälliger Zug.

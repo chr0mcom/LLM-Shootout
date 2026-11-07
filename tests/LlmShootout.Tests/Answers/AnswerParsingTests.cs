@@ -149,4 +149,19 @@ public sealed class AnswerParsingTests
 
         Assert.Equal(AnswerClass.Refusal, evaluation.Class);
     }
+
+    [Theory]
+    [InlineData("{\"move\":\"x\",\"estimate\":42}", "42")]
+    [InlineData("{\"move\":\"x\",\"estimate\":\" 42 \"}", "42")]
+    [InlineData("{\"move\":\"x\",\"estimate\":42.5}", "42.5")]
+    [InlineData("{\"move\":\"x\",\"estimate\":null}", null)]
+    [InlineData("{\"move\":\"x\",\"estimate\":\"\"}", null)]
+    [InlineData("{\"move\":\"x\"}", null)]
+    public void Reads_the_estimate_as_text_and_knows_it_as_a_key_of_the_contract(string json, string? expected)
+    {
+        var answer = AnswerParser.Parse(json, null);
+
+        Assert.Equal(expected, answer.Estimate);
+        Assert.Empty(answer.ExtraKeys);
+    }
 }

@@ -7,8 +7,9 @@ namespace LlmShootout.Arena.Prompting;
 public static class ResponseSchema
 {
     /// <summary>
-    /// Schema for <c>{thought, message, move}</c>. All keys are present; unused ones are null. Without
-    /// messages between players the <c>message</c> key does not exist at all.
+    /// Schema for <c>{thought, message, move, estimate}</c>. All keys are present; unused ones are null. Without
+    /// messages between players the <c>message</c> key does not exist at all, and without an estimate in the turn
+    /// neither does the <c>estimate</c> key.
     /// </summary>
     public static JsonNode ForTurn(TurnRequest turn, bool communication = true)
     {
@@ -23,6 +24,12 @@ public static class ResponseSchema
 
         properties["move"] = MoveSchema(turn);
         required.Add("move");
+        if (turn.Estimate != FieldRule.Forbidden)
+        {
+            properties["estimate"] = EstimateSchema(turn.Estimate);
+            required.Add("estimate");
+        }
+
         return new JsonObject
         {
             ["type"] = "object",
@@ -31,6 +38,13 @@ public static class ResponseSchema
             ["properties"] = properties,
         };
     }
+
+    private static JsonObject EstimateSchema(FieldRule rule) => new()
+    {
+        ["type"] = rule == FieldRule.Required ? "integer" : new JsonArray("integer", "null"),
+        ["minimum"] = 0,
+        ["maximum"] = 100,
+    };
 
     private static JsonObject NullableString() => new() { ["type"] = new JsonArray("string", "null") };
 

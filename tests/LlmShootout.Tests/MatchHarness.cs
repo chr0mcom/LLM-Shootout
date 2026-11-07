@@ -24,8 +24,16 @@ public sealed class MatchHarness : IDisposable
 
     public string Directory => _root;
 
-    public static string Answer(string? thought = "t", string? message = null, string? move = null) =>
-        new JsonObject { ["thought"] = thought, ["message"] = message, ["move"] = move }.ToJsonString();
+    public static string Answer(string? thought = "t", string? message = null, string? move = null, JsonNode? estimate = null)
+    {
+        var answer = new JsonObject { ["thought"] = thought, ["message"] = message, ["move"] = move };
+        if (estimate is not null)
+        {
+            answer["estimate"] = estimate;
+        }
+
+        return answer.ToJsonString();
+    }
 
     public static ModelCallInfo Info(decimal? cost = 0.001m, string model = "test/model") =>
         new(model, model, "test", "gen-1", 10, 5, null, cost, TimeSpan.FromSeconds(1), "stop", 1);

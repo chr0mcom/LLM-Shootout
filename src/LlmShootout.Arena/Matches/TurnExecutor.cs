@@ -21,6 +21,7 @@ namespace LlmShootout.Arena.Matches;
 /// <param name="InvalidAnswers">Number of invalid answers.</param>
 /// <param name="Refusals">Number of refusals.</param>
 /// <param name="TokenLimitHits">Number of answers cut off by the token limit.</param>
+/// <param name="Estimate">The self-assessment from 0 to 100, or null if none was asked for or none was usable.</param>
 public sealed record TurnResult(
     TurnSubmission Submission,
     bool MessageAllowed,
@@ -32,7 +33,8 @@ public sealed record TurnResult(
     int Attempts,
     int InvalidAnswers,
     int Refusals,
-    int TokenLimitHits);
+    int TokenLimitHits,
+    int? Estimate = null);
 
 /// <summary>
 /// Plays one turn of one seat: builds the prompt, calls the player, classifies the answer, and retries with a
@@ -50,6 +52,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
     public async Task<TurnResult> ExecuteAsync(TurnRequest turn, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(turn);
+        EnsureEstimateIsDescribed(turn);
         var max = context.Plan.Options.MaxAttempts;
         var state = new TurnState();
 
@@ -69,6 +72,14 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         }
 
         return Finish(turn, state, state.LastEvaluation!, SubmissionStatus.Exhausted, max);
+    }
+
+    private static void EnsureEstimateIsDescribed(TurnRequest turn)
+    {
+        if (turn.Estimate != FieldRule.Forbidden && turn.EstimateMeaning is null)
+        {
+            throw new ArgumentException($"Turn '{turn.TurnId}' asks for an estimate but names no meaning for it.", nameof(turn));
+        }
     }
 
     /// <summary>One model call and the classification of its answer. Returns the evaluation, or null if the call timed out.</summary>
@@ -148,7 +159,8 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             attempts,
             state.InvalidAnswers,
             state.Refusals,
-            state.TokenLimitHits);
+            state.TokenLimitHits,
+            evaluation.Estimate);
     }
 
     private string SampleAnswer(TurnRequest turn, SeededRng rng)
@@ -161,13 +173,23 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             ["message"] = wantsMessage ? messages[rng.NextInt(messages.Length)] : null,
             ["move"] = turn.Move == FieldRule.Forbidden ? null : context.Game.SampleLegalMove(turn, rng),
         };
+        if (turn.Estimate != FieldRule.Forbidden)
+        {
+            answer["estimate"] = rng.NextInt(101);
+        }
+
         return answer.ToJsonString();
     }
 
     private Task WriteCallAsync(TurnRequest turn, PlayerCall request, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, bool tokenLimit, CancellationToken cancellationToken)
     {
-        var fields = parsed.HasJson ? new ParsedFields(parsed.Thought, parsed.Message, parsed.Move, parsed.FromReasoning, parsed.ExtraKeys) : null;
-        var violations = evaluation.Violations.Select(v => v.Code is null ? $"{v.Key}: {v.Violation}" : $"{v.Key} [{v.Code}]: {v.Violation}").ToArray();
+        var fields = parsed.HasJson ? new ParsedFields(parsed.Thought, parsed.Message, parsed.Move, parsed.FromReasoning, parsed.ExtraKeys, parsed.Estimate) : null;
+        var violations = evaluation.Violations.Select(v => v.Code is null ? $"{v.Key}: {v.Violation}" : $"{v.Key} [{v.Code}]: {v.Violation}").ToList();
+        if (evaluation.DiscardedEstimate is { } discarded)
+        {
+            violations.Add($"{discarded.Key} [discarded]: {discarded.Violation}");
+        }
+
         var callClass = tokenLimit ? CallClass.TokenLimit : CallClass.Of(evaluation.Class);
         return context.Writer.AppendAsync(
             ModelCallEvent.Answered(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, request.Attempt, request.Messages, reply, fields, callClass, violations),

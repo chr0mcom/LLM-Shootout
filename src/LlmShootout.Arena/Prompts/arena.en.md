@@ -73,6 +73,12 @@ Answer with a single JSON object of this shape and no text before or after it:
 ## field.move.forbidden
 - "move": null (no move is made in this turn)
 
+## field.estimate.required
+- "estimate": {meaning} A whole number from 0 to 100.
+
+## field.estimate.optional
+- "estimate": {meaning} A whole number from 0 to 100, or null.
+
 ## retry.invalid
 Your last answer was not valid.
 {hint}
@@ -107,8 +113,14 @@ must not be set in this turn, use null
 ## violation.too_long
 is too long ({count} words)
 
+## violation.estimate
+"{value}" cannot be used
+
 ## allowed.max_words
 at most {max} words
+
+## allowed.estimate
+a whole number from 0 to 100
 
 ## sample.thought
 Random move.

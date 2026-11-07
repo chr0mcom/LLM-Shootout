@@ -17,7 +17,7 @@ The hash of each file is stored in the `match_started` event, so a protocol says
 ## Prompt languages
 
 `--lang de` (default) or `--lang en`. The language changes the wording of prompts and reports, and the system prompt tells the model explicitly to write every text it composes in that language (without that sentence, some models answer in English to a German prompt). Field names
-(`thought`, `message`, `move`), move values (`split`, `steal`) and protocol keys are always English.
+(`thought`, `message`, `move`, `estimate`), move values (`split`, `steal`) and protocol keys are always English.
 
 ## Layout of a turn prompt
 
@@ -63,8 +63,12 @@ Answer with a single JSON object of this shape and no text before or after it:
 ## The answer
 
 ```json
-{ "thought": "private, at most 40 words", "message": "public, at most 20 words, or null", "move": "game specific, or null" }
+{ "thought": "private, at most 40 words", "message": "public, at most 20 words, or null", "move": "game specific, or null", "estimate": "0 to 100, or null" }
 ```
+
+The line with the shape in the prompt is put together from the keys a turn has: `thought` always, `message` with messages between
+players, `move` always, and `estimate` only if the turn asks for it. A key that does not exist for the turn does not appear in the
+shape, in the list of fields or in the schema.
 
 - **thought** is private. The opponent never sees it; it is stored in the protocol. A thought that is too long is
   shortened and marked (`thoughtTruncated`); it never makes a turn invalid.
@@ -72,6 +76,13 @@ Answer with a single JSON object of this shape and no text before or after it:
   (`TurnRequest.Message`). Without messages between players the prompt does not mention messages at all and the key does not
   exist in the schema.
 - **move** is checked by the rules of the game (`IGame.Check`).
+- **estimate** is the fourth field, a self-assessment of the seat: a whole number from 0 to 100. What it stands for is
+  worded by the game for each turn (`TurnRequest.EstimateMeaning`, for example "your chance of winning in percent"); the
+  arena adds only the scale. It is **forbidden by default** (`TurnRequest.Estimate`); a game can make it optional or required. The
+  prompt and the schema do not mention it in a turn that does not ask for it, so the answer contract of such a turn is exactly the one
+  of the three fields. The number is read from a JSON number or from text (`"62"`, `55.0`); `101`, `-1`, `42.5`, `"high"` and `"50%"` are
+  not usable. The value is stored in the `turn` event (`estimate`) and never shown to the opponent.
+  A turn that asks for an estimate must name its meaning (`EstimateMeaning`); the arena refuses the turn otherwise.
 
 The word limits are options (`MatchOptions.MaxThoughtWords`, `MaxMessageWords`).
 
@@ -82,6 +93,10 @@ The word limits are options (`MatchOptions.MaxThoughtWords`, `MaxMessageWords`).
 | Required | The field must be present and not empty. |
 | Optional | The field may be given or be `null`. |
 | Forbidden | The field must be `null`. A value makes the answer invalid. |
+
+For `estimate` the schema is `{"type": ["integer", "null"], "minimum": 0, "maximum": 100}`; if the field is required, the type is
+`"integer"` without `null`. The key is part of `required` and of `properties` only if the turn is not forbidden, and
+`additionalProperties` stays `false`, so strict structured output keeps working.
 
 ### Structured output
 
@@ -112,8 +127,12 @@ Every turn has a budget of **three model calls** (`MatchOptions.MaxAttempts`), s
 answers, refusals and token-limit hits are counted per player and shown in the report: "model X attempted four
 illegal moves" is a result, not an operating detail.
 
-In the **last attempt** the arena salvages the message only: a message that is too long is shortened and marked,
-and a required message that is missing becomes *silence* (shown to the opponent as "(no message)"). The rules for
+In the **last attempt** the arena salvages the message and the estimate: a message that is too long is shortened and marked,
+a required message that is missing becomes *silence* (shown to the opponent as "(no message)"), and an estimate that is missing or
+unusable is **discarded instead of rejecting the answer**: the move is played, the turn has no estimate, and the call carries the
+problem `estimate [discarded]: ...` in `violations`. A slip in a side field must not change the outcome of a game. In the earlier attempts
+a missing or unusable estimate is an invalid answer with a correction hint like any other field (`"estimate": "high" cannot be used. Allowed:
+a whole number from 0 to 100.`), and an estimate in a turn that forbids it is always rejected. The rules for
 thought and move always apply. If the budget is used up without a legal move, the arena reports the turn as
 `exhausted` and the game decides what that means (Split or Steal: the player gets 0 points).
 

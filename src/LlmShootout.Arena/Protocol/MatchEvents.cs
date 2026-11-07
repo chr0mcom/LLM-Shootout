@@ -5,11 +5,17 @@ using LlmShootout.Arena.Players;
 
 namespace LlmShootout.Arena.Protocol;
 
-/// <summary>Version of the line format of <c>events.jsonl</c>. Increase it when the shape of an event changes.</summary>
+/// <summary>
+/// Version of the line format of <c>events.jsonl</c>. Increase it when the shape of an event changes or the protocol
+/// gains a field that extends what it means. Readers accept every version from <see cref="Oldest"/> up to <see cref="Current"/>.
+/// </summary>
 public static class ProtocolVersion
 {
-    /// <summary>The current version.</summary>
-    public const int Current = 1;
+    /// <summary>The version that is written. Version 2 added the self-assessment (<c>estimate</c>) of a turn.</summary>
+    public const int Current = 2;
+
+    /// <summary>The oldest version a reader still understands.</summary>
+    public const int Oldest = 1;
 }
 
 /// <summary>Base of all protocol events. One event is one line of <c>events.jsonl</c>.</summary>
@@ -47,7 +53,7 @@ public sealed record MatchStartedEvent(
     string GitCommit) : MatchEvent(At);
 
 /// <summary>The fields of an answer as parsed by the arena.</summary>
-public sealed record ParsedFields(string? Thought, string? Message, string? Move, bool FromReasoning, IReadOnlyList<string> ExtraKeys);
+public sealed record ParsedFields(string? Thought, string? Message, string? Move, bool FromReasoning, IReadOnlyList<string> ExtraKeys, string? Estimate = null);
 
 /// <summary>One call to a player, with the exact prompt and the unchanged answer.</summary>
 public sealed record ModelCallEvent(
@@ -102,7 +108,8 @@ public sealed record TurnEvent(
     int Attempts,
     int InvalidAnswers,
     int Refusals,
-    int TokenLimitHits = 0) : MatchEvent(At);
+    int TokenLimitHits = 0,
+    int? Estimate = null) : MatchEvent(At);
 
 /// <summary>A fact reported by the game.</summary>
 public sealed record FactEvent(

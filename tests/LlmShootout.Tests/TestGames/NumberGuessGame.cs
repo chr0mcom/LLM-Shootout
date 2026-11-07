@@ -37,6 +37,32 @@ public sealed class NumberGuessDefinition : IGameDefinition
             Hits per guess
             ## metric.never
             Never measurable
+            ## estimate_meaning
+            Your estimated chance of guessing correctly with this guess, in percent.
+            """,
+        ["de"] = """
+            ## rules
+            Du und dein Gegner ratet abwechselnd eine geheime Zahl von 1 bis 100. Wer sie trifft, gewinnt. Nach {max} Tipps ist es unentschieden.
+            ## view
+            Geheime Zahl: zwischen 1 und 100. Als Nächstes kommt Tipp {n} von {max}.
+            ## instruction
+            Rate die Zahl.
+            ## format
+            Eine ganze Zahl von 1 bis 100.
+            ## error.not_number
+            "{move}" ist keine ganze Zahl
+            ## error.range
+            {move} liegt außerhalb von 1 bis 100
+            ## fact.guess
+            {who} hat {guess} geraten: {hint}.
+            ## metric.guesses
+            Tipps
+            ## metric.hit_rate
+            Treffer je Tipp
+            ## metric.never
+            Nie messbar
+            ## estimate_meaning
+            Deine geschätzte Trefferchance mit diesem Tipp in Prozent.
             """,
     });
 
@@ -71,6 +97,16 @@ public sealed class NumberGuessGame(GameSetup setup) : IGame
 
     public GameResult? Result { get; private set; }
 
+    private FieldRule EstimateRule => setup.Options?["estimate"]?.GetValue<string>() switch
+    {
+        "required" => FieldRule.Required,
+        "optional" => FieldRule.Optional,
+        _ => FieldRule.Forbidden,
+    };
+
+    private TemplateRef? EstimateMeaning =>
+        EstimateRule == FieldRule.Forbidden || setup.Options?["withoutMeaning"]?.GetValue<bool>() == true ? null : TemplateRef.Of("estimate_meaning");
+
     private FieldRule MessageRule =>
         !setup.Communication ? FieldRule.Forbidden : setup.Options?["messageRequired"]?.GetValue<bool>() == true ? FieldRule.Required : FieldRule.Optional;
 
@@ -85,7 +121,9 @@ public sealed class NumberGuessGame(GameSetup setup) : IGame
                 MessageRule,
                 FieldRule.Required,
                 TemplateRef.Of("instruction"),
-                new MoveFormat(TemplateRef.Of("format"))),
+                new MoveFormat(TemplateRef.Of("format")),
+                Estimate: EstimateRule,
+                EstimateMeaning: EstimateMeaning),
         ];
 
     public TemplateRef RulesFor(Seat seat) => TemplateRef.Of("rules", ("max", MaxGuesses.ToString(CultureInfo.InvariantCulture)));

@@ -129,7 +129,8 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
                 result.Attempts,
                 result.InvalidAnswers,
                 result.Refusals,
-                result.TokenLimitHits),
+                result.TokenLimitHits,
+                result.Estimate),
             cancellationToken);
 
         if (result.MessageAllowed)

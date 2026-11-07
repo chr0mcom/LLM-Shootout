@@ -3,11 +3,12 @@ using System.Text.Json.Nodes;
 
 namespace LlmShootout.Arena.Answers;
 
-/// <summary>The three fields of a model answer, as far as they could be read.</summary>
+/// <summary>The four fields of a model answer, as far as they could be read.</summary>
 /// <param name="HasJson">True if a JSON object was found.</param>
 /// <param name="Thought">Private thought, or null.</param>
 /// <param name="Message">Public message, or null.</param>
 /// <param name="Move">Move as text, or null.</param>
+/// <param name="Estimate">Self-assessment as text (a JSON number is turned into its text), or null.</param>
 /// <param name="ExtraKeys">Keys of the object that are not part of the contract.</param>
 /// <param name="FromReasoning">True if the object had to be recovered from the reasoning channel.</param>
 public sealed record ParsedAnswer(
@@ -15,17 +16,18 @@ public sealed record ParsedAnswer(
     string? Thought,
     string? Message,
     string? Move,
+    string? Estimate,
     IReadOnlyList<string> ExtraKeys,
     bool FromReasoning)
 {
     /// <summary>An answer without any usable JSON.</summary>
-    public static ParsedAnswer None { get; } = new(false, null, null, null, [], false);
+    public static ParsedAnswer None { get; } = new(false, null, null, null, null, [], false);
 }
 
 /// <summary>Reads the JSON object out of the raw text of an answer.</summary>
 public static class AnswerParser
 {
-    private static readonly string[] KnownKeys = ["thought", "message", "move"];
+    private static readonly string[] KnownKeys = ["thought", "message", "move", "estimate"];
 
     /// <summary>
     /// Finds the answer object in the content (plain, in a code fence, or surrounded by text) and, if the content
@@ -39,7 +41,7 @@ public static class AnswerParser
         }
 
         var extra = node.Select(p => p.Key).Where(k => !KnownKeys.Contains(k, StringComparer.Ordinal)).ToArray();
-        return new ParsedAnswer(true, ReadText(node, "thought"), ReadText(node, "message"), ReadText(node, "move"), extra, fromReasoning);
+        return new ParsedAnswer(true, ReadText(node, "thought"), ReadText(node, "message"), ReadText(node, "move"), ReadText(node, "estimate"), extra, fromReasoning);
     }
 
     private static string? ReadText(JsonObject node, string key)

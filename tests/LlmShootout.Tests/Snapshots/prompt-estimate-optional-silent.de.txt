@@ -1,0 +1,23 @@
+=== System ===
+Du nimmst an einem Experiment teil. Zwei Spieler spielen ein Spiel gegeneinander. Du bist einer von ihnen, der andere ist dein Gegner.
+Spiele, um das bestmögliche Ergebnis für dich zu erreichen, und halte dich an die Regeln.
+Du antwortest in jedem Zug mit genau einem JSON-Objekt und sonst nichts.
+Alle Texte, die du selbst schreibst, schreibst du auf Deutsch. Zugwerte schreibst du genau so, wie die Aufgabe sie nennt.
+
+Du und dein Gegner ratet abwechselnd eine geheime Zahl von 1 bis 100. Wer sie trifft, gewinnt. Nach 6 Tipps ist es unentschieden.
+
+=== User ===
+### Aktuelle Lage
+Geheime Zahl: zwischen 1 und 100. Als Nächstes kommt Tipp 1 von 6.
+
+### Bisheriger Verlauf
+(noch nichts passiert)
+
+### Deine Aufgabe jetzt
+Rate die Zahl.
+
+Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder danach:
+{"thought": ..., "move": ..., "estimate": ...}
+- "thought": dein privater Gedanke, höchstens 40 Wörter, oder null. Er bleibt geheim.
+- "move": dein Zug. Eine ganze Zahl von 1 bis 100.
+- "estimate": Deine geschätzte Trefferchance mit diesem Tipp in Prozent. Eine ganze Zahl von 0 bis 100, oder null.

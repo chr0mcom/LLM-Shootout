@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 
 namespace LlmShootout.Arena.Protocol;
 
@@ -46,11 +47,34 @@ public sealed class ProtocolWriter : IAsyncDisposable
 /// <summary>Reads an event log back.</summary>
 public static class ProtocolReader
 {
-    /// <summary>Reads all events of a log file of a match directory in order.</summary>
-    public static IReadOnlyList<MatchEvent> ReadAll(string directory, string fileName = ProtocolFiles.Events) =>
-        [.. ReadLines(Path.Combine(directory, fileName))
+    /// <summary>
+    /// Reads all events of a log file of a match directory in order. Versions <see cref="ProtocolVersion.Oldest"/> to
+    /// <see cref="ProtocolVersion.Current"/> are read; a newer version throws an <see cref="InvalidDataException"/>.
+    /// </summary>
+    public static IReadOnlyList<MatchEvent> ReadAll(string directory, string fileName = ProtocolFiles.Events)
+    {
+        var path = Path.Combine(directory, fileName);
+        return [.. ReadLines(path)
             .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Select(ProtocolJson.FromLine)];
+            .Select(line => ReadEvent(line, path))];
+    }
+
+    private static MatchEvent ReadEvent(string line, string path)
+    {
+        var version = SchemaVersionOf(line);
+        return version > ProtocolVersion.Current
+            ? throw new InvalidDataException($"'{path}' uses protocol version {version}, but this program reads versions up to {ProtocolVersion.Current}. Update the program to read it.")
+            : ProtocolJson.FromLine(line);
+    }
+
+    private static int SchemaVersionOf(string line)
+    {
+        using var document = JsonDocument.Parse(line);
+        var root = document.RootElement;
+        return root.ValueKind == JsonValueKind.Object && root.TryGetProperty("schemaVersion", out var value) && value.TryGetInt32(out var version)
+            ? version
+            : ProtocolVersion.Oldest;
+    }
 
     private static IEnumerable<string> ReadLines(string path)
     {

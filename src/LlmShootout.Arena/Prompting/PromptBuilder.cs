@@ -111,10 +111,19 @@ public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSourc
         }
 
         fields.Add(("move", Field("move", turn.Move, turn.Format is null ? null : RenderGame(turn.Format.Description))));
+        if (turn.Estimate != FieldRule.Forbidden)
+        {
+            fields.Add(("estimate", EstimateField(turn)));
+        }
+
         return Arena("contract", ("shape", Shape(fields.Select(f => f.Key))), ("fields", string.Join('\n', fields.Select(f => f.Line))));
     }
 
     private static string Shape(IEnumerable<string> keys) => "{" + string.Join(", ", keys.Select(key => $"\"{key}\": ...")) + "}";
+
+    private string EstimateField(TurnRequest turn) => Arena(
+        $"field.estimate.{turn.Estimate.ToString().ToLowerInvariant()}",
+        ("meaning", RenderGame(turn.EstimateMeaning ?? throw new InvalidOperationException($"Turn '{turn.TurnId}' asks for an estimate but names no meaning for it."))));
 
     private string Field(string name, FieldRule rule, string? format = null) => Arena(
         $"field.{name}.{rule.ToString().ToLowerInvariant()}",

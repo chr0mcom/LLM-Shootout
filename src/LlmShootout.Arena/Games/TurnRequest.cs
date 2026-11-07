@@ -33,6 +33,8 @@ public sealed record MoveFormat(
 /// <param name="Instruction">What the player is asked to do, as a template.</param>
 /// <param name="Format">The move format, or null if no move is allowed.</param>
 /// <param name="Thought">Whether a private thought is forbidden, optional or required.</param>
+/// <param name="Estimate">Whether a self-assessment (a whole number from 0 to 100) is forbidden, optional or required.</param>
+/// <param name="EstimateMeaning">What the estimate stands for, for example "your chance of winning in percent". Required unless <paramref name="Estimate"/> is forbidden.</param>
 public sealed record TurnRequest(
     string TurnId,
     string Kind,
@@ -41,4 +43,6 @@ public sealed record TurnRequest(
     FieldRule Move,
     TemplateRef Instruction,
     MoveFormat? Format = null,
-    FieldRule Thought = FieldRule.Optional);
+    FieldRule Thought = FieldRule.Optional,
+    FieldRule Estimate = FieldRule.Forbidden,
+    TemplateRef? EstimateMeaning = null);

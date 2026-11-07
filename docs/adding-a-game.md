@@ -187,6 +187,7 @@ sequenceDiagram
 | Hidden information per seat | keep it in the game, show it in `ViewFor(seat)` or as a `FactAudience.Seat` fact. **Hidden starting state** (dice, a drawn code, a random layout) is returned from `IGame.Start()` as private facts, so it is in the protocol, in later prompts and in the debriefing |
 | Reveal | a `FactAudience.Everyone` fact in `Apply` |
 | A referee or oracle (Nim) | rate the move inside `Apply` and return a `FactAudience.Analysis` fact; it reaches the protocol but never a prompt |
+| A self-assessment per turn | set `TurnRequest.Estimate` to `Optional` or `Required` and name what the number means in `EstimateMeaning`, for example `TemplateRef.Of("estimate_meaning")` with the text "Your estimated chance of winning, in percent." in both template files. The answer gets a fourth field `estimate` (a whole number from 0 to 100, default `Forbidden`, see [prompt contract](prompt-contract.md)); the value lands in the `turn` event, not in `TurnSubmission`, so `Apply` never sees it. A missing or unusable value in the last attempt is dropped, never a reason to lose the turn |
 | Messages together with moves | `Message = Optional` or `Required` and `Move = Required` in the same turn |
 | Roles (code maker, code breaker) | read them from `GameSetup.Options` in `Create`, so a rematch with swapped roles is configuration |
 | Options (pot, rounds) | parse `GameSetup.Options` in `Create`; throw `GameOptionsException` with a helpful message. The options arrive as JSON from a series file, from `--game-option key=value` (the value is JSON if it can be read as JSON: `1000` is a number, `true` a boolean, `[1,4,5]` an array, `pass` text, `"1"` the text 1; so `1.5` is a number, `007`, `+5` and `True` are text) and from the field *Game options* of the web interface; check the type of every value |
@@ -203,6 +204,7 @@ sequenceDiagram
 - [ ] `Check` rejects with a stable code, a template for the reason, and the allowed values if there is a short list
 - [ ] `Apply` handles `Exhausted`, and the rule is written down in `docs/games/<id>.md`
 - [ ] Options are validated and documented; a series file can configure the game
+- [ ] A turn that asks for an `estimate` names its `EstimateMeaning` in both languages; the wording says what is estimated, the arena adds the scale 0 to 100
 - [ ] Tests (use `MatchHarness` from the test project):
   - rules: every outcome, turn order, locks of fields per phase
   - a match with `RandomPlayer`s runs through the arena and the debriefing

@@ -27,6 +27,16 @@ public sealed class LegacyProtocolTests : IDisposable
     }
 
     [Fact]
+    public void The_turns_of_a_version_1_protocol_have_no_estimate()
+    {
+        var match = LoadVersion1();
+
+        Assert.NotEmpty(match.Turns());
+        Assert.All(match.Turns(), turn => Assert.Null(turn.Estimate));
+        Assert.All(match.Events, e => Assert.Equal(1, e.SchemaVersion));
+    }
+
+    [Fact]
     public void The_summary_and_the_report_of_an_old_protocol_can_be_built()
     {
         var match = LoadVersion1();

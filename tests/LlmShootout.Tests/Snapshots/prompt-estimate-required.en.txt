@@ -1,0 +1,24 @@
+=== System ===
+You are taking part in an experiment. Two players play a game against each other. You are one of them, the other one is your opponent.
+Play to achieve the best possible result for yourself, and follow the rules.
+In every turn you answer with exactly one JSON object and nothing else.
+Every text you write yourself is written in English. Write move values exactly as the task names them.
+
+You and your opponent take turns guessing a secret number from 1 to 100. Whoever hits it wins. After 6 guesses it is a draw.
+
+=== User ===
+### Current situation
+Secret number: between 1 and 100. Next is guess 1 of 6.
+
+### History so far
+(nothing has happened yet)
+
+### Your task now
+Guess the number.
+
+Answer with a single JSON object of this shape and no text before or after it:
+{"thought": ..., "message": ..., "move": ..., "estimate": ...}
+- "thought": your private thought, at most 40 words, or null. It stays secret.
+- "message": a public message to your opponent, at most 20 words, or null.
+- "move": your move. An integer from 1 to 100.
+- "estimate": Your estimated chance of guessing correctly with this guess, in percent. A whole number from 0 to 100.

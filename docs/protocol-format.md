@@ -26,9 +26,17 @@ A series is a directory `..._series/` with one match directory per entry of the 
 
 ## Versioning
 
-Every line carries `"schemaVersion"`. The current version is **1**. The version is raised whenever the shape of an
-event changes in a way that breaks readers (a field is renamed, removed, or changes its meaning). New optional
-fields do not change the version. Readers must ignore unknown fields. `ProtocolVersion.Current` is the constant in code.
+Every line carries `"schemaVersion"`. The current version is **2**. The version is raised whenever the shape of an
+event changes in a way that breaks readers (a field is renamed, removed, or changes its meaning), and also when a new
+optional field extends what the protocol means, so that a reader can tell from the version which questions a protocol can
+answer. Older versions stay readable: the reader accepts every version from `ProtocolVersion.Oldest` (1) up to
+`ProtocolVersion.Current` (2), and a missing field reads as "not recorded". A protocol of a newer version is refused with a
+message that names both versions. Readers must ignore unknown fields. `ProtocolVersion.Current` is the constant in code.
+
+| Version | Change |
+|---|---|
+| 1 | First format. |
+| 2 | The self-assessment of a turn: `estimate` in `turn` events (and in `model_call.parsed`). Version 1 events have none. |
 
 Naming: property names are camelCase; enum values are written by name (`Turn`, `Everyone`, `A`); keys of
 dictionaries are written unchanged (`A`, `B`, `rules_followed`, `split-or-steal`).
@@ -59,9 +67,9 @@ One call to a player: a turn or a debriefing.
 | `turnId`, `purpose` (`Turn`, `Debrief`), `seat`, `attempt` | which call |
 | `messages` | the complete prompt as sent: `role` and `text` of every message |
 | `rawContent`, `rawReasoning` | the unchanged answer and the reasoning channel |
-| `parsed` | `thought`, `message`, `move`, `fromReasoning`, `extraKeys` as read by the arena (turns only) |
+| `parsed` | `thought`, `message`, `move`, `estimate` (as text, version 2), `fromReasoning`, `extraKeys` as read by the arena (turns only) |
 | `class` | `valid`, `invalid`, `refusal`, `token_limit`, `technical_error` |
-| `violations` | what was wrong, one line per field |
+| `violations` | what was wrong, one line per field; an estimate that was dropped in the last attempt appears as `estimate [discarded]: ...` although the answer counts as valid |
 | `call` | `requestedModel`, `deliveredModel`, `provider`, `generationId`, `promptTokens`, `completionTokens`, `reasoningTokens`, `costUsd`, `estimatedCostUsd`, `latency`, `finishReason`, `httpAttempts` |
 | `costUnknown` | true if the endpoint reported no cost and none could be estimated (the call is held back with a reserve) |
 | `error` | text of a technical error |
@@ -83,8 +91,13 @@ A public message became visible. `text` is absent for silence.
 
 ### `turn`
 
-The final outcome of a turn of a seat: the move, the status (`played` or `exhausted`), the private `thought`, and
+The final outcome of a turn of a seat: the move, the status (`played` or `exhausted`), the private `thought`, the
+self-assessment `estimate` (version 2: a whole number from 0 to 100, absent if the turn did not ask for one or none was usable), and
 counters: `attempts`, `invalidAnswers`, `refusals`, `tokenLimitHits`.
+
+```json
+{"type":"turn","turnId":"guess-1","kind":"guess","seat":"A","move":"10","status":"played","thought":"...","thoughtTruncated":false,"attempts":1,"invalidAnswers":0,"refusals":0,"tokenLimitHits":0,"estimate":73,"at":"...","schemaVersion":2}
+```
 
 ### `fact`
 
