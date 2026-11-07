@@ -12,7 +12,7 @@ public sealed class MatchContext(
     PromptBuilder prompts,
     AnswerEvaluator evaluator,
     ProtocolWriter writer,
-    PlayerGateway gateway,
+    PlayerGateway calls,
     Identity.IdentityGuard identityGuard,
     TimeProvider time)
 {
@@ -32,7 +32,7 @@ public sealed class MatchContext(
     public ProtocolWriter Writer { get; } = writer;
 
     /// <summary>The door to all players.</summary>
-    public PlayerGateway Gateway { get; } = gateway;
+    public PlayerGateway Calls { get; } = calls;
 
     /// <summary>Marks identity mentions in public messages.</summary>
     public Identity.IdentityGuard IdentityGuard { get; } = identityGuard;

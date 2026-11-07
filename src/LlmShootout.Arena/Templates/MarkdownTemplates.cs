@@ -9,7 +9,9 @@ namespace LlmShootout.Arena.Templates;
 /// <summary>
 /// Wording templates stored in one Markdown file per language. A line starting with <c>## </c> starts a template,
 /// its text up to the next such line is the body. Placeholders look like <c>{name}</c>; braces followed by anything
-/// else (such as the JSON examples in prompts) are plain text.
+/// else (such as the JSON examples in prompts) are plain text. A placeholder like <c>{name:prefix}</c> words a machine-readable
+/// value: it renders the template <c>prefix.value</c> of the same language, so the protocol keeps the value and the text is in
+/// the language of the match.
 /// </summary>
 public sealed partial class MarkdownTemplates : ITemplateSource
 {
@@ -64,17 +66,23 @@ public sealed partial class MarkdownTemplates : ITemplateSource
         return PlaceholderPattern().Replace(body, match =>
         {
             var name = match.Groups[1].Value;
-            return reference.Values is not null && reference.Values.TryGetValue(name, out var value)
-                ? value
+            var value = reference.Values is not null && reference.Values.TryGetValue(name, out var found)
+                ? found
                 : throw new KeyNotFoundException($"Template '{reference.Key}' needs a value for '{name}'.");
+            return match.Groups[2].Success ? WordValue(sections, match.Groups[2].Value, value, language) : value;
         });
     }
+
+    private static string WordValue(Dictionary<string, string> sections, string prefix, string value, string language) =>
+        sections.TryGetValue($"{prefix}.{value}", out var word)
+            ? word
+            : throw new KeyNotFoundException($"Template '{prefix}.{value}' not found for language '{language}'.");
 
     /// <inheritdoc />
     public string Hash(string language) =>
         _hashes.TryGetValue(language, out var hash) ? hash : throw new KeyNotFoundException($"No templates for language '{language}'.");
 
-    /// <summary>True if the language has a template with this key.</summary>
+    /// <inheritdoc />
     public bool Contains(string language, string key) => _sections.TryGetValue(language, out var s) && s.ContainsKey(key);
 
     private static Dictionary<string, string> ParseSections(string text)
@@ -110,6 +118,6 @@ public sealed partial class MarkdownTemplates : ITemplateSource
         return sections;
     }
 
-    [GeneratedRegex(@"\{([A-Za-z_][A-Za-z0-9_.]*)\}")]
+    [GeneratedRegex(@"\{([A-Za-z_][A-Za-z0-9_.]*)(?::([A-Za-z_][A-Za-z0-9_.]*))?\}")]
     private static partial Regex PlaceholderPattern();
 }

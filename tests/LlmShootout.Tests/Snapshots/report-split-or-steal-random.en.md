@@ -60,7 +60,7 @@ Rejected answers were repeated with a correction hint. A rule violation is a mov
 | Rule violations | 0 | 0 |
 | Resignations | 0 | 0 |
 | Exhausted turns (no acceptable move in any attempt) | 0 | 0 |
-| Debriefing answer to "rules_followed" | true | true |
+| Debriefing answer to "rules_followed" | yes | yes |
 
 No rule violations were recorded.
 
@@ -104,6 +104,6 @@ The opponent never saw these thoughts. The exact wording is in the protocol.
 | `decisive_move` | No statement. | No statement. |
 | `own_mistake` | No statement. | No statement. |
 | `opponent_strength` | 3 | 3 |
-| `rules_followed` | true | true |
+| `rules_followed` | yes | yes |
 | `rules_followed_reason` | No statement. | No statement. |
 | `next_time` | No statement. | No statement. |

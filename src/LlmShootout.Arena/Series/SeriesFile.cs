@@ -23,6 +23,10 @@ public sealed record SeriesMatch(bool? Communication = null, Seat? FirstSeat = n
 /// <param name="PlayerB">Player for seat B; may be overridden on the command line.</param>
 public sealed record SeriesFile(string Game, long Seed, IReadOnlyList<SeriesMatch> Matches, string? Language = null, string? PlayerA = null, string? PlayerB = null)
 {
+    /// <summary>The base name of the file the series was read from, such as <c>nim-misere</c>; <c>null</c> for a series that was not read from a file.</summary>
+    [JsonIgnore]
+    public string? Name { get; init; }
+
     /// <summary>Reads and validates a series file. Errors name the file and the problem.</summary>
     public static SeriesFile Load(string path)
     {
@@ -46,7 +50,7 @@ public sealed record SeriesFile(string Game, long Seed, IReadOnlyList<SeriesMatc
             throw new SeriesFileException($"Series file '{path}' needs a 'game' and at least one entry in 'matches'.");
         }
 
-        return file;
+        return file with { Name = Path.GetFileNameWithoutExtension(path) };
     }
 }
 

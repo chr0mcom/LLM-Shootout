@@ -126,7 +126,16 @@ eine ganze Zahl von 0 bis 100
 Sitz {seat} hat in {turn} `{move}` gespielt. Die Regeln verbieten es (Code: {code}).
 
 ## fact.oracle
-Orakel, Sitz {seat}, {turn}: Lage {value}, Zug `{move}`, optimal: {optimal}. Beste Züge: {best}.
+Orakel, Sitz {seat}, {turn}: Lage {value:report.position}, Zug `{move}`, optimal: {optimal:fact.optimal}. Beste Züge: {best}.
+
+## fact.optimal.true
+ja
+
+## fact.optimal.false
+nein
+
+## fact.optimal.n/a
+n/a
 
 ## optimal.thought
 Bester Zug.

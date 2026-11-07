@@ -123,7 +123,7 @@ public sealed class RuleComplianceReportTests : IDisposable
         Assert.Contains("| Rule violations | 1 | 0 |", report, StringComparison.Ordinal);
         Assert.Contains("| Resignations | 0 | 0 |", report, StringComparison.Ordinal);
         Assert.Contains("| Exhausted turns (no acceptable move in any attempt) | 0 | 0 |", report, StringComparison.Ordinal);
-        Assert.Contains("| Debriefing answer to \"rules_followed\" | true | false |", report, StringComparison.Ordinal);
+        Assert.Contains("| Debriefing answer to \"rules_followed\" | yes | no |", report, StringComparison.Ordinal);
         Assert.Contains("- Seat A, move-1: `pass` (rule: pass; position before the move: won)", report, StringComparison.Ordinal);
         Assert.Contains("| Rule violation in a lost position, then won | no | no |", report, StringComparison.Ordinal);
         Assert.Contains("**Result reached with a rule violation.**", report, StringComparison.Ordinal);

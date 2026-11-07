@@ -36,7 +36,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             finished = await PlayGameAsync(context, cancellationToken);
             if (plan.Options.Debrief)
             {
-                await new Debriefer(context.Gateway, time).RunAsync(plan.Definition, MatchRecord.Load(plan.Directory), plan.Players, plan.Options, writer, cancellationToken);
+                await new Debriefer(context.Calls, time).RunAsync(plan.Definition, MatchRecord.Load(plan.Directory), plan.Players, plan.Options, writer, cancellationToken);
             }
 
             return new MatchOutcome(plan.Directory, finished, null, null);

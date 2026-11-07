@@ -11,8 +11,10 @@ matches/2026-11-20_nim_gpt-oss-20b_vs_optimal_01/
 └─ debrief.<timestamp>.jsonl     answers of a repeated debriefing (optional, `shootout debrief`)
 ```
 
-A series is a directory `..._series/` with one match directory per entry of the series file (`01-A-first`,
-`02-B-first`: the number and the seat that starts), plus `series.json` and `series-report.md`.
+A series is a directory `<date>_<series>_<a>_vs_<b>_series/` with one match directory per entry of the series file (`01-A-first`,
+`02-B-first`: the number and the seat that starts), plus `series.json` and `series-report.md`. `<series>` is the name of the series file
+without `.json` (`nim-misere` for `shootouts/nim-misere.json`), so two series of the same game with the same players get different
+directories; a series that was not read from a file uses the id of the game. A second run on the same day gets the ending `-2`.
 
 ## Guarantees
 
@@ -132,11 +134,13 @@ It follows the `turn` event (and a `rule_violation` fact of the same turn) and p
 | `rated` | `false` for a resignation and a rule violation, otherwise `true` |
 | `turn` | the turn id |
 
+The text is worded in the language of the match (German: "Lage gewonnen", "optimal: ja"); `values` and `data` keep the machine-readable
+values `won`, `lost`, `drawn`, `unknown` and `true`, `false`, `n/a`.
 A turn that ended `exhausted` has no `oracle` fact, and neither has a protocol of a game without an oracle or one written before the
 oracle existed; every figure that depends on it is "not applicable" there. The fact is never rendered into a prompt or a debriefing.
 
 ```json
-{"type":"fact","turnId":"move-1","kind":"oracle","audience":"Analysis","seat":"A","text":"Oracle, seat A, move-1: position won, move `1`, optimal: true. Best moves: 1.","template":{"key":"fact.oracle","values":{"seat":"A","turn":"move-1","value":"won","move":"1","optimal":"true","best":"1"}},"data":{"value":"won","move":"1","best":"1","optimal":"true","rated":"true","turn":"move-1"},"at":"...","schemaVersion":2}
+{"type":"fact","turnId":"move-1","kind":"oracle","audience":"Analysis","seat":"A","text":"Oracle, seat A, move-1: position won, move `1`, optimal: yes. Best moves: 1.","template":{"key":"fact.oracle","values":{"seat":"A","turn":"move-1","value":"won","move":"1","optimal":"true","best":"1"}},"data":{"value":"won","move":"1","best":"1","optimal":"true","rated":"true","turn":"move-1"},"at":"...","schemaVersion":2}
 ```
 
 ```json

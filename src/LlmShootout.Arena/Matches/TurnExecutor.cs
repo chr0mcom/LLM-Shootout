@@ -120,7 +120,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
     {
         try
         {
-            return await context.Gateway.CallAsync(context.Plan.Players[turn.Seat], request, cancellationToken);
+            return await context.Calls.CallAsync(context.Plan.Players[turn.Seat], request, cancellationToken);
         }
         catch (PlayerFailureException ex)
         {

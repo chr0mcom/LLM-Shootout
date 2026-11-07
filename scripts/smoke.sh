@@ -41,7 +41,9 @@ grep -q "Brier score of the estimates" "$NIMSERIES/series-report.md"
 step "series: the three Nim series files with the random and the optimal player"
 NIM_SERIES="$("${SHOOTOUT[@]}" series shootouts/nim.json --a random --b optimal --lang en --quiet --out "$WORK")"
 "${SHOOTOUT[@]}" series shootouts/nim-vs-optimal.json --a random --lang en --quiet --out "$WORK" >/dev/null
-"${SHOOTOUT[@]}" series shootouts/nim-misere.json --a optimal --b random --lang en --quiet --out "$WORK" >/dev/null
+MISERE_SERIES="$("${SHOOTOUT[@]}" series shootouts/nim-misere.json --a optimal --b random --lang en --quiet --out "$WORK")"
+[[ "$(basename "$NIM_SERIES")" == *_nim_random_vs_optimal_series ]]
+[[ "$(basename "$MISERE_SERIES")" == *_nim-misere_optimal_vs_random_series ]]
 test -f "$NIM_SERIES/series-report.md" && test -d "$NIM_SERIES/01-A-first" && test -d "$NIM_SERIES/02-B-first"
 
 step "replay, debrief and report of a Nim series"

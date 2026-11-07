@@ -126,7 +126,16 @@ a whole number from 0 to 100
 Seat {seat} played `{move}` in {turn}. The rules forbid it (code: {code}).
 
 ## fact.oracle
-Oracle, seat {seat}, {turn}: position {value}, move `{move}`, optimal: {optimal}. Best moves: {best}.
+Oracle, seat {seat}, {turn}: position {value:report.position}, move `{move}`, optimal: {optimal:fact.optimal}. Best moves: {best}.
+
+## fact.optimal.true
+yes
+
+## fact.optimal.false
+no
+
+## fact.optimal.n/a
+n/a
 
 ## optimal.thought
 Best move.

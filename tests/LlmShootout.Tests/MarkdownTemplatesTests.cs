@@ -26,6 +26,19 @@ public sealed class MarkdownTemplatesTests
     }
 
     [Fact]
+    public void Words_a_machine_readable_value_with_the_template_of_its_prefix()
+    {
+        var words = MarkdownTemplates.FromText(new Dictionary<string, string>
+        {
+            ["de"] = "## state\nLage {value:word}\n\n## word.won\ngewonnen\n\n## word.n/a\nn/a\n",
+        });
+
+        Assert.Equal("Lage gewonnen", words.Render(TemplateRef.Of("state", ("value", "won")), "de"));
+        Assert.Equal("Lage n/a", words.Render(TemplateRef.Of("state", ("value", "n/a")), "de"));
+        Assert.Throws<KeyNotFoundException>(() => words.Render(TemplateRef.Of("state", ("value", "lost")), "de"));
+    }
+
+    [Fact]
     public void Selects_the_language()
     {
         Assert.Equal("Hallo Ada!", Templates.Render(TemplateRef.Of("greeting", ("name", "Ada")), "de"));

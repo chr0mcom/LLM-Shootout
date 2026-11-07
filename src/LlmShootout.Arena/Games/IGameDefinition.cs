@@ -90,4 +90,7 @@ public interface ITemplateSource
 
     /// <summary>A hash over the template file of a language, recorded in the protocol.</summary>
     string Hash(string language);
+
+    /// <summary>True if the language has a template with this key.</summary>
+    bool Contains(string language, string key);
 }

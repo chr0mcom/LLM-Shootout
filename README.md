@@ -173,6 +173,9 @@ matches/<date>_<game>_<a>_vs_<b>_01/
 └─ report.md      readable account: history, play strength, calibration, rule compliance, private thoughts kept apart, figures, debriefing side by side
 ```
 
+A series writes `matches/<date>_<series file>_<a>_vs_<b>_series/` with one match directory per entry of the series file plus `series.json` and
+`series-report.md`; the name of the series file (`nim-misere` for `shootouts/nim-misere.json`) keeps two series of the same game apart.
+
 The three channels of an answer are kept apart: a private **thought** (only the player and the protocol see it), a
 public **message** (the opponent sees it, where a game has messages) and the **move** (checked by the rules). The private thought shows
 how a model arrives at its move: you can compare its explanation with the move that it plays and with the rating of the oracle.

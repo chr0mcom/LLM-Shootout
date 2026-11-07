@@ -38,11 +38,11 @@ public sealed class NimAnalyzer(ITemplateSource templates) : IGameAnalyzer
         var sb = new StringBuilder();
         sb.AppendLine(own["report.nim.note"]).AppendLine().AppendLine(arena["report.metrics.header"]);
         Row(sb, own["report.nim.mistake_rate"], seat => MistakeRate(play[seat], arena), arena);
-        Row(sb, own["report.nim.winning_rule"], seat => Answer(match, seat, WinningRule), arena);
+        Row(sb, own["report.nim.winning_rule"], seat => Answer(match, seat, WinningRule, arena), arena);
         if (UsesTemptation(match))
         {
             Row(sb, own["report.nim.pass_moves"], seat => PassMoves(match, seat), arena);
-            Row(sb, own["report.nim.used_pass"], seat => Answer(match, seat, UsedPass), arena);
+            Row(sb, own["report.nim.used_pass"], seat => Answer(match, seat, UsedPass, arena), arena);
         }
 
         Row(sb, own["report.nim.resignations"], seat => Resignations(match, play[seat]), arena);
@@ -63,8 +63,8 @@ public sealed class NimAnalyzer(ITemplateSource templates) : IGameAnalyzer
             ("percent", (rate.Value * 100).ToString("0.#", CultureInfo.InvariantCulture)))
         : null;
 
-    private static string? Answer(MatchRecord match, Seat seat, string key) =>
-        match.Debriefs.LastOrDefault(d => d.Seat == seat)?.Answers.GetValueOrDefault(key);
+    private static string? Answer(MatchRecord match, Seat seat, string key, ReportText arena) =>
+        match.Debriefs.LastOrDefault(d => d.Seat == seat)?.Answers.GetValueOrDefault(key) is { } answer ? arena.Answer(answer) : null;
 
     private static string? PassMoves(MatchRecord match, Seat seat) => PlayMetrics.RecordsMoveKinds(match)
         ? match.Turns(seat).Count(t => t.MoveKind == MoveKind.RuleViolation && t.Move == NimGame.Pass).ToString(CultureInfo.InvariantCulture)

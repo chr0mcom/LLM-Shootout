@@ -25,13 +25,13 @@
 
 Seat A moves: `1` (attempts: 1)
 
-Oracle, seat A, move-1: position won, move `1`, optimal: false. Best moves: 2. *(analysis, never in a prompt)*
+Oracle, seat A, move-1: position won, move `1`, optimal: no. Best moves: 2. *(analysis, never in a prompt)*
 
 Seat A takes 1. 9 stones are left.
 
 Seat B moves: `1` (attempts: 1)
 
-Oracle, seat B, move-2: position won, move `1`, optimal: true. Best moves: 1. *(analysis, never in a prompt)*
+Oracle, seat B, move-2: position won, move `1`, optimal: yes. Best moves: 1. *(analysis, never in a prompt)*
 
 Seat B takes 1. 8 stones are left.
 
@@ -43,7 +43,7 @@ Seat A takes 2. 6 stones are left.
 
 Seat B moves: `2` (attempts: 1)
 
-Oracle, seat B, move-4: position won, move `2`, optimal: true. Best moves: 2. *(analysis, never in a prompt)*
+Oracle, seat B, move-4: position won, move `2`, optimal: yes. Best moves: 2. *(analysis, never in a prompt)*
 
 Seat B takes 2. 4 stones are left.
 
@@ -55,7 +55,7 @@ Seat A takes 3. 1 stones are left.
 
 Seat B moves: `1` (attempts: 1)
 
-Oracle, seat B, move-6: position won, move `1`, optimal: true. Best moves: 1. *(analysis, never in a prompt)*
+Oracle, seat B, move-6: position won, move `1`, optimal: yes. Best moves: 1. *(analysis, never in a prompt)*
 
 Seat B takes 1. 0 stones are left.
 

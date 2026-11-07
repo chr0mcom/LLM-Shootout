@@ -12,6 +12,8 @@ The wording lives in versioned template files, never in C# code:
 
 A template file is Markdown. A line starting with `## key` starts a template, its body runs to the next such
 line. Placeholders look like `{name}`; braces followed by anything else (like the JSON examples) are plain text.
+A placeholder `{name:prefix}` words a machine-readable value: it renders the template `prefix.<value>` (for example `{value:report.position}`
+renders `report.position.won`), so the protocol keeps the value and the text is in the language of the match.
 The hash of each file is stored in the `match_started` event, so a protocol says which wording produced it.
 
 ## Prompt languages

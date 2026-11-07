@@ -80,7 +80,7 @@ public sealed class SeriesAndReportTests : IDisposable
         Assert.DoesNotContain("Kennzahlen", report, StringComparison.Ordinal);
         Assert.DoesNotContain("Punkte", report, StringComparison.Ordinal);
         Assert.DoesNotContain("ungültig", report, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Kommunikation", report, StringComparison.Ordinal);
+        Assert.Equal(["## Überblick", "## Partien"], report.Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal)));
     }
 
     [Fact]
@@ -321,8 +321,27 @@ public sealed class SeriesAndReportTests : IDisposable
 
         Assert.EndsWith("2026-11-20_split-or-steal_gpt-4o_vs_claude-sonnet_01", first, StringComparison.Ordinal);
         Assert.EndsWith("_02", second, StringComparison.Ordinal);
-        Assert.EndsWith("_series", MatchPaths.Series(_harness.Directory, date, "split-or-steal", "a", "b"), StringComparison.Ordinal);
+        Assert.EndsWith("2026-11-20_split-or-steal_a_vs_b_series", MatchPaths.Series(_harness.Directory, date, "split-or-steal", "a", "b"), StringComparison.Ordinal);
         Assert.Equal("player", MatchPaths.Slug(":::"));
+    }
+
+    [Fact]
+    public void Two_series_of_one_game_with_the_same_players_get_the_name_of_their_series_file()
+    {
+        var date = new DateTimeOffset(2026, 11, 20, 12, 0, 0, TimeSpan.Zero);
+        Directory.CreateDirectory(_harness.Directory);
+        var standard = WriteSeries("nim.json", """{ "game": "split-or-steal", "seed": 1, "matches": [ { } ] }""");
+        var misere = WriteSeries("nim misere!.json", """{ "game": "split-or-steal", "seed": 1, "matches": [ { } ] }""");
+
+        var first = MatchPaths.Series(_harness.Directory, date, standard.Name ?? "split-or-steal", "random", "optimal");
+        var second = MatchPaths.Series(_harness.Directory, date, misere.Name ?? "split-or-steal", "random", "optimal");
+        Directory.CreateDirectory(first);
+        var repeated = MatchPaths.Series(_harness.Directory, date, standard.Name ?? "split-or-steal", "random", "optimal");
+
+        Assert.EndsWith("2026-11-20_nim_random_vs_optimal_series", first, StringComparison.Ordinal);
+        Assert.EndsWith("2026-11-20_nim-misere_random_vs_optimal_series", second, StringComparison.Ordinal);
+        Assert.EndsWith("2026-11-20_nim_random_vs_optimal_series-2", repeated, StringComparison.Ordinal);
+        Assert.Null(new SeriesFile("split-or-steal", 1, [new SeriesMatch()]).Name);
     }
 
     [Fact]

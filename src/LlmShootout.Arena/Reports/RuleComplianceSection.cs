@@ -53,8 +53,10 @@ internal static class RuleComplianceSection
             return;
         }
 
-        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.rules.debrief_answer"]} | {MarkdownTable.Cell(answers[Seat.A] ?? "-")} | {MarkdownTable.Cell(answers[Seat.B] ?? "-")} |");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.rules.debrief_answer"]} | {MarkdownTable.Cell(Shown(answers[Seat.A], t))} | {MarkdownTable.Cell(Shown(answers[Seat.B], t))} |");
     }
+
+    private static string Shown(string? answer, ReportText t) => answer is null ? "-" : t.Answer(answer);
 
     private static void AppendViolations(StringBuilder sb, Dictionary<Seat, PlayMetrics> play, bool recorded, ReportText t)
     {

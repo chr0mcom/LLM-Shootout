@@ -107,12 +107,13 @@ public static class MatchReportWriter
     {
         var language = match.Started.Language;
         var t = new ReportText(ArenaTemplates.Default, language);
+        var game = new ReportText(definition.Templates, language);
         var summary = Summarize(match);
         var sb = new StringBuilder();
         sb.AppendLine(t.Format("report.title", ("game", definition.DisplayName), ("a", match.Started.Players[Seat.A].Name), ("b", match.Started.Players[Seat.B].Name))).AppendLine();
         AppendAbort(sb, match, t);
-        AppendOverview(sb, summary, t);
-        AppendResult(sb, match, t);
+        AppendOverview(sb, summary, t, game);
+        AppendResult(sb, match, t, game);
         AppendHistory(sb, match, t);
         foreach (var section in definition.Analyzer?.AnalyzeMatch(match) ?? [])
         {
@@ -136,7 +137,7 @@ public static class MatchReportWriter
         }
     }
 
-    private static void AppendOverview(StringBuilder sb, MatchSummary s, ReportText t)
+    private static void AppendOverview(StringBuilder sb, MatchSummary s, ReportText t, ReportText game)
     {
         sb.AppendLine("## " + t["report.overview"]).AppendLine().AppendLine("| | |").AppendLine("|---|---|");
         Row(sb, t["report.label.date"], s.StartedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture));
@@ -144,14 +145,14 @@ public static class MatchReportWriter
         Row(sb, t["report.label.language"], s.Language);
         Row(sb, t["report.label.communication"], t[s.Communication ? "report.communication.on" : "report.communication.off"]);
         Row(sb, t["report.label.first_seat"], s.FirstSeat.ToString());
-        Row(sb, t["report.label.outcome"], s.Outcome ?? "-");
+        Row(sb, t["report.label.outcome"], s.Outcome is { } outcome ? game.Word("result.outcome", outcome) : "-");
         Row(sb, t["report.label.duration"], TimeSpan.FromSeconds(s.DurationSeconds).ToString("hh\\:mm\\:ss", CultureInfo.InvariantCulture));
         Row(sb, t["report.label.cost"], s.CostUsd.ToString("0.0000", CultureInfo.InvariantCulture));
         Row(sb, t["report.label.version"], $"{s.AppVersion} ({s.GitCommit})");
         sb.AppendLine();
     }
 
-    private static void AppendResult(StringBuilder sb, MatchRecord match, ReportText t)
+    private static void AppendResult(StringBuilder sb, MatchRecord match, ReportText t, ReportText game)
     {
         if (match.Result is not { } result)
         {
@@ -161,7 +162,7 @@ public static class MatchReportWriter
         sb.AppendLine("## " + t["report.result"]).AppendLine().AppendLine(t["report.result.header"]);
         foreach (var seat in Seat.All)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| {seat} | {MarkdownTable.Cell(match.Started.Players[seat].Name)} | {result.Seats[seat].Label} | {result.Seats[seat].Score.ToString("0.##", CultureInfo.InvariantCulture)} |");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {seat} | {MarkdownTable.Cell(match.Started.Players[seat].Name)} | {game.Word("result.label", result.Seats[seat].Label)} | {result.Seats[seat].Score.ToString("0.##", CultureInfo.InvariantCulture)} |");
         }
 
         sb.AppendLine();
@@ -268,7 +269,7 @@ public static class MatchReportWriter
         var keys = debriefs.Values.OfType<DebriefEvent>().SelectMany(d => d.Answers.Keys).Distinct(StringComparer.Ordinal).ToArray();
         foreach (var key in keys)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| `{key}` | {MarkdownTable.Cell(debriefs[Seat.A]?.Answers.GetValueOrDefault(key) ?? "-")} | {MarkdownTable.Cell(debriefs[Seat.B]?.Answers.GetValueOrDefault(key) ?? "-")} |");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| `{key}` | {MarkdownTable.Cell(DebriefAnswer(debriefs[Seat.A], key, t))} | {MarkdownTable.Cell(DebriefAnswer(debriefs[Seat.B], key, t))} |");
         }
 
         sb.AppendLine();
@@ -277,6 +278,9 @@ public static class MatchReportWriter
             sb.AppendLine(t.Format("report.debrief.failed", ("seat", seat.ToString()), ("problems", string.Join("; ", debrief!.Problems)))).AppendLine();
         }
     }
+
+    private static string DebriefAnswer(DebriefEvent? debrief, string key, ReportText t) =>
+        debrief?.Answers.GetValueOrDefault(key) is { } answer ? t.Answer(answer) : "-";
 
     private static void AppendFooter(StringBuilder sb, MatchSummary s, ReportText t)
     {

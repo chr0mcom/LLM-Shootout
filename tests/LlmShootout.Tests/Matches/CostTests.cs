@@ -26,17 +26,17 @@ public sealed class CostTests : IDisposable
     }
 
     [Fact]
-    public async Task The_gateway_books_unknown_cost_for_failed_model_calls_only()
+    public async Task The_call_desk_books_unknown_cost_for_failed_model_calls_only()
     {
         var cost = new CostMeter(10m);
-        var gateway = new PlayerGateway(cost);
+        var calls = new PlayerGateway(cost);
         var request = new PlayerCall(CallPurpose.Turn, [], null, 1, _ => "{}");
         var model = new ScriptedPlayer("m", new LlmShootout.Arena.Identity.ModelIdentity("x/y")).Timeout();
         var plain = new ScriptedPlayer("p").Timeout();
 
-        await Assert.ThrowsAsync<PlayerFailureException>(() => gateway.CallAsync(plain, request, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<PlayerFailureException>(() => calls.CallAsync(plain, request, TestContext.Current.CancellationToken));
         Assert.Equal(0, cost.UnknownCalls);
-        await Assert.ThrowsAsync<PlayerFailureException>(() => gateway.CallAsync(model, request, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<PlayerFailureException>(() => calls.CallAsync(model, request, TestContext.Current.CancellationToken));
         Assert.Equal(1, cost.UnknownCalls);
     }
 

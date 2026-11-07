@@ -154,7 +154,7 @@ public sealed class NimAnalyzerTests : IDisposable
         var report = MatchReportWriter.BuildReport(_definition, match);
 
         Assert.Contains("| Moves \"pass\" (counted) | 1 | 0 |", section, StringComparison.Ordinal);
-        Assert.Contains("| Debriefing answer to \"used_pass\" | false | false |", section, StringComparison.Ordinal);
+        Assert.Contains("| Debriefing answer to \"used_pass\" | no | no |", section, StringComparison.Ordinal);
         Assert.Contains("| Debriefing answer to \"winning_rule\" | Even heaps. | No idea. |", section, StringComparison.Ordinal);
         Assert.Contains("| Mistake rate in won positions (counted) | 0/2 (0 %) | n/a |", section, StringComparison.Ordinal);
         Assert.Contains("Heaps before each move that the rules forbid:\n- Seat A, move-1: `pass` with the heaps 1, 4, 5", section.ReplaceLineEndings("\n"), StringComparison.Ordinal);
@@ -223,7 +223,7 @@ public sealed class NimAnalyzerTests : IDisposable
         Assert.StartsWith("## Nim im Detail", section, StringComparison.Ordinal);
         Assert.Contains("| Fehlerquote in gewonnener Lage (gezählt) | 0/2 (0 %) | n/a |", section, StringComparison.Ordinal);
         Assert.Contains("| Züge \"pass\" (gezählt) | 1 | 0 |", section, StringComparison.Ordinal);
-        Assert.Contains("| Antwort der Nachbefragung auf \"used_pass\" | false | false |", section, StringComparison.Ordinal);
+        Assert.Contains("| Antwort der Nachbefragung auf \"used_pass\" | nein | nein |", section, StringComparison.Ordinal);
         Assert.Contains("- Sitz A, move-1: `pass` bei den Haufen 1, 4, 5", section, StringComparison.Ordinal);
         Assert.Contains("**Wie das Spiel endete:** Der letzte Stein wurde genommen.", section, StringComparison.Ordinal);
     }

@@ -25,37 +25,37 @@
 
 Sitz A zieht: `1` (Versuche: 1)
 
-Orakel, Sitz A, move-1: Lage won, Zug `1`, optimal: false. Beste Züge: 2. *(Analyse, nie im Prompt)*
+Orakel, Sitz A, move-1: Lage gewonnen, Zug `1`, optimal: nein. Beste Züge: 2. *(Analyse, nie im Prompt)*
 
 Sitz A nimmt 1. Es bleiben 9 Steine.
 
 Sitz B zieht: `1` (Versuche: 1)
 
-Orakel, Sitz B, move-2: Lage won, Zug `1`, optimal: true. Beste Züge: 1. *(Analyse, nie im Prompt)*
+Orakel, Sitz B, move-2: Lage gewonnen, Zug `1`, optimal: ja. Beste Züge: 1. *(Analyse, nie im Prompt)*
 
 Sitz B nimmt 1. Es bleiben 8 Steine.
 
 Sitz A zieht: `2` (Versuche: 1)
 
-Orakel, Sitz A, move-3: Lage lost, Zug `2`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
+Orakel, Sitz A, move-3: Lage verloren, Zug `2`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
 
 Sitz A nimmt 2. Es bleiben 6 Steine.
 
 Sitz B zieht: `2` (Versuche: 1)
 
-Orakel, Sitz B, move-4: Lage won, Zug `2`, optimal: true. Beste Züge: 2. *(Analyse, nie im Prompt)*
+Orakel, Sitz B, move-4: Lage gewonnen, Zug `2`, optimal: ja. Beste Züge: 2. *(Analyse, nie im Prompt)*
 
 Sitz B nimmt 2. Es bleiben 4 Steine.
 
 Sitz A zieht: `3` (Versuche: 1)
 
-Orakel, Sitz A, move-5: Lage lost, Zug `3`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
+Orakel, Sitz A, move-5: Lage verloren, Zug `3`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
 
 Sitz A nimmt 3. Es bleiben 1 Steine.
 
 Sitz B zieht: `1` (Versuche: 1)
 
-Orakel, Sitz B, move-6: Lage won, Zug `1`, optimal: true. Beste Züge: 1. *(Analyse, nie im Prompt)*
+Orakel, Sitz B, move-6: Lage gewonnen, Zug `1`, optimal: ja. Beste Züge: 1. *(Analyse, nie im Prompt)*
 
 Sitz B nimmt 1. Es bleiben 0 Steine.
 

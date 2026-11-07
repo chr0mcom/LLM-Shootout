@@ -58,7 +58,7 @@ public static class SeriesReportWriter
         var sb = new StringBuilder();
         sb.AppendLine(t.Format("report.series.title", ("game", definition.DisplayName), ("a", summary.PlayerA), ("b", summary.PlayerB))).AppendLine();
         AppendOverview(sb, t, definition, summary);
-        AppendMatches(sb, t, summary);
+        AppendMatches(sb, t, new ReportText(definition.Templates, language), summary);
         foreach (var player in summary.Players)
         {
             AppendPlayer(sb, t, player);
@@ -76,13 +76,13 @@ public static class SeriesReportWriter
         sb.AppendLine(CultureInfo.InvariantCulture, $"| {t["report.series.stat.unknown"]} | {summary.CostUnknownCalls} |").AppendLine();
     }
 
-    private static void AppendMatches(StringBuilder sb, ReportText t, SeriesSummary summary)
+    private static void AppendMatches(StringBuilder sb, ReportText t, ReportText game, SeriesSummary summary)
     {
         sb.AppendLine("## " + t["report.series.list"]).AppendLine().AppendLine(t["report.series.list.header"]);
         for (var i = 0; i < summary.Entries.Count; i++)
         {
             var e = summary.Entries[i];
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| {i + 1} | [{e.Directory}]({e.Directory}/report.md) | {e.FirstSeat} | {e.Outcome ?? "-"} | {e.CostUsd:0.0000} |");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {i + 1} | [{e.Directory}]({e.Directory}/report.md) | {e.FirstSeat} | {(e.Outcome is { } outcome ? game.Word("result.outcome", outcome) : "-")} | {e.CostUsd:0.0000} |");
         }
     }
 

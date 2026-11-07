@@ -164,6 +164,24 @@ Haufen vor jedem Zug, den die Regeln verbieten:
 ## report.nim.violation_line
 - {speaker}, {turn}: `{move}` bei den Haufen {heaps}
 
+## result.outcome.a_wins
+Sieg von A
+
+## result.outcome.b_wins
+Sieg von B
+
+## result.label.win
+Sieg
+
+## result.label.loss
+Niederlage
+
+## result.label.resigned
+Aufgegeben
+
+## result.label.forfeit
+Forfeit
+
 ## series.wins
 Siege
 

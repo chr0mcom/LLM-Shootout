@@ -90,7 +90,7 @@ public sealed class OracleFactTests : IDisposable
         Assert.Equal(
             new Dictionary<string, string> { ["value"] = "lost", ["move"] = "3", ["best"] = string.Empty, ["optimal"] = "n/a", ["rated"] = "true", ["turn"] = "move-2" },
             facts[1].Data);
-        Assert.Equal("Oracle, seat A, move-1: position won, move `1`, optimal: true. Best moves: 1.", facts[0].Text);
+        Assert.Equal("Oracle, seat A, move-1: position won, move `1`, optimal: yes. Best moves: 1.", facts[0].Text);
         Assert.Equal("Oracle, seat B, move-2: position lost, move `3`, optimal: n/a. Best moves: -.", facts[1].Text);
     }
 
@@ -117,7 +117,9 @@ public sealed class OracleFactTests : IDisposable
 
         var fact = run.Events.OfType<FactEvent>().First(f => f.Kind == OracleFact.Kind);
 
-        Assert.Equal("Orakel, Sitz A, move-1: Lage won, Zug `1`, optimal: true. Beste Züge: 1.", fact.Text);
+        Assert.Equal("Orakel, Sitz A, move-1: Lage gewonnen, Zug `1`, optimal: ja. Beste Züge: 1.", fact.Text);
+        Assert.Equal("won", fact.Data!["value"]);
+        Assert.Equal("true", fact.Data["optimal"]);
     }
 
     [Fact]

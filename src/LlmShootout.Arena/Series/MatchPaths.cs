@@ -11,9 +11,12 @@ public static class MatchPaths
     public static string Match(string baseDirectory, DateTimeOffset date, string gameId, string playerA, string playerB) =>
         FirstFree(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}", i => string.Create(CultureInfo.InvariantCulture, $"_{i:00}"));
 
-    /// <summary>The next free directory for a series.</summary>
-    public static string Series(string baseDirectory, DateTimeOffset date, string gameId, string playerA, string playerB) =>
-        FirstFree(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}_series", i => i == 1 ? string.Empty : $"-{i}");
+    /// <summary>
+    /// The next free directory for a series. <paramref name="seriesName"/> is the base name of the series file, so that two series
+    /// of the same game with the same players get different directories; a series without a file passes the id of the game.
+    /// </summary>
+    public static string Series(string baseDirectory, DateTimeOffset date, string seriesName, string playerA, string playerB) =>
+        FirstFree(baseDirectory, $"{date:yyyy-MM-dd}_{Clean(seriesName, "series")}_{Slug(playerA)}_vs_{Slug(playerB)}_series", i => i == 1 ? string.Empty : $"-{i}");
 
     /// <summary>The directory of match <paramref name="number"/> (1-based) inside a series directory, for example <c>01-A-first</c>.</summary>
     public static string SeriesMatch(string seriesDirectory, int number, Seat firstSeat) =>
@@ -24,9 +27,13 @@ public static class MatchPaths
     {
         var (endpoint, model) = EndpointRegistry.Split(player);
         var name = endpoint is null or "scripted" ? player : model;
-        name = name[(name.LastIndexOf('/') + 1)..];
-        var slug = new string([.. name.Select(c => char.IsLetterOrDigit(c) || c is '-' or '.' or '_' ? c : '-')]).Trim('-');
-        return slug.Length == 0 ? "player" : slug;
+        return Clean(name[(name.LastIndexOf('/') + 1)..], "player");
+    }
+
+    private static string Clean(string name, string fallback)
+    {
+        var clean = new string([.. name.Select(c => char.IsLetterOrDigit(c) || c is '-' or '.' or '_' ? c : '-')]).Trim('-');
+        return clean.Length == 0 ? fallback : clean;
     }
 
     /// <summary>The first name that is free in the folder; <paramref name="suffix"/> turns the attempt number into the ending (the first attempt may have none).</summary>

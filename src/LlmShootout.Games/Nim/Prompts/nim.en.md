@@ -164,6 +164,24 @@ Heaps before each move that the rules forbid:
 ## report.nim.violation_line
 - {speaker}, {turn}: `{move}` with the heaps {heaps}
 
+## result.outcome.a_wins
+A wins
+
+## result.outcome.b_wins
+B wins
+
+## result.label.win
+win
+
+## result.label.loss
+loss
+
+## result.label.resigned
+resigned
+
+## result.label.forfeit
+forfeit
+
 ## series.wins
 Wins
 

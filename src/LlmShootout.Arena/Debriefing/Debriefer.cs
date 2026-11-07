@@ -15,7 +15,7 @@ namespace LlmShootout.Arena.Debriefing;
 /// own thoughts, its own moves and the result. Never the opponent's thoughts.
 /// It works from the protocol alone, so the same code runs live and when a debriefing is repeated later.
 /// </summary>
-public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxRetries = 2)
+public sealed class Debriefer(PlayerGateway calls, TimeProvider time, int maxRetries = 2)
 {
     /// <summary>Debriefs both seats and writes the answers (and the model calls) to <paramref name="writer"/>.</summary>
     public async Task RunAsync(
@@ -97,7 +97,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         PlayerReply reply;
         try
         {
-            reply = await gateway.CallAsync(player, request, cancellationToken);
+            reply = await calls.CallAsync(player, request, cancellationToken);
         }
         catch (PlayerFailureException ex)
         {

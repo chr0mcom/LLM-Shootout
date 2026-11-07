@@ -60,7 +60,7 @@ Abgelehnte Antworten wurden mit einem Korrekturhinweis wiederholt. Ein Regelvers
 | Regelverstöße | 0 | 0 |
 | Aufgaben | 0 | 0 |
 | Erschöpfte Züge (in keinem Versuch ein annehmbarer Zug) | 0 | 0 |
-| Antwort der Nachbefragung auf „rules_followed“ | true | true |
+| Antwort der Nachbefragung auf „rules_followed“ | ja | ja |
 
 Es wurden keine Regelverstöße festgehalten.
 
@@ -104,6 +104,6 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 | `decisive_move` | Keine Angabe. | Keine Angabe. |
 | `own_mistake` | Keine Angabe. | Keine Angabe. |
 | `opponent_strength` | 3 | 3 |
-| `rules_followed` | true | true |
+| `rules_followed` | ja | ja |
 | `rules_followed_reason` | Keine Angabe. | Keine Angabe. |
 | `next_time` | Keine Angabe. | Keine Angabe. |
