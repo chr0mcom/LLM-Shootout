@@ -48,7 +48,7 @@ First line. Everything needed to understand and repeat the match.
 | `gameOptions` | game specific options from the series file, or absent |
 | `players` | per seat: `name` (for example `openrouter:openai/gpt-oss-20b`, `ollama:llama3.2` or `random`; the prefix is the [endpoint](endpoints.md)), `requestedModel`, and `settings` (temperature, reasoning effort, output limit, call timeout, only those that are sent; a repeated debriefing uses them again) |
 | `templateHashes` | hash of the template file of the arena and of the game, for the language used |
-| `options` | the `MatchOptions`: attempts, word limits, thought memory, identity settings, cost limit, refusal keywords |
+| `options` | the `MatchOptions`: attempts, word limits, thought memory, scanner settings, cost limit, refusal keywords |
 | `appVersion`, `gitCommit` | version and short commit of the application |
 
 ### `model_call`

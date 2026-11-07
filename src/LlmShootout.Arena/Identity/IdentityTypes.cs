@@ -1,4 +1,4 @@
-// Adapted from AiBehavior.PublicGoods (MIT, same author).
+// Adapted from an earlier project by the same author (MIT).
 namespace LlmShootout.Arena.Identity;
 
 /// <summary>Identifies a model: the requested slug and, if known, the version the provider reported.</summary>
@@ -12,12 +12,10 @@ public sealed record ModelIdentity(string Slug, string? Version = null)
 
 /// <summary>Settings of the identity scanner.</summary>
 /// <param name="EnableLeetspeak">Also match names written with digits for letters, such as <c>cl4ude-s0nnet</c>.</param>
-/// <param name="RedactionPlaceholder">Text that replaces a match when a message is redacted.</param>
 /// <param name="ModelAliases">Additional names per model slug.</param>
 /// <param name="ProviderAliases">Additional names per provider prefix.</param>
 public sealed record IdentityScannerSettings(
     bool EnableLeetspeak = false,
-    string RedactionPlaceholder = "[IDENTITY REDACTED]",
     IReadOnlyDictionary<string, IReadOnlyList<string>>? ModelAliases = null,
     IReadOnlyDictionary<string, IReadOnlyList<string>>? ProviderAliases = null);
 
@@ -32,12 +30,10 @@ public sealed record IdentityLeakMatch(IdentityLeakMarkerType MarkerType, string
 
 /// <summary>Result of scanning one message.</summary>
 /// <param name="HasLeak">True if at least one name was found.</param>
-/// <param name="RedactedMessage">The message with all hits replaced by the placeholder.</param>
 /// <param name="Matches">The distinct hits.</param>
 /// <param name="LeetspeakApplied">True if the hit needed leetspeak normalization.</param>
 public sealed record IdentityScanResult(
     bool HasLeak,
-    string RedactedMessage,
     IReadOnlyList<IdentityLeakMatch> Matches,
     bool LeetspeakApplied);
 

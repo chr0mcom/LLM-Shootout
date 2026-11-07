@@ -285,7 +285,7 @@ public sealed class MatchRunnerTests : IDisposable
     }
 
     [Fact]
-    public async Task Hidden_identity_keeps_the_opponent_slug_out_of_every_prompt_and_reveal_puts_it_in()
+    public async Task The_prompts_never_name_the_model_of_the_opponent()
     {
         var a = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a")).Reply(MatchHarness.Answer(move: "10"));
         var b = new ScriptedPlayer("b", new ModelIdentity("vendor-b/model-b")).Reply(MatchHarness.Answer(move: "10"));
@@ -293,12 +293,6 @@ public sealed class MatchRunnerTests : IDisposable
 
         Assert.DoesNotContain("vendor-b", AllPromptText(a), StringComparison.Ordinal);
         Assert.DoesNotContain("vendor-a", AllPromptText(b), StringComparison.Ordinal);
-
-        var a2 = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a")).Reply(MatchHarness.Answer(move: "10"));
-        var b2 = new ScriptedPlayer("b", new ModelIdentity("vendor-b/model-b")).Reply(MatchHarness.Answer(move: "10"));
-        await _harness.RunAsync(_guess, a2, b2, options: new MatchOptions { MaxAttempts = 1, RevealIdentity = true });
-
-        Assert.Contains("vendor-b/model-b", AllPromptText(a2), StringComparison.Ordinal);
     }
 
     [Fact]

@@ -22,7 +22,6 @@ public sealed class IdentityScannerTests
         var result = Scan(message, "openai/gpt-4o");
 
         Assert.True(result.HasLeak);
-        Assert.Contains("[IDENTITY REDACTED]", result.RedactedMessage, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -34,7 +33,7 @@ public sealed class IdentityScannerTests
         var withAliases = new IdentityScannerSettings(ProviderAliases: IdentityAliases.Providers);
 
         Assert.True(Scan(message, slug, withAliases).HasLeak);
-        Assert.False(Scan("Let us split, I promise.", slug, withAliases).HasLeak);
+        Assert.False(Scan("Your move.", slug, withAliases).HasLeak);
     }
 
     [Fact]
@@ -44,12 +43,11 @@ public sealed class IdentityScannerTests
     }
 
     [Fact]
-    public void Leaves_a_clean_message_untouched()
+    public void Finds_nothing_in_a_clean_message()
     {
-        var result = Scan("Let us split, I promise.", "anthropic/claude-sonnet");
+        var result = Scan("Your move.", "anthropic/claude-sonnet");
 
         Assert.False(result.HasLeak);
-        Assert.Equal("Let us split, I promise.", result.RedactedMessage);
         Assert.Empty(result.Matches);
     }
 
@@ -71,11 +69,11 @@ public sealed class IdentityScannerTests
     }
 
     [Fact]
-    public void Merges_overlapping_hits_into_one_redaction()
+    public void Merges_overlapping_hits_into_one_match()
     {
         var result = Scan("openai/gpt-4o", "openai/gpt-4o");
 
-        Assert.Equal("[IDENTITY REDACTED]", result.RedactedMessage);
+        Assert.Single(result.Matches);
     }
 
     [Fact]
@@ -102,7 +100,7 @@ public sealed class IdentityScannerTests
     [InlineData("plain", "plain")]
     public void Splits_provider(string slug, string provider)
     {
-        Assert.Equal(provider, PromptIdentityFormatter.GetProvider(slug));
+        Assert.Equal(provider, ModelIdentityNames.GetProvider(slug));
     }
 
     [Theory]
@@ -111,12 +109,6 @@ public sealed class IdentityScannerTests
     [InlineData("trailing/", "trailing/")]
     public void Strips_provider_prefix(string slug, string expected)
     {
-        Assert.Equal(expected, PromptIdentityFormatter.WithoutProviderPrefix(slug));
-    }
-
-    [Fact]
-    public void Formats_identity_without_duplicate_version()
-    {
-        Assert.Equal("a/b", PromptIdentityFormatter.Format(new ModelIdentity("a/b", "A/B")));
+        Assert.Equal(expected, ModelIdentityNames.WithoutProviderPrefix(slug));
     }
 }

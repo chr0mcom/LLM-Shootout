@@ -27,7 +27,5 @@ public sealed class MatchOptionsTests
         var options = new MatchOptions();
 
         Assert.Equal((3, 40, 20, 10, 1m), (options.MaxAttempts, options.MaxThoughtWords, options.MaxMessageWords, options.ThoughtMemory, options.MaxCostUsd));
-        Assert.False(options.RevealIdentity);
-        Assert.False(options.RedactIdentity);
     }
 }

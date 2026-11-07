@@ -125,11 +125,9 @@ A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slu
 | Option | Meaning |
 |---|---|
 | `--communication on\|off` | may the players talk (`play`, default on) |
-| `--reveal-identity` | name the opponent model in the prompt (default: hidden) |
 | `--seed <n>`, `--first-seat A\|B` | reproducibility (`play`); a series takes its seed from the file |
 | `--lang de\|en` | prompt language (default `de`) |
 | `--game-option key=value` | game specific option, repeatable (for example `pot=1000`; `play` only, a series takes them from the file) |
-| `--redact-identity` | replace model names in public messages by a placeholder (default: only mark them) |
 | `--thought-memory <n>` | how many of its own earlier thoughts a player sees again (default 10, 0 for none) |
 | `--max-cost <usd>` | spending limit for the run (default 1) |
 | `--no-debrief` | skip the questions after the game |

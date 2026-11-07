@@ -87,7 +87,6 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             turn,
             context.Timeline,
             context.Thoughts,
-            OpponentModel(turn.Seat),
             state.PreviousAnswer,
             state.Hint,
             state.AfterRefusal));
@@ -151,9 +150,6 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             state.Refusals,
             state.TokenLimitHits);
     }
-
-    private Identity.ModelIdentity? OpponentModel(Seat seat) =>
-        context.Plan.Options.RevealIdentity ? context.Plan.Players[seat.Opponent].Model : null;
 
     private string SampleAnswer(TurnRequest turn, SeededRng rng)
     {

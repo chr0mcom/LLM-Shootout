@@ -1,6 +1,5 @@
 using System.Text;
 using LlmShootout.Arena.Games;
-using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Players;
 
 namespace LlmShootout.Arena.Prompting;
@@ -11,7 +10,6 @@ namespace LlmShootout.Arena.Prompting;
 /// <param name="Turn">The turn to answer.</param>
 /// <param name="Timeline">The shared history.</param>
 /// <param name="Thoughts">The private thoughts so far.</param>
-/// <param name="Opponent">The opponent model if its identity is revealed, otherwise null.</param>
 /// <param name="PreviousAnswer">On a retry: the raw invalid answer.</param>
 /// <param name="CorrectionHint">On a retry: what was wrong.</param>
 /// <param name="AfterRefusal">True if the previous answer was a refusal.</param>
@@ -21,7 +19,6 @@ public sealed record TurnPromptInput(
     TurnRequest Turn,
     Timeline Timeline,
     ThoughtLog Thoughts,
-    ModelIdentity? Opponent = null,
     string? PreviousAnswer = null,
     string? CorrectionHint = null,
     bool AfterRefusal = false);
@@ -84,13 +81,8 @@ public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSourc
         return RenderGame(fact.Description with { Values = values });
     }
 
-    private string BuildSystem(TurnPromptInput input)
-    {
-        var opponent = input.Opponent is null
-            ? Arena("opponent.hidden")
-            : Arena("opponent.revealed", ("model", PromptIdentityFormatter.Format(input.Opponent)));
-        return Arena("system", ("opponent", opponent), ("rules", RenderGame(input.Game.RulesFor(input.Seat))));
-    }
+    private string BuildSystem(TurnPromptInput input) =>
+        Arena("system", ("rules", RenderGame(input.Game.RulesFor(input.Seat))));
 
     private string BuildUser(TurnPromptInput input)
     {

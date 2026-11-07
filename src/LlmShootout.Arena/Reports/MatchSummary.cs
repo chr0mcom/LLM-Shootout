@@ -36,7 +36,6 @@ public sealed record MatchSummary(
     string Language,
     long Seed,
     Seat FirstSeat,
-    bool IdentityRevealed,
     string? Outcome,
     IReadOnlyDictionary<Seat, SeatSummary> Seats,
     decimal CostUsd,

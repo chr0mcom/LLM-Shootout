@@ -63,7 +63,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
     {
         var game = plan.Definition.Create(plan.Setup);
         var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options, plan.Setup.Communication);
-        var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner, plan.Options.RedactIdentity);
+        var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner);
         return new MatchContext(plan, game, prompts, new AnswerEvaluator(plan.Options, prompts), writer, new PlayerGateway(cost), guard, time);
     }
 
@@ -134,10 +134,10 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
 
         if (result.MessageAllowed)
         {
-            var inspected = context.IdentityGuard.Inspect(turn.Seat, result.Message);
-            context.Timeline.AddMessage(turn.TurnId, turn.Seat, inspected.Text);
+            var hits = context.IdentityGuard.Inspect(turn.Seat, result.Message);
+            context.Timeline.AddMessage(turn.TurnId, turn.Seat, result.Message);
             await context.Writer.AppendAsync(
-                new MessageEvent(time.GetUtcNow(), turn.TurnId, turn.Seat, inspected.Text, result.Silent, result.MessageTruncated, inspected.Hits),
+                new MessageEvent(time.GetUtcNow(), turn.TurnId, turn.Seat, result.Message, result.Silent, result.MessageTruncated, hits),
                 cancellationToken);
         }
     }

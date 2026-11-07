@@ -18,19 +18,6 @@ public enum QuestionKind
     Text,
 }
 
-/// <summary>When a question is asked.</summary>
-public enum QuestionCondition
-{
-    /// <summary>Always.</summary>
-    Always,
-
-    /// <summary>Only when the players could talk.</summary>
-    WithCommunication,
-
-    /// <summary>Only when the identity of the opponent was hidden.</summary>
-    HiddenIdentity,
-}
-
 /// <summary>One typed question of the debriefing.</summary>
 /// <param name="Key">Unique JSON key of the answer.</param>
 /// <param name="Kind">Type of the answer.</param>
@@ -39,7 +26,6 @@ public enum QuestionCondition
 /// <param name="Max">Highest value of a scale.</param>
 /// <param name="Choices">Allowed answers of a choice question.</param>
 /// <param name="WithReason">True if the answer also needs a short reason (key plus <c>_reason</c>).</param>
-/// <param name="When">When to ask.</param>
 public sealed record DebriefingQuestion(
     string Key,
     QuestionKind Kind,
@@ -47,5 +33,4 @@ public sealed record DebriefingQuestion(
     int Min = 1,
     int Max = 5,
     IReadOnlyList<string>? Choices = null,
-    bool WithReason = false,
-    QuestionCondition When = QuestionCondition.Always);
+    bool WithReason = false);

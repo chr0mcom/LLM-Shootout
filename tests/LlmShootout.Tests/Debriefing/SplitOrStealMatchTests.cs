@@ -17,7 +17,7 @@ public sealed class SplitOrStealMatchTests : IDisposable
 
     public void Dispose() => _harness.Dispose();
 
-    public static string DebriefJson(bool communication = true, bool hidden = true, string truthful = "true", int trust = 4)
+    public static string DebriefJson(bool communication = true, string truthful = "true", int trust = 4)
     {
         var json = new JsonObject
         {
@@ -30,15 +30,8 @@ public sealed class SplitOrStealMatchTests : IDisposable
         };
         if (communication)
         {
-            json["influenced_by_messages"] = 3;
-            json["influenced_by_messages_reason"] = "Some.";
             json["announced_truthfully"] = truthful == "true";
             json["announced_truthfully_reason"] = "I said what I did.";
-        }
-
-        if (hidden)
-        {
-            json["opponent_guess"] = "Maybe GPT, it was polite.";
         }
 
         return json.ToJsonString();
@@ -63,18 +56,17 @@ public sealed class SplitOrStealMatchTests : IDisposable
 
     private async Task<(MatchOutcome Outcome, IReadOnlyList<MatchEvent> Events, ScriptedPlayer A, ScriptedPlayer B)> PlayAsync(
         bool communication = true,
-        bool reveal = false,
         string? debriefA = "",
         string? debriefB = "")
     {
-        var a = Player("a", "vendor-a/model-a", "split", "SECRET-A", communication ? Said("A") : [], debriefA == "" ? DebriefJson(communication, !reveal) : debriefA);
-        var b = Player("b", "vendor-b/model-b", "steal", "SECRET-B", communication ? Said("B") : [], debriefB == "" ? DebriefJson(communication, !reveal) : debriefB);
-        var (outcome, events) = await _harness.RunAsync(_definition, a, b, communication, new MatchOptions { RevealIdentity = reveal }, debrief: true);
+        var a = Player("a", "vendor-a/model-a", "split", "SECRET-A", communication ? Said("A") : [], debriefA == "" ? DebriefJson(communication) : debriefA);
+        var b = Player("b", "vendor-b/model-b", "steal", "SECRET-B", communication ? Said("B") : [], debriefB == "" ? DebriefJson(communication) : debriefB);
+        var (outcome, events) = await _harness.RunAsync(_definition, a, b, communication, new MatchOptions(), debrief: true);
         return (outcome, events, a, b);
     }
 
     [Fact]
-    public async Task A_full_match_with_communication_asks_all_questions_of_the_hidden_identity_variant()
+    public async Task A_full_match_with_communication_asks_all_questions()
     {
         var (outcome, events, _, _) = await PlayAsync();
 
@@ -83,19 +75,17 @@ public sealed class SplitOrStealMatchTests : IDisposable
         Assert.Equal([Seat.A, Seat.B], debriefs.Select(d => d.Seat));
         Assert.All(debriefs, d => Assert.True(d.Valid));
         Assert.Equal(
-            ["announced_truthfully", "announced_truthfully_reason", "influenced_by_messages", "influenced_by_messages_reason", "next_time", "opponent_guess", "opponent_strategy", "strategy", "tried_to_deceive", "tried_to_deceive_reason", "trust_in_opponent"],
+            ["announced_truthfully", "announced_truthfully_reason", "next_time", "opponent_strategy", "strategy", "tried_to_deceive", "tried_to_deceive_reason", "trust_in_opponent"],
             debriefs[0].Answers.Keys.Order(StringComparer.Ordinal));
     }
 
     [Fact]
-    public async Task Without_communication_and_with_revealed_identity_the_conditional_questions_disappear()
+    public async Task Without_communication_the_game_asks_no_extra_question()
     {
-        var (_, events, _, _) = await PlayAsync(communication: false, reveal: true);
+        var (_, events, _, _) = await PlayAsync(communication: false);
 
         var keys = events.OfType<DebriefEvent>().First().Answers.Keys;
-        Assert.DoesNotContain("influenced_by_messages", keys);
         Assert.DoesNotContain("announced_truthfully", keys);
-        Assert.DoesNotContain("opponent_guess", keys);
         Assert.Contains("tried_to_deceive", keys);
     }
 
@@ -113,14 +103,6 @@ public sealed class SplitOrStealMatchTests : IDisposable
         var debriefB = Prompts(b, 4);
         Assert.DoesNotContain("SECRET-A", debriefB, StringComparison.Ordinal);
         Assert.DoesNotContain("vendor-a", debriefB, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task With_revealed_identity_the_debriefing_names_the_opponent()
-    {
-        var (_, _, a, _) = await PlayAsync(reveal: true);
-
-        Assert.Contains("vendor-b/model-b", Prompts(a, 4), StringComparison.Ordinal);
     }
 
     [Fact]

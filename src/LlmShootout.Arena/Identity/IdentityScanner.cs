@@ -1,4 +1,4 @@
-// Adapted from AiBehavior.PublicGoods (MIT, same author).
+// Adapted from an earlier project by the same author (MIT).
 using System.Globalization;
 using System.Text;
 
@@ -21,12 +21,12 @@ public static class IdentityScanner
         var matches = FindMatches(NormalizedTextView.Create(publicMessage, false), tokenSet.Tokens);
         if (matches.Count > 0)
         {
-            return BuildResult(publicMessage, settings.RedactionPlaceholder, matches, false);
+            return BuildResult(matches, false);
         }
 
         if (!settings.EnableLeetspeak)
         {
-            return new IdentityScanResult(false, publicMessage, [], false);
+            return new IdentityScanResult(false, [], false);
         }
 
         var leetTokens = tokenSet.Tokens
@@ -35,8 +35,8 @@ public static class IdentityScanner
             .ToArray();
         matches = FindMatches(NormalizedTextView.Create(publicMessage, true), leetTokens);
         return matches.Count > 0
-            ? BuildResult(publicMessage, settings.RedactionPlaceholder, matches, true)
-            : new IdentityScanResult(false, publicMessage, [], true);
+            ? BuildResult(matches, true)
+            : new IdentityScanResult(false, [], true);
     }
 
     /// <summary>Lower-cases, strips accents and removes everything except letters and digits.</summary>
@@ -49,12 +49,12 @@ public static class IdentityScanner
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(settings);
 
-        var provider = model.Slug.Contains('/', StringComparison.Ordinal) ? PromptIdentityFormatter.GetProvider(model.Slug) : InferProvider(model.Slug, settings);
-        var withoutProvider = PromptIdentityFormatter.WithoutProviderPrefix(PromptIdentityFormatter.WithoutVariant(model.Slug));
+        var provider = model.Slug.Contains('/', StringComparison.Ordinal) ? ModelIdentityNames.GetProvider(model.Slug) : InferProvider(model.Slug, settings);
+        var withoutProvider = ModelIdentityNames.WithoutProviderPrefix(ModelIdentityNames.WithoutVariant(model.Slug));
         var seen = new Dictionary<string, IdentityToken>(StringComparer.Ordinal);
 
         AddToken(seen, model.Slug, IdentityLeakMarkerType.ExactName);
-        AddToken(seen, PromptIdentityFormatter.WithoutVariant(model.Slug), IdentityLeakMarkerType.ExactName);
+        AddToken(seen, ModelIdentityNames.WithoutVariant(model.Slug), IdentityLeakMarkerType.ExactName);
         if (!string.Equals(model.ResolvedVersion, model.Slug, StringComparison.OrdinalIgnoreCase))
         {
             AddToken(seen, model.ResolvedVersion, IdentityLeakMarkerType.ExactName);
@@ -157,33 +157,8 @@ public static class IdentityScanner
     private static bool IsBoundary(string original, int index)
         => index < 0 || index >= original.Length || !char.IsLetterOrDigit(original[index]);
 
-    private static IdentityScanResult BuildResult(
-        string original,
-        string placeholder,
-        List<MatchSpan> matches,
-        bool leetspeakApplied)
-    {
-        var merged = Merge(matches);
-        var builder = new StringBuilder();
-        var cursor = 0;
-        foreach (var span in merged)
-        {
-            if (span.Start > cursor)
-            {
-                builder.Append(original, cursor, span.Start - cursor);
-            }
-
-            builder.Append(placeholder);
-            cursor = span.End + 1;
-        }
-
-        if (cursor < original.Length)
-        {
-            builder.Append(original, cursor, original.Length - cursor);
-        }
-
-        return new IdentityScanResult(true, builder.ToString(), [.. merged.Select(x => x.Match).Distinct()], leetspeakApplied);
-    }
+    private static IdentityScanResult BuildResult(List<MatchSpan> matches, bool leetspeakApplied) =>
+        new(true, [.. Merge(matches).Select(x => x.Match).Distinct()], leetspeakApplied);
 
     private static List<MatchSpan> Merge(List<MatchSpan> spans)
     {

@@ -23,12 +23,11 @@ public static class PlayCommand
         var game = new Argument<string>("game") { Description = "Game id, see: shootout games" };
         var communication = new Option<string>("--communication") { Description = "Players may talk: on (default) or off.", DefaultValueFactory = _ => "on" };
         communication.AcceptOnlyFromAmong("on", "off");
-        var reveal = new Option<bool>("--reveal-identity") { Description = "Name the opponent model in the prompts (default: hidden)." };
         var seed = new Option<long?>("--seed") { Description = "Seed for all random decisions. Default: derived from the clock; it is printed and stored." };
         var first = new Option<string?>("--first-seat") { Description = "Seat that starts, A or B. Default: the seed decides." };
         var gameOption = new Option<string[]>("--game-option") { Description = "Game specific option as key=value, repeatable (for example pot=1000).", AllowMultipleArgumentsPerToken = false };
 
-        var command = new Command("play", "Plays one match between two players.") { game, communication, reveal, seed, first, gameOption };
+        var command = new Command("play", "Plays one match between two players.") { game, communication, seed, first, gameOption };
         foreach (var option in run.All)
         {
             command.Options.Add(option);
@@ -55,7 +54,7 @@ public static class PlayCommand
                 [Seat.B] = await env.CreatePlayerAsync(specB, matchSeed + 2, settings.Endpoint, ct),
             };
             var directory = MatchPaths.Match(settings.OutDirectory, env.Time.GetUtcNow(), definition.Id, players[Seat.A].Name, players[Seat.B].Name);
-            var plan = new MatchPlan(definition, setup, players, settings.Match with { RevealIdentity = parse.GetValue(reveal) }, directory);
+            var plan = new MatchPlan(definition, setup, players, settings.Match, directory);
 
             var view = new LiveView(env.Console, settings.ShowThoughts, cost);
             var runner = env.CreateRunner(cost, settings.Quiet ? null : view.Handle);

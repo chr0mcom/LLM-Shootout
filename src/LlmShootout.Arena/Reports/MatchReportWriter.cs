@@ -34,7 +34,6 @@ public static class MatchReportWriter
             started.Language,
             started.Seed,
             started.FirstSeat,
-            started.Options.RevealIdentity,
             match.Result?.Outcome,
             seats,
             match.CostUsd,
@@ -90,7 +89,6 @@ public static class MatchReportWriter
             sb.AppendLine().AppendLine("## " + section.Title).AppendLine().AppendLine(section.Markdown);
         }
 
-        AppendIdentity(sb, match, t);
         AppendThoughts(sb, match, t);
         AppendMetrics(sb, summary, t);
         AppendDebrief(sb, match, t);
@@ -113,7 +111,6 @@ public static class MatchReportWriter
         Row(sb, t["report.label.seed"], s.Seed.ToString(CultureInfo.InvariantCulture));
         Row(sb, t["report.label.language"], s.Language);
         Row(sb, t["report.label.communication"], t[s.Communication ? "report.communication.on" : "report.communication.off"]);
-        Row(sb, t["report.label.identity"], t[s.IdentityRevealed ? "report.identity.revealed" : "report.identity.hidden"]);
         Row(sb, t["report.label.first_seat"], s.FirstSeat.ToString());
         Row(sb, t["report.label.outcome"], s.Outcome ?? "-");
         Row(sb, t["report.label.duration"], TimeSpan.FromSeconds(s.DurationSeconds).ToString("hh\\:mm\\:ss", CultureInfo.InvariantCulture));
@@ -188,29 +185,6 @@ public static class MatchReportWriter
         FactAudience.Analysis => t.Format("report.history.fact.analysis", ("text", fact.Text)),
         _ => t.Format("report.history.fact", ("text", fact.Text)),
     };
-
-    private static void AppendIdentity(StringBuilder sb, MatchRecord match, ReportText t)
-    {
-        var guesses = Seat.All.ToDictionary(seat => seat, seat => match.Debriefs.LastOrDefault(d => d.Seat == seat && d.Valid)?.Answers.GetValueOrDefault("opponent_guess"));
-        if (match.Started.Options.RevealIdentity || guesses.Values.All(g => g is null))
-        {
-            return;
-        }
-
-        int Hits(Seat author, string subject) =>
-            match.Messages(author).Sum(m => m.IdentityHits.Count(h => h.StartsWith(subject + ":", StringComparison.Ordinal)));
-
-        sb.AppendLine().AppendLine("## " + t["report.identity"]).AppendLine().AppendLine(t["report.identity.header"]);
-        foreach (var seat in Seat.All.Where(s => guesses[s] is not null))
-        {
-            var read = Hits(seat.Opponent, "self") + Hits(seat.Opponent, "ambiguous");
-            var said = Hits(seat, "opponent") + Hits(seat, "ambiguous");
-            var finding = t[read > 0 ? "report.identity.read" : "report.identity.guessed"];
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| {seat} | {MarkdownTable.Cell(guesses[seat]!)} | {read} | {said} | {finding} |");
-        }
-
-        sb.AppendLine().AppendLine(t["report.identity.note"]).AppendLine();
-    }
 
     private static void AppendThoughts(StringBuilder sb, MatchRecord match, ReportText t)
     {

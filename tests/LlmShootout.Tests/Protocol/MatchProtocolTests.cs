@@ -110,7 +110,7 @@ public sealed class MatchProtocolTests : IDisposable
         Assert.Contains(cardA, a.Calls[^1].Messages[1].Text, StringComparison.Ordinal);
     }
 
-    private static string DebriefJsonFor() => Debriefing.SplitOrStealMatchTests.DebriefJson(communication: false, hidden: true);
+    private static string DebriefJsonFor() => Debriefing.SplitOrStealMatchTests.DebriefJson(communication: false);
 
     [Fact]
     public async Task The_settings_of_a_player_are_recorded_in_the_match_start()

@@ -33,9 +33,6 @@ public sealed class RunOptionSet
     /// <summary>Quiet mode.</summary>
     public Option<bool> Quiet { get; } = new("--quiet") { Description = "Print only the resulting directory." };
 
-    /// <summary>Redact identity mentions.</summary>
-    public Option<bool> RedactIdentity { get; } = new("--redact-identity") { Description = "Replace mentions of model names in public messages by a placeholder (default: only mark them)." };
-
     /// <summary>Thought memory.</summary>
     public Option<int?> ThoughtMemory { get; } = new("--thought-memory") { Description = "How many of its own earlier thoughts a player sees again (default 10, 0 for none)." };
 
@@ -54,7 +51,7 @@ public sealed class RunOptionSet
     /// <summary>All options, for adding to a command.</summary>
     public IEnumerable<Option> All =>
     [
-        PlayerA, PlayerB, Language, MaxCost, NoDebrief, Out, ShowThoughts, Quiet, RedactIdentity, ThoughtMemory,
+        PlayerA, PlayerB, Language, MaxCost, NoDebrief, Out, ShowThoughts, Quiet, ThoughtMemory,
         Temperature, ReasoningEffort, MaxOutputTokens, Timeout,
     ];
 
@@ -73,7 +70,6 @@ public sealed class RunOptionSet
         {
             Debrief = !parse.GetValue(NoDebrief),
             MaxCostUsd = maxCost,
-            RedactIdentity = parse.GetValue(RedactIdentity),
             ThoughtMemory = parse.GetValue(ThoughtMemory) ?? new MatchOptions().ThoughtMemory,
         };
         return new RunSettings(

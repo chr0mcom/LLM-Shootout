@@ -20,41 +20,35 @@ public static class IdentityAliases
     };
 }
 
-/// <summary>A public message after the identity check.</summary>
-/// <param name="Text">The message to publish: unchanged, or redacted if redaction is on. Null for silence.</param>
-/// <param name="Hits">Hits as <c>subject:type:name</c>, for example <c>opponent:Provider:openai</c>.</param>
-public sealed record InspectedMessage(string? Text, IReadOnlyList<string> Hits);
-
 /// <summary>
-/// Checks every public message for names of the author's own model or the opponent's model. A name that belongs to
-/// both models (self-play, same provider) is marked ambiguous. By default messages are only marked, not changed.
+/// Checks every public message for names of the author's own model or the other player's model and returns the hits
+/// as a technical marker for the protocol. A name that belongs to both models (self-play, same provider) is marked
+/// ambiguous. Messages are never changed.
 /// </summary>
 public sealed class IdentityGuard
 {
     private readonly Dictionary<ModelIdentity, IdentityTokenSet> _tokens = [];
     private readonly Func<Seat, ModelIdentity?> _models;
     private readonly IdentityScannerSettings _settings;
-    private readonly bool _redact;
 
     /// <summary>
     /// Creates the guard. <paramref name="models"/> is asked for every message, so a version that a provider reports
     /// only after the first call is picked up. Seats without a model (random, scripted without identity) have no names to find.
     /// </summary>
-    public IdentityGuard(Func<Seat, ModelIdentity?> models, IdentityScannerSettings settings, bool redact)
+    public IdentityGuard(Func<Seat, ModelIdentity?> models, IdentityScannerSettings settings)
     {
         ArgumentNullException.ThrowIfNull(models);
         ArgumentNullException.ThrowIfNull(settings);
         _models = models;
         _settings = settings;
-        _redact = redact;
     }
 
-    /// <summary>Scans a message of the given author.</summary>
-    public InspectedMessage Inspect(Seat author, string? message)
+    /// <summary>Scans a message of the given author. Returns the hits as <c>subject:type:name</c>, for example <c>opponent:Provider:openai</c>.</summary>
+    public IReadOnlyList<string> Inspect(Seat author, string? message)
     {
         if (string.IsNullOrEmpty(message))
         {
-            return new InspectedMessage(message, []);
+            return [];
         }
 
         var own = ScanFor(author, message);
@@ -64,17 +58,14 @@ public sealed class IdentityGuard
         var hits = new List<string>();
         hits.AddRange(Describe(own, LeakedIdentitySubject.Self, ambiguous));
         hits.AddRange(Describe(other, LeakedIdentitySubject.Opponent, ambiguous));
-        var distinct = hits.Distinct(StringComparer.Ordinal).ToArray();
-
-        var text = _redact && distinct.Length > 0 ? ScanFor(author.Opponent, own.RedactedMessage).RedactedMessage : message;
-        return new InspectedMessage(text, distinct);
+        return [.. hits.Distinct(StringComparer.Ordinal)];
     }
 
     private IdentityScanResult ScanFor(Seat seat, string message)
     {
         if (_models(seat) is not { } model)
         {
-            return new IdentityScanResult(false, message, [], false);
+            return new IdentityScanResult(false, [], false);
         }
 
         if (!_tokens.TryGetValue(model, out var set))

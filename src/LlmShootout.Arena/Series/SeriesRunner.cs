@@ -13,7 +13,7 @@ namespace LlmShootout.Arena.Series;
 /// <param name="PlayerA">Player for seat A.</param>
 /// <param name="PlayerB">Player for seat B.</param>
 /// <param name="Language">Prompt language.</param>
-/// <param name="Options">Match settings; the reveal setting is taken from each match of the series file.</param>
+/// <param name="Options">Match settings.</param>
 /// <param name="Directory">The series directory.</param>
 public sealed record SeriesPlan(
     IGameDefinition Definition,
@@ -74,7 +74,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             plan.Definition,
             new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
             new Dictionary<Seat, IPlayer> { [Seat.A] = Fresh(plan.PlayerA, seed + RandomSeedOffsetA), [Seat.B] = Fresh(plan.PlayerB, seed + RandomSeedOffsetB) },
-            plan.Options with { RevealIdentity = match.RevealIdentity },
+            plan.Options,
             MatchPaths.SeriesMatch(plan.Directory, number, match.Communication, first));
     }
 

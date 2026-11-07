@@ -58,8 +58,7 @@ public sealed class SplitOrStealDefinition : IGameDefinition
                     "announced_truthfully",
                     QuestionKind.Boolean,
                     new TemplateRef("question.announced_truthfully"),
-                    WithReason: true,
-                    When: QuestionCondition.WithCommunication),
+                    WithReason: true),
             ]
             : [];
     }

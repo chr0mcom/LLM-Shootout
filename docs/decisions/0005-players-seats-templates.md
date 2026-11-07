@@ -1,6 +1,6 @@
 # 0005 - Players, seats and wording as templates
 
-Status: accepted (2026-11-06)
+Status: accepted (2026-11-06), amended 2026-11-07
 
 ## Decision
 - **Seats** are `enum Seat { A, B }`. The arena iterates `Seat.All` and does not call `Opponent` except where
@@ -25,3 +25,5 @@ bound to the concrete turn, enum vs struct for seats (struct suggested, enum acc
 
 ## Consequences
 One concept ("text is a template plus values") is used for rules, views, facts and errors.
+
+Amended 2026-11-07: the opponent is described the same way for every kind of player; see [0011](0011-identity-and-description-of-the-opponent.md). The identity scanner remains a technical marker.

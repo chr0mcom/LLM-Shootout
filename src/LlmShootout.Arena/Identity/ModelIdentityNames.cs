@@ -1,18 +1,9 @@
-// Adapted from AiBehavior.PublicGoods (MIT, same author).
+// Adapted from an earlier project by the same author (MIT).
 namespace LlmShootout.Arena.Identity;
 
-/// <summary>Helpers that split and format model slugs (<c>provider/model</c> on OpenRouter, a bare model name on other endpoints).</summary>
-public static class PromptIdentityFormatter
+/// <summary>Helpers that split model slugs (<c>provider/model</c> on OpenRouter, a bare model name on other endpoints).</summary>
+public static class ModelIdentityNames
 {
-    /// <summary>Formats an identity as <c>slug (version)</c>, or just the slug if both are equal.</summary>
-    public static string Format(ModelIdentity identity)
-    {
-        ArgumentNullException.ThrowIfNull(identity);
-        return string.Equals(identity.Slug, identity.ResolvedVersion, StringComparison.OrdinalIgnoreCase)
-            ? identity.Slug
-            : $"{identity.Slug} ({identity.ResolvedVersion})";
-    }
-
     /// <summary>Returns the provider prefix of a slug such as <c>openai/gpt-4o</c>, or the slug itself.</summary>
     public static string GetProvider(string modelSlug)
     {

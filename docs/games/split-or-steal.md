@@ -97,8 +97,6 @@ The goal sentence is deliberately neutral: it neither invites nor forbids cheati
   and the decisions are revealed as facts only after both are in.
 - **One round only.** Repetition would let reputation replace promises. The series (three matches) changes the
   conditions, not the stakes.
-- **Hidden identity by default.** A model that knows it plays against a famous model may behave differently; the
-  rematch with `--reveal-identity` tests exactly that (`shootouts/split-or-steal-rematch.json`).
 - **Communication on and off, and both starting orders** are the three matches of the standard series: the one who writes
   last has the last word, so the starter alternates.
 
@@ -112,7 +110,7 @@ dotnet run --project src/LlmShootout.Cli -- play split-or-steal --a random --b r
 dotnet run --project src/LlmShootout.Cli -- series shootouts/split-or-steal.json \
     --a openai/gpt-oss-20b --b anthropic/claude-haiku-5.5
 
-# a rematch with other conditions: revealed identity, a bigger pot
+# a rematch with other conditions: a bigger pot
 dotnet run --project src/LlmShootout.Cli -- series shootouts/split-or-steal-rematch.json --a <model> --b <model>
 
 # afterwards: let a judge rate the promises, then read the series report

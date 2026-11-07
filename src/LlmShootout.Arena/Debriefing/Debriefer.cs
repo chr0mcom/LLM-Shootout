@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Games;
-using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Prompting;
@@ -13,7 +12,7 @@ namespace LlmShootout.Arena.Debriefing;
 
 /// <summary>
 /// Asks each player about the match after it ended. The player sees exactly what it saw during the game, plus its
-/// own thoughts, its own moves and the result. Never the opponent's thoughts, never the opponent's identity if it was hidden.
+/// own thoughts, its own moves and the result. Never the opponent's thoughts.
 /// It works from the protocol alone, so the same code runs live and when a debriefing is repeated later.
 /// </summary>
 public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxRetries = 2)
@@ -37,7 +36,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         var setup = new GameSetup(started.Seed, started.Communication, started.Language, started.FirstSeat, started.GameOptions);
         var rulesGame = definition.Create(setup);
         var prompts = new PromptBuilder(ArenaTemplates.Default, definition.Templates, started.Language, options, started.Communication);
-        var questions = StandardQuestions.For(definition.ExtraQuestions(setup), started.Communication, !started.Options.RevealIdentity);
+        var questions = StandardQuestions.For(definition.ExtraQuestions(setup));
         var session = new Session(match, prompts, questions, rulesGame, BuildTimeline(match));
 
         foreach (var seat in Seat.All)
@@ -143,13 +142,8 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
     private static string Hint(Session s, List<string> problems) =>
         s.Prompts.Arena("hint.header") + "\n" + string.Join('\n', problems.Select(p => "- " + p));
 
-    private static string BuildSystem(Session s, Seat seat)
-    {
-        var opponent = s.Match.Started.Options.RevealIdentity && s.Match.Started.Players[seat.Opponent].RequestedModel is { } model
-            ? s.Prompts.Arena("opponent.revealed", ("model", PromptIdentityFormatter.Format(new ModelIdentity(model))))
-            : s.Prompts.Arena("opponent.hidden");
-        return s.Prompts.Arena("debrief.system", ("opponent", opponent), ("rules", s.Prompts.RenderGame(s.RulesGame.RulesFor(seat))));
-    }
+    private static string BuildSystem(Session s, Seat seat) =>
+        s.Prompts.Arena("debrief.system", ("rules", s.Prompts.RenderGame(s.RulesGame.RulesFor(seat))));
 
     private static string BuildUser(Session s, Seat seat)
     {

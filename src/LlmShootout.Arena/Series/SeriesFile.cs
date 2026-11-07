@@ -8,9 +8,8 @@ namespace LlmShootout.Arena.Series;
 /// <summary>One match of a series.</summary>
 /// <param name="Communication">True if the players may talk. Default: true.</param>
 /// <param name="FirstSeat">The seat that starts (<c>A</c> or <c>B</c>). If absent, the seed decides.</param>
-/// <param name="RevealIdentity">True to name the opponent model in the prompts. Default: false.</param>
 /// <param name="Options">Game specific options.</param>
-public sealed record SeriesMatch(bool Communication = true, Seat? FirstSeat = null, bool RevealIdentity = false, JsonObject? Options = null);
+public sealed record SeriesMatch(bool Communication = true, Seat? FirstSeat = null, JsonObject? Options = null);
 
 /// <summary>
 /// A series: the same pairing over several matches with defined variants. A rematch with other models or other
