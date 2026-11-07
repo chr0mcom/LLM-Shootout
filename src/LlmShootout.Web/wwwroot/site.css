@@ -132,6 +132,8 @@ textarea { resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, C
 fieldset.inline { border: 0; padding: 0; margin: 0.6rem 0 0; display: flex; gap: 1rem; flex-wrap: wrap; }
 fieldset.inline legend { font-weight: 600; font-size: 0.9rem; padding: 0; margin-bottom: 0.25rem; }
 fieldset.inline label { font-weight: 400; margin: 0; display: flex; gap: 0.35rem; align-items: center; }
+fieldset.game-options { border: 1px solid var(--line); border-radius: 6px; padding: 0.4rem 0.8rem 0.7rem; margin: 0.8rem 0 0; display: flex; flex-direction: column; gap: 0.35rem; }
+fieldset.game-options legend { font-weight: 600; font-size: 0.9rem; padding: 0 0.3rem; }
 .pair { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.4rem; }
 .pair label { margin-top: 0; }
 .buttons { display: flex; gap: 0.6rem; margin-top: 0.9rem; }
@@ -184,6 +186,17 @@ fieldset.inline label { font-weight: 400; margin: 0; display: flex; gap: 0.35rem
 .banner.aborted { border-color: var(--bad); }
 .banner strong { font-family: var(--ui); font-weight: 700; }
 
+/* ---------- heaps (Nim) ---------- */
+.heaps { margin-top: 1rem; padding: 0.7rem 1rem 0.8rem; background: var(--sheet); border-left: 5px solid var(--ink); }
+.heaps h2 { margin-bottom: 0.4rem; }
+.heap-rows { display: grid; grid-template-columns: auto 1fr auto; gap: 0.15rem 1rem; align-items: baseline; font-variant-numeric: tabular-nums; }
+.heap { display: contents; }
+.heap-name { color: var(--muted); font-size: 0.88rem; }
+.stones { letter-spacing: 0.12em; font-size: 1.1rem; overflow-wrap: anywhere; }
+.heap.changed .stones { color: var(--gold); }
+.heap-size { font-weight: 650; text-align: right; min-width: 2ch; }
+.heaps .legend { color: var(--muted); font-size: 0.8rem; margin-top: 0.4rem; }
+
 /* ---------- transcript ---------- */
 .board { margin-top: 1.4rem; }
 .rows { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 3rem minmax(0, 1fr); row-gap: 0.55rem; }
@@ -227,6 +240,8 @@ fieldset.inline label { font-weight: 400; margin: 0; display: flex; gap: 0.35rem
 .a .chip.move { border-color: var(--a); color: var(--a-ink); font-weight: 650; }
 .b .chip.move { border-color: var(--b); color: var(--b-ink); font-weight: 650; }
 .mid .chip { background: var(--bg); }
+.chip.analysis { color: var(--muted); border-style: dashed; background: transparent; font-style: italic; }
+.chip.analysis.violation { border-color: var(--bad); color: var(--bad); }
 .mid .chip.reveal { font-weight: 650; border-color: var(--ink); }
 .note { font-size: 0.82rem; color: var(--bad); }
 .turn-mark { grid-column: 1 / -1; justify-self: center; z-index: 1; background: var(--bg); color: var(--muted); font-size: 0.78rem; padding: 0 0.6rem; margin-top: 0.5rem; }

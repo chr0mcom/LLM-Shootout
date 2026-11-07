@@ -11,21 +11,27 @@ Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (A
 
 ## What you see
 
-- **New match** (left): game, the two players, prompt language, whether there are messages between players (the box starts with the default of the selected game), whether they are asked
-  afterwards, who starts, a seed, the spending limit, and the game options as a JSON object, for example `{"pot": 1000}`
-  (empty means the defaults of the game; the server answers wrong options with a message of the game, and accepts at most
-  2 KB nested at most four levels deep). A player is `random`, `optimal` (the best move; refused with a message for a game that cannot name it), `<endpoint>:<model>` such as
+- **New match** (left): game (Nim is the first and the default), the two players, prompt language, whether there are messages between players (the box starts with the default of the selected game), whether they are asked
+  afterwards, who starts, a seed, the spending limit, and the game options. A player is `random`, `optimal` (the best move; refused with a message for a game that cannot name it), `<endpoint>:<model>` such as
   `ollama:llama3.2`, or an OpenRouter slug. The fields suggest every model that the configured endpoints
-  offer; you can type anything else.
+  offer; you can type anything else. With Nim selected the player fields start as `random` (seat A) and `optimal` (seat B); a value you typed stays when you change the game.
+- **Game options**: for Nim, four simple fields appear: *Heaps* (whole numbers separated by commas, for example `3,4,5`; empty means `3,4,5`), *Misère*, *Temptation* (`None` or `Pass`) and *Resigning is a legal move*.
+  Below them is the field *More game options* for everything else, as a JSON object, for example `{"maxTake": 3}` (empty means the defaults of the game).
+  The fields and the JSON become one object; a key that is in both takes the value of the field. A field at its default adds nothing, so the JSON can still set that key. The server checks the options
+  with the rules of the game and answers a mistake with its message (HTTP 400); it accepts at most 2 KB, nested at most four levels deep.
 - **The match** (right): both players side by side. Spoken messages are in the lane of their seat, the private thoughts
   hang under them (dashed), the moves appear when a turn ends, then the game's own reveal and payout. Above: per seat the
   calls, tokens, cost and the score. The clock, seed and settings are in the middle.
+- **Heaps** (Nim): under the result, one row per heap with a ● for each stone and a ○ for each stone taken in the last move. The rows come from the public facts of the protocol
+  (`heaps` in the start fact, `heaps_after` in every move) and change move by move, also when you open an earlier match.
+- **Analysis**: the facts that only the analysis uses (the rating of each move by the oracle, a rule violation) appear in the transcript dimmed and dashed, with the prefix "analysis:"; a rule violation is red.
+  You see them while the match runs; the players never get them.
 - **Debriefing**: the answers of both players after the game.
 - **Model calls**: one row per call with tokens, seconds, cost and result. *Open* shows the exact prompt, the unchanged
   answer, the reasoning and the problems of that call.
 - **Earlier matches** (left): every match in the volume. Opening one replays it from `events.jsonl`. Under the match are
   three links: **Download as Excel** (workbook with the sheets *Match*, *Transcript*, *Debriefing*, *Calls* and
-  *Raw answers*, ready to show or to filter), the text report, and the raw protocol.
+  *Raw answers*, ready to show or to filter; the sheet *Match* has per seat the rule violations, resignations, exhausted turns, the figures for won positions and the calibration, with `n/a` where a figure has no basis), the text report, and the raw protocol.
 
 While a player is thinking, its plate says "answering" with the seconds since the question was sent, so a slow model
 does not look like a frozen page. Only one match runs at a time. *Cancel match* stops it cleanly (the protocol ends with `match_aborted`). Reloading the
@@ -73,7 +79,7 @@ After changing the env file, run `docker compose up -d web` again; the container
 - The session is a cookie that is `HttpOnly`, `Secure` and `SameSite=Strict`, valid for 12 hours of activity. Its signing
   keys are stored in the data volume (unencrypted, inside the container volume), so a restart keeps sessions.
 - Requests that change something must come from the same site (`Origin` or `Sec-Fetch-Site` checked).
-- Model output is untrusted. The page builds everything with `textContent`; the content security policy allows scripts
+- Model output is untrusted. The page builds everything with `textContent` (the heaps are drawn from whole numbers that are read from the protocol); the content security policy allows scripts
   and styles only from the site itself.
 - `scripted:` players, which read files, are refused. A request can ask for at most `MaxCostCapUsd`.
 - The cap per match cannot protect subscription endpoints (their calls cost nothing per call). Therefore the number of

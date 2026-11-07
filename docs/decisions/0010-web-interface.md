@@ -30,3 +30,5 @@ nothing in it may need a database or a build step.
 - Several users or roles would need a different design; this is a one-operator tool.
 
 Amended 2026-11-07: the context and the network sentence are neutral; the example compose file is an operation behind Traefik with variables for everything that depends on the host.
+
+Amended 2026-11-07: Nim is the default game, the form has fields for its main options, the page draws the heaps and shows the analysis facts to the viewer ([ADR 0023](0023-web-interface-nim-fields-heaps-and-analysis-facts.md)); the page has a second JavaScript file, a module without a build step.

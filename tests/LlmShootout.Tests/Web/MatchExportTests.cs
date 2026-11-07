@@ -42,6 +42,28 @@ public sealed class MatchExportTests : IDisposable
     }
 
     [Fact]
+    public async Task The_overview_names_the_messages_setting_without_the_old_wording()
+    {
+        var match = await PlayAsync("2");
+
+        var overview = MatchExport.Overview(match);
+
+        Assert.Equal("no", Cell(overview, "Messages between players"));
+        Assert.DoesNotContain(overview.Rows, row => row[0]?.ToString()?.Contains("talk", StringComparison.OrdinalIgnoreCase) == true);
+    }
+
+    [Fact]
+    public async Task The_overview_counts_resignations_and_exhausted_turns_per_seat()
+    {
+        var match = await PlayAsync("resign");
+
+        var overview = MatchExport.Overview(match);
+
+        Assert.Equal(["1", "0"], new[] { Cell(overview, "Seat A: resignations"), Cell(overview, "Seat B: resignations") });
+        Assert.Equal(["0", "0"], new[] { Cell(overview, "Seat A: exhausted turns"), Cell(overview, "Seat B: exhausted turns") });
+    }
+
+    [Fact]
     public async Task The_overview_of_a_match_without_a_violation_says_no()
     {
         var match = await PlayAsync("resign");

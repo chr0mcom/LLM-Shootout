@@ -1,3 +1,5 @@
+import { NIM, heapRows, mergeOptions, nimOptions, parseHeapList, parseHeaps } from '/nim.js';
+
 const $ = (selector) => document.querySelector(selector);
 
 function h(tag, attrs = {}, ...children) {
@@ -52,6 +54,9 @@ class Arena {
     this.live = false;
     this.lastTurn = null;
     this.calls = [];
+    this.heaps = null;
+    $('#heaps').hidden = true;
+    $('#heapRows').replaceChildren();
     $('#rows').replaceChildren();
     $('#calls').replaceChildren();
     $('#callCount').textContent = '';
@@ -158,8 +163,23 @@ class Arena {
       this.lanePut(event.seat, h('span', { class: 'chip' }, `private: ${event.text}`));
       return;
     }
-    const kind = event.audience === 'Analysis' ? 'analysis: ' : '';
-    this.midPut(h('span', { class: `chip${event.kind === 'decision' ? ' reveal' : ''}` }, kind + event.text));
+    if (event.audience === 'Analysis') {
+      this.midPut(h('span', { class: `chip analysis${event.kind === 'rule_violation' ? ' violation' : ''}`, title: 'Analysis of the match: the players never see it' }, `analysis: ${event.text}`));
+      return;
+    }
+    this.showHeapsOf(event);
+    this.midPut(h('span', { class: `chip${event.kind === 'decision' ? ' reveal' : ''}` }, event.text));
+  }
+
+  showHeapsOf(event) {
+    const heaps = this.game?.gameId === NIM ? parseHeapList(event.data?.heaps_after ?? event.data?.heaps) : null;
+    if (!heaps) return;
+    $('#heapRows').replaceChildren(...heapRows(this.heaps, heaps).map((row) => h('div', { class: `heap${row.changed ? ' changed' : ''}` },
+      h('span', { class: 'heap-name' }, row.name),
+      h('span', { class: 'stones' }, row.stones),
+      h('span', { class: 'heap-size' }, row.size))));
+    this.heaps = heaps;
+    $('#heaps').hidden = false;
   }
 
   onFinished(event) {
@@ -393,10 +413,25 @@ async function loadHistory() {
 }
 
 let games = [];
+const playerDefaults = { [NIM]: { a: 'random', b: 'optimal' } };
+let appliedPlayers = { a: '', b: '' };
+
+/** Fills an empty player field, or one that still holds the default of the previous game, with the default of the selected game. */
+function applyPlayerDefaults(gameId) {
+  const next = playerDefaults[gameId] ?? { a: '', b: '' };
+  for (const seat of ['a', 'b']) {
+    const field = $(`#player${seat.toUpperCase()}`);
+    if (field.value.trim() === '' || field.value === appliedPlayers[seat]) field.value = next[seat];
+  }
+  appliedPlayers = next;
+}
 
 function applyGameDefaults() {
-  const game = games.find((g) => g.id === $('#game').value);
+  const id = $('#game').value;
+  const game = games.find((g) => g.id === id);
   if (game) $('#start').elements.communication.checked = game.defaultCommunication;
+  $('#nimOptions').hidden = id !== NIM;
+  applyPlayerDefaults(id);
 }
 
 async function loadConfig() {
@@ -425,11 +460,33 @@ function readGameOptions(text) {
   return { options: value };
 }
 
+function readNimFields(data) {
+  const { heaps, error } = parseHeaps(String(data.get('nimHeaps') ?? ''));
+  if (error) return { error };
+  return {
+    options: nimOptions({
+      heaps,
+      misere: data.get('nimMisere') === 'on',
+      temptation: String(data.get('nimTemptation') ?? 'none'),
+      allowResign: data.get('nimAllowResign') === 'on',
+    }),
+  };
+}
+
+/** The options of the start request: the JSON field first, the fields of the selected game over it. */
+function readAllOptions(data) {
+  const json = readGameOptions(String(data.get('options') ?? ''));
+  if (json.error) return json;
+  if (data.get('game') !== NIM) return json;
+  const fields = readNimFields(data);
+  return fields.error ? fields : { options: mergeOptions(json.options, fields.options) };
+}
+
 async function startMatch(form) {
   const error = $('#formError');
   error.hidden = true;
   const data = new FormData(form);
-  const { options, error: optionsError } = readGameOptions(String(data.get('options') ?? ''));
+  const { options, error: optionsError } = readAllOptions(data);
   if (optionsError) {
     error.textContent = optionsError;
     error.hidden = false;

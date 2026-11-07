@@ -302,6 +302,121 @@ public sealed class WebTests : IDisposable
         Assert.Contains($"\"communication\":{(expected ? "true" : "false")}", ProtocolLines(stream)[0], StringComparison.Ordinal);
     }
 
+    private static JsonObject StartNim(JsonNode? options, string a = "random", string b = "optimal") =>
+        new() { ["game"] = "nim", ["a"] = a, ["b"] = b, ["language"] = "en", ["seed"] = 7, ["firstSeat"] = "A", ["options"] = options };
+
+    private static async Task<(JsonNode Run, string Stream)> PlayNimAsync(HttpClient client, JsonNode? options, string a = "random", string b = "optimal")
+    {
+        using var response = await client.PostAsJsonAsync("/api/runs", StartNim(options, a, b), Token);
+        var run = await JsonOf(response);
+        using var stream = await client.GetAsync($"/api/runs/{run["id"]}/stream", Token);
+        return (run, await stream.Content.ReadAsStringAsync(Token));
+    }
+
+    [Fact]
+    public async Task Nim_is_the_first_game_of_the_configuration_and_the_form_offers_the_optimal_player()
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        var config = await JsonOf(await client.GetAsync("/api/config", Token));
+
+        Assert.Equal("nim", config["games"]![0]!["id"]!.ToString());
+        Assert.Contains("optimal", config["players"]!.AsArray().Select(p => p!.GetValue<string>()));
+    }
+
+    [Fact]
+    public async Task The_form_has_the_Nim_fields_and_the_page_logic_knows_the_heaps()
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        var page = await client.GetStringAsync("/", Token);
+        var app = await client.GetStringAsync("/app.js", Token);
+        var nim = await client.GetStringAsync("/nim.js", Token);
+
+        foreach (var name in new[] { "nimHeaps", "nimMisere", "nimTemptation", "nimAllowResign", "heapRows" })
+        {
+            Assert.Contains(name, page, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("Messages between players", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("talk", page + app + nim, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("heaps_after", app, StringComparison.Ordinal);
+        Assert.Contains("export function parseHeaps", nim, StringComparison.Ordinal);
+        Assert.DoesNotContain("innerHTML", app + nim, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_Nim_match_with_options_runs_through_and_has_a_report_and_an_export()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var options = JsonNode.Parse("""{"heaps":[1,4,5],"temptation":"pass","allowResign":true}""");
+
+        var (run, stream) = await PlayNimAsync(client, options);
+        var name = run["match"]!.ToString();
+        var report = await client.GetStringAsync($"/api/matches/{name}/report", Token);
+        using var export = await client.GetAsync($"/api/matches/{name}/export.xlsx", Token);
+
+        var lines = ProtocolLines(stream);
+        Assert.Contains("\"gameOptions\":{\"heaps\":[1,4,5],\"temptation\":\"pass\",\"allowResign\":true}", lines[0], StringComparison.Ordinal);
+        Assert.Contains("\"communication\":false", lines[0], StringComparison.Ordinal);
+        Assert.Contains("event: end\ndata: finished", stream, StringComparison.Ordinal);
+        Assert.Contains("Starting position, heaps 1 to 3: 1, 4, 5", report, StringComparison.Ordinal);
+        Assert.Contains("## Play strength", report, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.OK, export.StatusCode);
+    }
+
+    [Fact]
+    public async Task The_stream_carries_the_heaps_in_the_facts_and_marks_the_analysis_for_the_viewer()
+    {
+        var (_, stream) = await PlayNimAsync(_factory.NewClient(signedIn: true), JsonNode.Parse("""{"heaps":[2,3]}"""));
+
+        var facts = ProtocolLines(stream).Where(l => l.Contains("\"type\":\"fact\"", StringComparison.Ordinal)).ToArray();
+        Assert.Contains(facts, f => f.Contains("\"kind\":\"start\"", StringComparison.Ordinal) && f.Contains("\"heaps\":\"2,3\"", StringComparison.Ordinal));
+        Assert.Contains(facts, f => f.Contains("\"heaps_after\":", StringComparison.Ordinal));
+        Assert.Contains(facts, f => f.Contains("\"kind\":\"oracle\"", StringComparison.Ordinal) && f.Contains("\"audience\":\"Analysis\"", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task The_optimal_player_beats_a_random_player_in_a_web_match_and_the_export_names_the_figures()
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        var (run, _) = await PlayNimAsync(client, JsonNode.Parse("""{"heaps":[1,4,5]}"""));
+        using var export = await client.GetAsync($"/api/matches/{run["match"]}/export.xlsx", Token);
+        using var zip = new System.IO.Compression.ZipArchive(await export.Content.ReadAsStreamAsync(Token));
+        var overview = await new StreamReader(zip.GetEntry("xl/worksheets/sheet1.xml")!.Open()).ReadToEndAsync(Token);
+
+        Assert.Equal("b_wins", (await JsonOf(await client.GetAsync("/api/matches", Token)))[0]!["outcome"]!.ToString());
+        Assert.Contains("Messages between players", overview, StringComparison.Ordinal);
+        Assert.Contains("Seat A: mistake rate", overview, StringComparison.Ordinal);
+        Assert.Contains("n/a", overview, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("""{"heaps":[0,4]}""", "heap")]
+    [InlineData("""{"heaps":[1,2,3,4,5,6]}""", "heap")]
+    [InlineData("""{"temptation":"jump"}""", "temptation")]
+    [InlineData("""{"misere":"yes"}""", "misere")]
+    [InlineData("""{"colour":"red"}""", "Unknown option(s) for nim: colour")]
+    public async Task Invalid_Nim_options_are_a_400_with_the_message_of_the_game(string options, string expected)
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        using var response = await client.PostAsJsonAsync("/api/runs", StartNim(JsonNode.Parse(options)), Token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(expected, (await JsonOf(response))["error"]!.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Null((await JsonOf(await client.GetAsync("/api/runs/current", Token)))["run"]);
+    }
+
+    [Fact]
+    public async Task Without_options_a_Nim_match_uses_the_default_heaps()
+    {
+        var (_, stream) = await PlayNimAsync(_factory.NewClient(signedIn: true), null, "optimal", "random");
+
+        Assert.Contains("Starting position, heaps 1 to 3: 3, 4, 5", stream, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task A_match_streams_from_its_start_to_its_end()
     {

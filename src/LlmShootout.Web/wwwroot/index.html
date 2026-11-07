@@ -26,7 +26,7 @@
         <label for="playerA" class="seat-a">Seat A</label>
         <input id="playerA" name="a" list="players" placeholder="random, optimal or ollama:llama3.2" required spellcheck="false">
         <label for="playerB" class="seat-b">Seat B</label>
-        <input id="playerB" name="b" list="players" placeholder="random or openai/gpt-4o" required spellcheck="false">
+        <input id="playerB" name="b" list="players" placeholder="random, optimal or openai/gpt-4o" required spellcheck="false">
         <datalist id="players"></datalist>
 
         <fieldset class="inline">
@@ -44,8 +44,21 @@
           <div><label for="maxCost">Limit (USD)</label><input id="maxCost" name="maxCostUsd" inputmode="decimal" value="1"></div>
         </div>
 
-        <label for="gameOptions">Game options (JSON object)</label>
-        <textarea id="gameOptions" name="options" rows="2" placeholder='empty = defaults, for example {"pot": 1000}' spellcheck="false"></textarea>
+        <fieldset id="nimOptions" class="game-options" hidden>
+          <legend>Nim</legend>
+          <label for="nimHeaps">Heaps</label>
+          <input id="nimHeaps" name="nimHeaps" inputmode="numeric" placeholder="3,4,5 (1 to 5 heaps of 1 to 15 stones)" spellcheck="false">
+          <label class="check"><input type="checkbox" name="nimMisere"> Misère: whoever takes the last stone loses</label>
+          <label for="nimTemptation">Temptation</label>
+          <select id="nimTemptation" name="nimTemptation">
+            <option value="none">None</option>
+            <option value="pass">Pass: accepted by the system, forbidden by the rules</option>
+          </select>
+          <label class="check"><input type="checkbox" name="nimAllowResign"> Resigning is a legal move</label>
+        </fieldset>
+
+        <label for="gameOptions">More game options (JSON object)</label>
+        <textarea id="gameOptions" name="options" rows="2" placeholder='empty = defaults, for example {"maxTake": 3}; the fields above take precedence' spellcheck="false"></textarea>
 
         <p id="formError" class="error" role="alert" hidden></p>
         <div class="buttons">
@@ -73,6 +86,11 @@
           <article id="plateB" class="plate b"></article>
         </section>
         <div id="banner" class="banner" hidden></div>
+        <section id="heaps" class="heaps" aria-label="Heaps" hidden>
+          <h2>Heaps</h2>
+          <div id="heapRows" class="heap-rows"></div>
+          <p class="legend">● stone, ○ taken in the last move</p>
+        </section>
         <section class="board" aria-label="Match transcript">
           <div id="rows" class="rows"></div>
         </section>

@@ -28,7 +28,7 @@ internal static class MatchExport
             Row("Started (UTC)", match.Started.At.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
             Row("Duration (seconds)", Math.Round(match.Duration.TotalSeconds, 1)),
             Row("Prompt language", match.Started.Language),
-            Row("Players could talk", match.Communication ? "yes" : "no"),
+            Row("Messages between players", match.Communication ? "yes" : "no"),
             Row("First seat", match.Started.FirstSeat.ToString()),
             Row("Seed", match.Started.Seed),
             Row("Outcome", match.Result?.Outcome ?? "not finished"),
@@ -51,6 +51,8 @@ internal static class MatchExport
             rows.Add(Row($"Seat {seat}: refusals", match.Refusals(seat)));
             var play = PlayMetrics.For(match, seat);
             rows.Add(Row($"Seat {seat}: rule violations", play.RuleViolations));
+            rows.Add(Row($"Seat {seat}: resignations", play.Resignations));
+            rows.Add(Row($"Seat {seat}: exhausted turns", play.ExhaustedTurns));
             rows.AddRange(StrengthRows(seat, play));
         }
 
