@@ -43,12 +43,7 @@ Sitz {seat}
 
 ## contract
 Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder danach:
-{"thought": ..., "message": ..., "move": ...}
-{fields}
-
-## contract.silent
-Antworte ausschließlich mit einem JSON-Objekt dieser Form, ohne Text davor oder danach:
-{"thought": ..., "move": ...}
+{shape}
 {fields}
 
 ## field.thought.required

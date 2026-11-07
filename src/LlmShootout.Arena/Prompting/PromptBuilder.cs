@@ -104,15 +104,17 @@ public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSourc
 
     private string BuildContract(TurnRequest turn)
     {
-        var lines = new List<string> { Field("thought", turn.Thought) };
+        List<(string Key, string Line)> fields = [("thought", Field("thought", turn.Thought))];
         if (communication)
         {
-            lines.Add(Field("message", turn.Message));
+            fields.Add(("message", Field("message", turn.Message)));
         }
 
-        lines.Add(Field("move", turn.Move, turn.Format is null ? null : RenderGame(turn.Format.Description)));
-        return Arena(communication ? "contract" : "contract.silent", ("fields", string.Join('\n', lines)));
+        fields.Add(("move", Field("move", turn.Move, turn.Format is null ? null : RenderGame(turn.Format.Description))));
+        return Arena("contract", ("shape", Shape(fields.Select(f => f.Key))), ("fields", string.Join('\n', fields.Select(f => f.Line))));
     }
+
+    private static string Shape(IEnumerable<string> keys) => "{" + string.Join(", ", keys.Select(key => $"\"{key}\": ...")) + "}";
 
     private string Field(string name, FieldRule rule, string? format = null) => Arena(
         $"field.{name}.{rule.ToString().ToLowerInvariant()}",
