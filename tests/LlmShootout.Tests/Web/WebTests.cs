@@ -178,39 +178,70 @@ public sealed class WebTests : IDisposable
         Assert.Contains("spending limit", (await JsonOf(response))["error"]!.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task A_match_streams_live_ends_and_lands_in_the_history()
+    /// <summary>Starts a match between random players and reads the stream to its end. Returns the run and everything that was streamed.</summary>
+    private static async Task<(JsonNode Run, string Stream)> PlayRandomMatchAsync(HttpClient client)
     {
-        var client = _factory.NewClient(signedIn: true);
-
-        using var started = await client.PostAsJsonAsync("/api/runs", RandomVersusRandom, Token);
-        var run = await JsonOf(started);
+        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", RandomVersusRandom, Token));
         using var stream = await client.GetAsync($"/api/runs/{run["id"]}/stream", Token);
-        var body = await stream.Content.ReadAsStringAsync(Token);
+        return (run, await stream.Content.ReadAsStringAsync(Token));
+    }
 
-        Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
-        Assert.Equal("text/event-stream", stream.Content.Headers.ContentType!.MediaType);
-        var lines = body.Split('\n').Where(l => l.StartsWith("data: {\"type\"", StringComparison.Ordinal)).ToArray();
+    private static string[] ProtocolLines(string stream) =>
+        [.. stream.Split('\n').Where(l => l.StartsWith("data: {\"type\"", StringComparison.Ordinal))];
+
+    [Fact]
+    public async Task A_match_streams_from_its_start_to_its_end()
+    {
+        var (_, stream) = await PlayRandomMatchAsync(_factory.NewClient(signedIn: true));
+
+        var lines = ProtocolLines(stream);
         Assert.Contains("\"type\":\"match_started\"", lines[0], StringComparison.Ordinal);
         Assert.Contains(lines, l => l.Contains("\"type\":\"match_finished\"", StringComparison.Ordinal));
-        Assert.Contains("event: end\ndata: finished", body, StringComparison.Ordinal);
+        Assert.Contains("event: end\ndata: finished", stream, StringComparison.Ordinal);
+    }
 
+    [Fact]
+    public async Task The_stream_has_the_content_type_of_server_sent_events()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", RandomVersusRandom, Token));
+
+        using var stream = await client.GetAsync($"/api/runs/{run["id"]}/stream", Token);
+
+        Assert.Equal("text/event-stream", stream.Content.Headers.ContentType!.MediaType);
+    }
+
+    [Fact]
+    public async Task A_finished_match_is_in_the_history_with_the_events_that_were_streamed()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var (run, stream) = await PlayRandomMatchAsync(client);
         var name = run["match"]!.ToString();
+
         var history = await JsonOf(await client.GetAsync("/api/matches", Token));
+        var events = await (await client.GetAsync($"/api/matches/{name}/events", Token)).Content.ReadAsStringAsync(Token);
+
         Assert.Equal(name, history[0]!["name"]!.ToString());
         Assert.Equal("random", history[0]!["playerA"]!.ToString());
-        var events = await (await client.GetAsync($"/api/matches/{name}/events", Token)).Content.ReadAsStringAsync(Token);
-        Assert.Equal(lines.Length, events.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
-        var report = await client.GetAsync($"/api/matches/{name}/report", Token);
+        Assert.Equal(ProtocolLines(stream).Length, events.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
+    }
+
+    [Fact]
+    public async Task The_report_is_served_as_plain_text_so_that_browsers_show_it()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var (run, _) = await PlayRandomMatchAsync(client);
+
+        using var report = await client.GetAsync($"/api/matches/{run["match"]}/report", Token);
+
         Assert.Equal("text/plain", report.Content.Headers.ContentType!.MediaType);
     }
 
     [Fact]
-    public async Task A_match_can_be_downloaded_as_an_excel_workbook()
+    public async Task The_excel_export_is_a_package_of_five_well_formed_sheets_named_after_the_match()
     {
         var client = _factory.NewClient(signedIn: true);
-        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", RandomVersusRandom, Token));
-        await (await client.GetAsync($"/api/runs/{run["id"]}/stream", Token)).Content.ReadAsStringAsync(Token);
+        var (run, _) = await PlayRandomMatchAsync(client);
         var name = run["match"]!.ToString();
 
         using var response = await client.GetAsync($"/api/matches/{name}/export.xlsx", Token);
@@ -219,20 +250,29 @@ public sealed class WebTests : IDisposable
         Assert.Equal(XlsxContentType, response.Content.Headers.ContentType!.MediaType);
         Assert.Equal($"{name}.xlsx", response.Content.Headers.ContentDisposition!.FileName!.Trim('"'));
         using var zip = new System.IO.Compression.ZipArchive(await response.Content.ReadAsStreamAsync(Token));
-        var sheets = zip.Entries.Where(e => e.FullName.StartsWith("xl/worksheets/", StringComparison.Ordinal)).ToList();
-        Assert.Equal(5, sheets.Count);
+        Assert.Equal(5, zip.Entries.Count(e => e.FullName.StartsWith("xl/worksheets/", StringComparison.Ordinal)));
         foreach (var entry in zip.Entries)
         {
             using var reader = new StreamReader(entry.Open());
             Assert.NotNull(System.Xml.Linq.XDocument.Parse(await reader.ReadToEndAsync(Token)));
         }
+    }
 
+    [Fact]
+    public async Task The_excel_export_has_the_transcript_and_the_debriefing()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var (run, _) = await PlayRandomMatchAsync(client);
+
+        using var response = await client.GetAsync($"/api/matches/{run["match"]}/export.xlsx", Token);
+        using var zip = new System.IO.Compression.ZipArchive(await response.Content.ReadAsStreamAsync(Token));
         var transcript = await new StreamReader(zip.GetEntry("xl/worksheets/sheet2.xml")!.Open()).ReadToEndAsync(Token);
+        var debriefing = await new StreamReader(zip.GetEntry("xl/worksheets/sheet3.xml")!.Open()).ReadToEndAsync(Token);
+
         Assert.Contains("Private thought", transcript, StringComparison.Ordinal);
         Assert.Contains("Message", transcript, StringComparison.Ordinal);
         Assert.Contains("Move", transcript, StringComparison.Ordinal);
-        var debrief = await new StreamReader(zip.GetEntry("xl/worksheets/sheet3.xml")!.Open()).ReadToEndAsync(Token);
-        Assert.Contains("trust in opponent", debrief, StringComparison.Ordinal);
+        Assert.Contains("trust in opponent", debriefing, StringComparison.Ordinal);
     }
 
     [Fact]
