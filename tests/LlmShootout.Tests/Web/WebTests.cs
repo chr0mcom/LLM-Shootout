@@ -190,7 +190,7 @@ public sealed class WebTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
         Assert.Equal("text/event-stream", stream.Content.Headers.ContentType!.MediaType);
-        var lines = body.Split('\n').Where(l => l.StartsWith("data: {", StringComparison.Ordinal)).ToArray();
+        var lines = body.Split('\n').Where(l => l.StartsWith("data: {\"type\"", StringComparison.Ordinal)).ToArray();
         Assert.Contains("\"type\":\"match_started\"", lines[0], StringComparison.Ordinal);
         Assert.Contains(lines, l => l.Contains("\"type\":\"match_finished\"", StringComparison.Ordinal));
         Assert.Contains("event: end\ndata: finished", body, StringComparison.Ordinal);
@@ -399,6 +399,34 @@ public sealed class WebRunTests : IDisposable
         }
 
         Assert.Fail("The match did not start.");
+    }
+
+    [Fact]
+    public async Task The_stream_tells_the_page_who_is_being_waited_for()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var run = JsonNode.Parse(await (await client.PostAsJsonAsync("/api/runs", new { game = "split-or-steal", a = "slow", b = "slow", language = "en" }, Token)).Content.ReadAsStringAsync(Token))!;
+        await WaitUntilStartedAsync(client, run["match"]!.ToString());
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(TimeSpan.FromSeconds(15));
+        using var response = await client.GetAsync($"/api/runs/{run["id"]}/stream", HttpCompletionOption.ResponseHeadersRead, limit.Token);
+        using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(limit.Token));
+        var seen = new System.Text.StringBuilder();
+
+        string? progress = null;
+        while (progress is null && await reader.ReadLineAsync(limit.Token) is { } line)
+        {
+            seen.AppendLine(line);
+            if (line.StartsWith("data: {", StringComparison.Ordinal) && line.Contains("\"now\"", StringComparison.Ordinal))
+            {
+                progress = line;
+            }
+        }
+
+        await client.PostAsync($"/api/runs/{run["id"]}/cancel", null, Token);
+        Assert.NotNull(progress);
+        Assert.Contains("event: progress", seen.ToString(), StringComparison.Ordinal);
+        Assert.True(progress.Contains("\"A\"", StringComparison.Ordinal) || progress.Contains("\"B\"", StringComparison.Ordinal), progress);
     }
 
     [Fact]

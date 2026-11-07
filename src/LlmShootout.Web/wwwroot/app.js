@@ -44,6 +44,7 @@ class Arena {
   reset() {
     clearInterval(this.timer);
     this.players = {};
+    this.busy = {};
     this.stats = { A: this.blankStats(), B: this.blankStats() };
     this.scores = null;
     this.startedAt = null;
@@ -77,13 +78,24 @@ class Arena {
   start(live) {
     this.live = live;
     clearInterval(this.timer);
-    if (live) this.timer = setInterval(() => this.drawCenter(), 1000);
+    if (live) this.timer = setInterval(() => { this.drawCenter(); this.drawPlates(); }, 1000);
   }
 
   stop() {
     this.live = false;
+    this.busy = {};
     clearInterval(this.timer);
     this.drawCenter();
+    this.drawPlates();
+  }
+
+  setBusy(progress) {
+    const offset = Date.now() - new Date(progress.now).getTime();
+    this.busy = {};
+    for (const seat of ['A', 'B']) {
+      if (progress[seat]) this.busy[seat] = new Date(progress[seat]).getTime() + offset;
+    }
+    this.drawPlates();
   }
 
   apply(event) {
@@ -223,7 +235,8 @@ class Arena {
         h('span', { class: 'seat' }, seat),
         h('div', { class: 'who-box' },
           h('p', { class: 'who' }, player.name ?? '…'),
-          delivered && delivered !== player.requestedModel ? h('p', { class: 'model' }, `answered by ${delivered}`) : null),
+          delivered && delivered !== player.requestedModel ? h('p', { class: 'model' }, `answered by ${delivered}`) : null,
+          this.busy[seat] ? h('p', { class: 'busy' }, `answering, ${Math.max(0, Math.round((Date.now() - this.busy[seat]) / 1000))} s`) : null),
         h('p', { class: 'stats' },
           h('span', {}, `${stats.calls} calls`),
           h('span', {}, `${count(stats.promptTokens)} in / ${count(stats.completionTokens)} out`),
@@ -308,6 +321,7 @@ function followLive(run) {
     arena.apply(event);
     if (event.type === 'turn') arena.closeCells();
   });
+  stream.addEventListener('progress', (message) => arena.setBusy(JSON.parse(message.data)));
   stream.addEventListener('end', async () => {
     stream.close();
     arena.stop();

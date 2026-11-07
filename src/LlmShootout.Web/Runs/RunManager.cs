@@ -47,9 +47,9 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
             var b = await players.CreateAsync(request.B, setup.Seed + 2, cancellationToken);
             var directory = MatchPaths.Match(web.Value.MatchesDirectory, time.GetUtcNow(), definition.Id, a.Name, b.Name);
             var cancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.ApplicationStopping);
-            var run = new ActiveRun(Guid.NewGuid().ToString("N")[..12], directory, request, time.GetUtcNow(), cancellation);
+            var run = new ActiveRun(Guid.NewGuid().ToString("N")[..12], directory, request, time.GetUtcNow(), cancellation, time);
             var options = new MatchOptions { Debrief = request.Debrief ?? true, MaxCostUsd = maxCost };
-            var plan = new MatchPlan(definition, setup, new Dictionary<Seat, IPlayer> { [Seat.A] = a, [Seat.B] = b }, options, directory);
+            var plan = new MatchPlan(definition, setup, new Dictionary<Seat, IPlayer> { [Seat.A] = new ProgressPlayer(a, Seat.A, run), [Seat.B] = new ProgressPlayer(b, Seat.B, run) }, options, directory);
             lock (_gate)
             {
                 _current = run;

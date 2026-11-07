@@ -67,7 +67,8 @@ public sealed record OpenRouterFields(
     string? FinishReason,
     string? Content,
     string? Reasoning,
-    string? ErrorMessage = null)
+    string? ErrorMessage = null,
+    string? Refusal = null)
 {
     /// <summary>Reads the fields from a response body. Missing or malformed bodies give an empty result.</summary>
     public static OpenRouterFields Parse(string? body)
@@ -103,7 +104,8 @@ public sealed record OpenRouterFields(
             choice?["finish_reason"]?.ToString(),
             message?["content"]?.ToString(),
             message?["reasoning"]?.ToString() ?? message?["reasoning_content"]?.ToString(),
-            root?["error"]?["message"]?.ToString() ?? choice?["error"]?["message"]?.ToString());
+            root?["error"]?["message"]?.ToString() ?? choice?["error"]?["message"]?.ToString(),
+            message?["refusal"]?.ToString());
     }
 
     private static decimal? ReadDecimal(JsonNode? node) =>

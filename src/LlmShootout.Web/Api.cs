@@ -94,13 +94,20 @@ internal static class Api
         context.Response.Headers["X-Accel-Buffering"] = "no";
         var sent = int.TryParse(context.Request.Headers["Last-Event-ID"], out var last) ? last + 1 : 0;
         var token = context.RequestAborted;
+        var busySent = -1;
         while (!token.IsCancellationRequested)
         {
-            var (lines, finished, changed) = run.Read(sent);
+            var (lines, finished, changed, busyVersion, busyJson) = run.Read(sent);
             var batch = new StringBuilder();
             foreach (var line in lines)
             {
                 batch.Append("id: ").Append(sent++).Append("\nevent: protocol\ndata: ").Append(line).Append("\n\n");
+            }
+
+            if (busyVersion != busySent)
+            {
+                busySent = busyVersion;
+                batch.Append("event: progress\ndata: ").Append(busyJson).Append("\n\n");
             }
 
             if (finished)

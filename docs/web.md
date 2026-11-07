@@ -25,7 +25,8 @@ Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (A
   three links: **Download as Excel** (workbook with the sheets *Match*, *Transcript*, *Debriefing*, *Calls* and
   *Raw answers*, ready to show or to filter), the text report, and the raw protocol.
 
-Only one match runs at a time. *Cancel match* stops it cleanly (the protocol ends with `match_aborted`). Reloading the
+While a player is thinking, its plate says "answering" with the seconds since the question was sent, so a slow model
+does not look like a frozen page. Only one match runs at a time. *Cancel match* stops it cleanly (the protocol ends with `match_aborted`). Reloading the
 page while a match runs reconnects to it and shows everything so far.
 
 ## Run it

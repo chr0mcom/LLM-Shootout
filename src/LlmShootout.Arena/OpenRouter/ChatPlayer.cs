@@ -149,7 +149,8 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
         }
 
         var content = string.IsNullOrWhiteSpace(fields.Content) ? response.Text : fields.Content;
-        return new PlayerReply(string.IsNullOrWhiteSpace(content) ? null : content, fields.Reasoning, info, capture.RenderExchange());
+        var notice = string.IsNullOrWhiteSpace(content) && !string.IsNullOrWhiteSpace(fields.Refusal) ? Shorten(fields.Refusal) : null;
+        return new PlayerReply(string.IsNullOrWhiteSpace(content) ? null : content, fields.Reasoning, info, capture.RenderExchange(), notice);
     }
 
     private string Label => options.Kind == EndpointKind.OpenRouter ? "OpenRouter" : $"endpoint '{options.EndpointName}'";

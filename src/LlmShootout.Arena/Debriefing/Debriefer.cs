@@ -83,7 +83,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
             }
 
             (answers, problems) = Check(s, ReadObject(reply));
-            await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, reply, problems.Count == 0 ? "valid" : "invalid", problems, reply.Call, reply.Call is { CostUsd: null }, null, reply.RawExchange), cancellationToken);
+            await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, reply, problems.Count == 0 ? "valid" : "invalid", reply.Notice is null ? problems : [.. problems, $"endpoint: {reply.Notice}"], reply.Call, reply.Call is { CostUsd: null }, null, reply.RawExchange), cancellationToken);
             if (problems.Count == 0)
             {
                 await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, true, answers, [], attempt), cancellationToken);

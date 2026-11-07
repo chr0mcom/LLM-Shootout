@@ -167,6 +167,8 @@ fieldset.inline label { font-weight: 400; margin: 0; display: flex; gap: 0.35rem
 .plate.b .seat { color: var(--b); }
 .plate .who { font-weight: 650; overflow-wrap: anywhere; }
 .plate .model { color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
+.plate .busy { color: var(--ok); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.plate .busy::before { content: ""; display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ok); margin-right: 0.4rem; animation: pulse 1.4s ease-in-out infinite; }
 .plate .stats { grid-column: 1 / -1; grid-row: 3; display: flex; gap: 1.1rem; flex-wrap: wrap; color: var(--muted); font-size: 0.84rem; font-variant-numeric: tabular-nums; margin-top: 0.4rem; }
 .plate.b .stats { justify-content: flex-end; }
 .plate .score { grid-column: 1 / -1; grid-row: 4; font-size: 2.4rem; font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 0.3rem; }
@@ -288,5 +290,5 @@ dialog::backdrop { background: rgb(0 0 0 / 0.5); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .runstate.live::before { animation: none; }
+  .runstate.live::before, .plate .busy::before { animation: none; }
 }

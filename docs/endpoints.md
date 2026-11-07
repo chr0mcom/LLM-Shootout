@@ -93,4 +93,15 @@ Things to know about this gateway:
   then still shows the requested model. Check the `x-cli-proxy-failover` header if a result looks odd; for an
   experiment that compares models, prefer a quiet moment or a second look at `/health`.
 - Latency is higher than with a plain API (a command line tool is started per call). The default call timeout of
-  180 s is usually enough.
+  180 s is usually enough. Measured on 2026-11-07 with Claude Haiku: 12 to 28 seconds per turn, up to 70 seconds when the
+  gateway is busy, against 4 to 9 seconds for Codex. `reasoning_effort` low helped only a little. The token numbers are
+  large (about 22 000 in, 1 000 to 8 000 out per call) because the command line tool brings its own system prompt and
+  does its own thinking; the prompt of the game is about 1 500 tokens. The "thinking" column stays 0 because the
+  gateway does not report reasoning tokens separately.
+- With a JSON schema, the Claude backend sometimes answers `content: null` and a message "Could not produce valid
+  structured output: no JSON object found in the response" (in a test, 4 of 6 long debriefing requests). The arena
+  treats that as an invalid answer and asks again (three attempts per turn). The message is written to the protocol as
+  `endpoint: …` in the problems of that call. Without a schema the model sometimes declines to answer in JSON, so a
+  schema stays on.
+- For quick demonstrations, the same model through OpenRouter is much faster and cheap: `anthropic/claude-haiku-5.5` costs
+  0.10 USD per million input tokens, a whole match well under one cent.

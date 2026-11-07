@@ -122,6 +122,19 @@ public sealed class EndpointTests : IDisposable
     }
 
     [Fact]
+    public async Task A_gateway_message_about_missing_structured_output_is_kept_as_a_notice()
+    {
+        const string Body = """{"id":"x","object":"chat.completion","model":"claude-haiku-latest","choices":[{"index":0,"message":{"role":"assistant","content":null,"refusal":"Could not produce valid structured output: no JSON object found in the response"},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5}}""";
+        var options = Registry().Resolve("claude", Base())!;
+        var player = CreatePlayer(new FakeOpenRouterHandler().Ok(Body), options);
+
+        var reply = await player.RespondAsync(new PlayerCall(CallPurpose.Turn, [new PromptMessage(PromptRole.User, "go")], null, 1, _ => "{}"), TestContext.Current.CancellationToken);
+
+        Assert.Null(reply.Content);
+        Assert.Contains("no JSON object found", reply.Notice, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_failure_names_the_endpoint_not_openrouter()
     {
         var options = Registry().Resolve("claude", Base())! with { MaxHttpRetries = 0 };

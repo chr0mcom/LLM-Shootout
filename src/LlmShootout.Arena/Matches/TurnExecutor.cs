@@ -166,7 +166,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
     {
         var info = reply.Call;
         var fields = parsed.HasJson ? new ParsedFields(parsed.Thought, parsed.Message, parsed.Move, parsed.FromReasoning, parsed.ExtraKeys) : null;
-        var violations = evaluation.Violations.Select(v => $"{v.Key}: {v.Violation}").ToArray();
+        var violations = evaluation.Violations.Select(v => $"{v.Key}: {v.Violation}").Concat(reply.Notice is null ? [] : [$"endpoint: {reply.Notice}"]).ToArray();
         return context.Writer.AppendAsync(
             new ModelCallEvent(
                 context.Time.GetUtcNow(),
