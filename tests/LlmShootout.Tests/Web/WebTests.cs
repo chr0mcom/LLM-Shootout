@@ -232,6 +232,28 @@ public sealed class WebTests : IDisposable
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task The_optimal_player_is_refused_for_a_game_that_cannot_name_the_best_move_and_nothing_is_written()
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        using var response = await client.PostAsJsonAsync("/api/runs", new { game = "split-or-steal", a = "optimal", b = "random" }, Token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("Player 'optimal' needs a game that can name the best move; 'split-or-steal' cannot.", (await JsonOf(response))["error"]!.ToString());
+        Assert.False(Directory.Exists(_factory.Matches) && Directory.EnumerateFileSystemEntries(_factory.Matches).Any());
+        using var again = await client.PostAsJsonAsync("/api/runs", RandomVersusRandom, Token);
+        Assert.True(again.IsSuccessStatusCode);
+    }
+
+    [Fact]
+    public async Task The_form_suggests_the_optimal_player_next_to_the_random_one()
+    {
+        var config = await JsonOf(await _factory.NewClient(signedIn: true).GetAsync("/api/config", Token));
+
+        Assert.Equal(["random", "optimal"], config["players"]!.AsArray().Take(2).Select(p => p!.GetValue<string>()));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(5.5)]

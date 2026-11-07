@@ -128,6 +128,9 @@ Sitz {seat} hat in {turn} `{move}` gespielt. Die Regeln verbieten es (Code: {cod
 ## fact.oracle
 Orakel, Sitz {seat}, {turn}: Lage {value}, Zug `{move}`, optimal: {optimal}. Beste Züge: {best}.
 
+## optimal.thought
+Bester Zug.
+
 ## sample.thought
 Zufälliger Zug.
 

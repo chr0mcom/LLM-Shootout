@@ -26,7 +26,8 @@ public sealed class PlayerSpecException : Exception
 }
 
 /// <summary>
-/// Turns a player specification into a player: <c>random</c>, <c>scripted:&lt;file&gt;</c>,
+/// Turns a player specification into a player: <c>random</c>, <c>optimal</c> (best moves, for games with an oracle),
+/// <c>scripted:&lt;file&gt;</c>,
 /// <c>&lt;endpoint&gt;:&lt;model&gt;</c> for an endpoint of the configuration (<c>ollama:llama3.2</c>),
 /// <c>openrouter:&lt;slug&gt;</c>, or a bare OpenRouter slug such as <c>openai/gpt-4o</c>.
 /// </summary>
@@ -46,7 +47,7 @@ public sealed class PlayerFactory(
     Func<EndpointOptions, ModelCatalog>? catalogFor = null,
     decimal? maxOutputUsdPerMillion = null)
 {
-    /// <summary>Creates a player. <paramref name="seed"/> seeds the random player.</summary>
+    /// <summary>Creates a player. <paramref name="seed"/> seeds the random player and the optimal player.</summary>
     public async Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(spec);
@@ -54,6 +55,7 @@ public sealed class PlayerFactory(
         return trimmed switch
         {
             "random" => new RandomPlayer(seed),
+            "optimal" => new OptimalPlayer(seed),
             _ when trimmed.StartsWith("scripted:", StringComparison.Ordinal) => await ReadScriptAsync(trimmed["scripted:".Length..], cancellationToken),
             "scripted" => throw new PlayerSpecException("'scripted' needs a file: scripted:<file.json> (a JSON array of answer strings)."),
             _ => await CreateModelPlayerAsync(trimmed, cancellationToken),

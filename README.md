@@ -118,7 +118,7 @@ For a deployment with Docker and Traefik (everything specific to your server is 
 | `shootout report <match-or-series>` | rebuilds `match.json` and `report.md` from the protocol |
 | `shootout debrief <match>` | asks the players again, into a new file |
 
-A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slug>`, just a slug like
+A *player* is `random`, `optimal` (always the best move; only for games that can name it, see [Adding a game](docs/adding-a-game.md)), `scripted:<file.json>` (fixed answers), `openrouter:<slug>`, just a slug like
 `openai/gpt-4o`, or `<endpoint>:<model>` for an endpoint from your [configuration](docs/endpoints.md). Useful options of `play` and `series`:
 
 | Option | Meaning |

@@ -47,6 +47,14 @@ step "debrief again"
 step "report"
 "${SHOOTOUT[@]}" report "$SERIES"
 
+step "play: the optimal player is refused for a game that cannot name the best move"
+if "${SHOOTOUT[@]}" play split-or-steal --a optimal --b random --out "$WORK/refused" 2>"$WORK/refused.txt"; then
+  echo "the optimal player was accepted for a game without an oracle" >&2
+  exit 1
+fi
+grep -q "needs a game that can name the best move" "$WORK/refused.txt"
+test ! -e "$WORK/refused"
+
 step "usage errors give exit code 2"
 set +e
 "${SHOOTOUT[@]}" models --endpoint nowhere 2>/dev/null

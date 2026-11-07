@@ -56,7 +56,7 @@ public sealed class EndpointRegistry
         _environment = environment ?? Environment.GetEnvironmentVariable;
     }
 
-    private static readonly string[] ReservedNames = ["openrouter", "random", "scripted"];
+    private static readonly string[] ReservedNames = ["openrouter", "random", "optimal", "scripted"];
 
     /// <summary>The name of the built-in OpenRouter endpoint.</summary>
     public const string OpenRouterName = "openrouter";

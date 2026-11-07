@@ -13,6 +13,8 @@ internal sealed class ProgressPlayer(IPlayer inner, Seat seat, ActiveRun run) : 
 
     public IReadOnlyDictionary<string, string> Settings => inner.Settings;
 
+    public bool RequiresOracle => inner.RequiresOracle;
+
     public async Task<PlayerReply> RespondAsync(PlayerCall request, CancellationToken cancellationToken)
     {
         run.SetBusy(seat, busy: true);

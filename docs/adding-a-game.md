@@ -197,6 +197,28 @@ sequenceDiagram
 | Numbers per player over a series | return `SeriesMetric`s from `IGameAnalyzer.SeriesMetrics`: a `Sum`, or a `Ratio` of two counts (sum of the numerators over the sum of the denominators; a denominator of 0 shows as "n/a"). The series report summarizes exactly these, per player over both seats. Without metrics it has no table per player. The general counts (rejected answers, rule violations, resignations, exhausted turns) and, for a game with an oracle, the figures for play strength and calibration (`Strength`, `Calibration`, each a `Fraction` with its number where it is a mean or a rate) come from `PlayMetrics.For(match, seat)`; use it instead of counting events again |
 | A random player | implement `SampleLegalMove` so that it always returns a legal move; the random player and the `random` debriefing rely on it |
 
+## A game with an oracle
+
+A game that can say how a seat stands before its move can be rated move by move, and the player type `optimal` can play it. This is one
+interface on the game ([ADR 0019](decisions/0019-oracle-rates-every-move.md), [ADR 0020](decisions/0020-optimal-player-and-oracle-capability.md)):
+
+1. **Implement `IGameOracle` on the game.** `Assess(turn)` returns the position for the seat that is to move (`Won`, `Lost`, `Drawn` or
+   `Unknown`) and all best moves: regular moves that keep the value, normalized like the moves of `Check`, in a fixed order. In a lost or
+   unknown position the list is empty. `Assess` assumes correct play from there on, and it is called once per turn, so memoize a search inside the game.
+2. **Write down the move for a lost position.** `ChooseMove(turn, assessment, rng)` returns one of the best moves (decide ties with the given
+   `rng`, never with another source of randomness) and, in a lost position, a fixed move that you document (Nim: one stone from the largest heap).
+   It must always return a legal regular move, never a resignation and never a forbidden action.
+3. **Keep forbidden actions and resignations out of the best moves.** A resignation and a rule violation are not compared with the oracle; the
+   arena records them as not rated and counts them as rule compliance. The best moves and `ChooseMove` never contain them.
+4. **Ask for an estimate where it makes sense.** If a turn sets `Estimate` (see the table above), `optimal` answers 100 in a won, 0 in a lost
+   and 50 in a drawn or unknown position, so the meaning you name should be "your chance of winning in percent". The reports then show the calibration.
+5. **Test it.** Compare `Assess` with an independent search for small positions, play `optimal` against `RandomPlayer` from both seats and check that it
+   never gives up a won position (`TakeAwayGame` and `OptimalPlayerTests` show both), and check that a game without the interface is refused
+   when a player of the type `optimal` is chosen: the match is rejected when it is set up, before any directory is created or any model is called.
+
+A game without `IGameOracle` needs none of this. Its reports have no section for play strength, and `optimal` is refused with the message
+`Player 'optimal' needs a game that can name the best move; '<id>' cannot.`
+
 ## Checklist
 
 - [ ] `Definition`, `Game`, both template files, embedded resource with `WithCulture="false"`, one line in `GameCatalog`
@@ -205,6 +227,7 @@ sequenceDiagram
 - [ ] Every `GameFact` has the right audience (`Everyone`, `Seat`, `Analysis`)
 - [ ] `Check` rejects with a stable code, a template for the reason, and the allowed values if there is a short list
 - [ ] `Apply` handles `Exhausted`, and the rule is written down in `docs/games/<id>.md`. Exhaustion is its own outcome, not a rule violation: define it so that it never pays
+- [ ] If the game can be rated: `IGameOracle` implemented as described in "A game with an oracle", with a documented move for lost positions
 - [ ] Options are validated and documented; a series file can configure the game
 - [ ] A turn that asks for an `estimate` names its `EstimateMeaning` in both languages; the wording says what is estimated, the arena adds the scale 0 to 100
 - [ ] Tests (use `MatchHarness` from the test project):

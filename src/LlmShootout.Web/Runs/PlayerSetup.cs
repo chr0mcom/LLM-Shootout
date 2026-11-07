@@ -22,7 +22,7 @@ internal sealed class PlayerSetup(IOptions<EndpointOptions> openRouter, Endpoint
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> SuggestionsAsync(CancellationToken cancellationToken)
     {
-        var suggestions = new List<string> { "random" };
+        var suggestions = new List<string> { "random", "optimal" };
         foreach (var name in endpoints.Names)
         {
             suggestions.AddRange((await ListAsync(endpoints.Resolve(name, openRouter.Value), cancellationToken)).Select(id => $"{name}:{id}"));

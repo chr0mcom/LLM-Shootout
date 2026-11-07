@@ -151,6 +151,35 @@ public sealed class CliProcessTests : IDisposable
         Assert.DoesNotContain("   at ", error, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task The_optimal_player_is_refused_for_a_game_without_an_oracle_with_exit_code_2_and_no_directory()
+    {
+        var (exit, _, error) = await RunAsync("play", "split-or-steal", "--a", "optimal", "--b", "random", "--out", _work);
+
+        Assert.Equal(2, exit);
+        Assert.Contains("Player 'optimal' needs a game that can name the best move; 'split-or-steal' cannot.", error, StringComparison.Ordinal);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_work));
+    }
+
+    [Fact]
+    public async Task A_series_with_the_optimal_player_is_refused_before_anything_is_written()
+    {
+        var (exit, _, error) = await RunAsync("series", SeriesFilePath(), "--a", "random", "--b", "optimal", "--out", _work);
+
+        Assert.Equal(2, exit);
+        Assert.Contains("needs a game that can name the best move", error, StringComparison.Ordinal);
+        Assert.Equal([Path.Combine(_work, "series.json")], Directory.EnumerateFileSystemEntries(_work));
+    }
+
+    [Fact]
+    public async Task The_help_of_play_names_the_optimal_player()
+    {
+        var (exit, output, _) = await RunAsync("play", "--help");
+
+        Assert.Equal(0, exit);
+        Assert.Contains("optimal", output, StringComparison.Ordinal);
+    }
+
     private string SeriesFilePath()
     {
         var path = Path.Combine(_work, "series.json");

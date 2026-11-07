@@ -51,6 +51,7 @@ internal sealed class RunManager(IPlayerSource players, UsageLedger usage, IOpti
             var run = new ActiveRun(Guid.NewGuid().ToString("N")[..12], directory, request, time.GetUtcNow(), cancellation, time);
             var options = new MatchOptions { Debrief = request.Debrief ?? true, MaxCostUsd = maxCost };
             var plan = new MatchPlan(definition, setup, new Dictionary<Seat, IPlayer> { [Seat.A] = new ProgressPlayer(a, Seat.A, run), [Seat.B] = new ProgressPlayer(b, Seat.B, run) }, options, directory);
+            RequirePlayersTheGameCanServe(plan, cancellation);
             lock (_gate)
             {
                 _current = run;
@@ -143,11 +144,25 @@ internal sealed class RunManager(IPlayerSource players, UsageLedger usage, IOpti
         }
     }
 
+    /// <summary>Refuses a player that needs an oracle in a game that has none, with a 400 before the run exists.</summary>
+    private static void RequirePlayersTheGameCanServe(MatchPlan plan, CancellationTokenSource cancellation)
+    {
+        try
+        {
+            MatchPreflight.Ensure(plan, plan.Definition.Create(plan.Setup));
+        }
+        catch (GameOptionsException ex)
+        {
+            cancellation.Dispose();
+            throw new StartRejectedException(ex.Message);
+        }
+    }
+
     private static void RequireSpec(string? spec, string label)
     {
         if (string.IsNullOrWhiteSpace(spec) || spec.Length > 200)
         {
-            throw new StartRejectedException($"{label} is missing. Pick 'random' or a model.");
+            throw new StartRejectedException($"{label} is missing. Pick 'random', 'optimal' or a model.");
         }
 
         if (spec.Trim().StartsWith("scripted", StringComparison.OrdinalIgnoreCase))

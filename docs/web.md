@@ -14,7 +14,7 @@ Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (A
 - **New match** (left): game, the two players, prompt language, whether there are messages between players (the box starts with the default of the selected game), whether they are asked
   afterwards, who starts, a seed, the spending limit, and the game options as a JSON object, for example `{"pot": 1000}`
   (empty means the defaults of the game; the server answers wrong options with a message of the game, and accepts at most
-  2 KB nested at most four levels deep). A player is `random`, `<endpoint>:<model>` such as
+  2 KB nested at most four levels deep). A player is `random`, `optimal` (the best move; refused with a message for a game that cannot name it), `<endpoint>:<model>` such as
   `ollama:llama3.2`, or an OpenRouter slug. The fields suggest every model that the configured endpoints
   offer; you can type anything else.
 - **The match** (right): both players side by side. Spoken messages are in the lane of their seat, the private thoughts

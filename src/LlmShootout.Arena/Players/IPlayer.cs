@@ -39,12 +39,17 @@ public enum CallPurpose
 /// <param name="Schema">JSON schema of the expected answer, or null if none can be given.</param>
 /// <param name="Attempt">1 for the first try, then 2 and 3 for retries.</param>
 /// <param name="SampleValidAnswer">Produces a valid answer as JSON text using the given generator.</param>
+/// <param name="BestAnswer">
+/// Produces the best answer as JSON text using the given generator, or null. Set only for a turn that asks for a move in a game that can
+/// name the best move. Only the player type <c>optimal</c> uses it; no other player knows the game.
+/// </param>
 public sealed record PlayerCall(
     CallPurpose Purpose,
     IReadOnlyList<PromptMessage> Messages,
     JsonNode? Schema,
     int Attempt,
-    Func<SeededRng, string> SampleValidAnswer);
+    Func<SeededRng, string> SampleValidAnswer,
+    Func<SeededRng, string>? BestAnswer = null);
 
 /// <summary>The unparsed answer of a player.</summary>
 /// <param name="Content">The text of the answer. May be null or empty for reasoning models.</param>
@@ -84,6 +89,12 @@ public interface IPlayer
 
     /// <summary>The settings sent with every call (temperature, reasoning effort, output limit, timeout), recorded in the protocol so that a repeated debriefing can use them. Empty by default.</summary>
     IReadOnlyDictionary<string, string> Settings => new Dictionary<string, string>();
+
+    /// <summary>
+    /// True if the player can only play a game that implements <see cref="Games.IGameOracle"/> (the player type <c>optimal</c>). A
+    /// match with such a player is refused when it is set up, if the game has no oracle. A player that wraps another one passes this on.
+    /// </summary>
+    bool RequiresOracle => false;
 
     /// <summary>Answers a request. Throws <see cref="PlayerFailureException"/> on technical failure.</summary>
     Task<PlayerReply> RespondAsync(PlayerCall request, CancellationToken cancellationToken);

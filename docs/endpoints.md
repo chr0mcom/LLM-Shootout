@@ -9,7 +9,7 @@ shootout play nim --a ollama:llama3.2 --b openai/gpt-4o
 ```
 
 A player specification is `<endpoint>:<model>`. Without a prefix (or with `openrouter:`) the model is an OpenRouter
-slug as before. `random` and `scripted:<file>` stay as they are.
+slug as before. `random`, `optimal` and `scripted:<file>` stay as they are.
 
 ## Configure an endpoint
 
@@ -45,7 +45,7 @@ export LLMSHOOTOUT_Endpoints__ollama__FlatRate=true
 | `FlatRate` | `true` if calls cost nothing per call (a local model, a flat-rate subscription). A call without a reported cost then counts as 0 USD. Default `false` |
 | `Kind` | `OpenAiCompatible` (default) or `OpenRouter` |
 
-The name is case-insensitive. `openrouter`, `random` and `scripted` are reserved and refused, because they already mean something in a player specification.
+The name is case-insensitive. `openrouter`, `random`, `optimal` and `scripted` are reserved and refused, because they already mean something in a player specification.
 
 ## Keeping the keys in one place
 

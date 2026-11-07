@@ -78,10 +78,15 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             MatchPaths.SeriesMatch(plan.Directory, number, first));
     }
 
-    /// <summary>Random players are created anew for every match from the match seed, so a match does not depend on the matches before it.</summary>
-    private static IPlayer Fresh(IPlayer player, long seed) => player is RandomPlayer ? new RandomPlayer(seed) : player;
+    /// <summary>Players without a model and without a script are created anew for every match from the match seed, so a match does not depend on the matches before it.</summary>
+    private static IPlayer Fresh(IPlayer player, long seed) => player switch
+    {
+        RandomPlayer => new RandomPlayer(seed),
+        OptimalPlayer => new OptimalPlayer(seed),
+        _ => player,
+    };
 
-    /// <summary>Creates every game once, so that wrong options are found before the first paid match.</summary>
+    /// <summary>Creates every game once, so that wrong options and a player that the game cannot serve are found before the first paid match.</summary>
     private static void ValidateGameOptions(SeriesPlan plan)
     {
         var number = 0;
@@ -90,7 +95,8 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             number++;
             try
             {
-                plan.Definition.Create(PlanMatch(plan, match, number).Setup);
+                var matchPlan = PlanMatch(plan, match, number);
+                MatchPreflight.Ensure(matchPlan, plan.Definition.Create(matchPlan.Setup));
             }
             catch (GameOptionsException ex)
             {

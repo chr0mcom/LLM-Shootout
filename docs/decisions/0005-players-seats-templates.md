@@ -27,3 +27,5 @@ bound to the concrete turn, enum vs struct for seats (struct suggested, enum acc
 One concept ("text is a template plus values") is used for rules, views, facts and errors.
 
 Amended 2026-11-07: the opponent is described the same way for every kind of player; see [0011](0011-identity-and-description-of-the-opponent.md). The identity scanner remains a technical marker.
+
+Amended 2026-11-07: the call has a last, optional member `BestAnswer` for the player type `optimal`, set only for a game that can name the best move; no other player reads it and no player knows the game ([0020](0020-optimal-player-and-oracle-capability.md)).

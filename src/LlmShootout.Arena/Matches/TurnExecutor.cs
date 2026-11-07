@@ -50,13 +50,16 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         context.Prompts.Arena("hint.unknown"),
         context.Prompts.Arena("hint.generic"));
 
-    /// <summary>Runs the turn.</summary>
-    public async Task<TurnResult> ExecuteAsync(TurnRequest turn, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs the turn. <paramref name="assessment"/> is what the oracle of the game said about the position before the turn, or null if
+    /// the game has no oracle; the player type <c>optimal</c> plays from it.
+    /// </summary>
+    public async Task<TurnResult> ExecuteAsync(TurnRequest turn, PositionAssessment? assessment, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(turn);
         EnsureEstimateIsDescribed(turn);
         var max = context.Plan.Options.MaxAttempts;
-        var state = new TurnState();
+        var state = new TurnState { Assessment = assessment };
 
         for (var attempt = 1; attempt <= max; attempt++)
         {
@@ -103,8 +106,14 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             state.PreviousAnswer,
             state.Hint,
             state.AfterRefusal));
-        return new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn, context.Plan.Setup.Communication), attempt, rng => SampleAnswer(turn, rng));
+        return new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn, context.Plan.Setup.Communication), attempt, rng => SampleAnswer(turn, rng), BestAnswerFor(turn, state));
     }
+
+    /// <summary>The way to the best answer, only for a turn that asks for a move in a game with an oracle.</summary>
+    private Func<SeededRng, string>? BestAnswerFor(TurnRequest turn, TurnState state) =>
+        context.Game is IGameOracle oracle && state.Assessment is { } assessment && turn.Move != FieldRule.Forbidden
+            ? rng => BestAnswer(turn, oracle, assessment, rng)
+            : null;
 
     /// <summary>Calls the player. A timeout is written to the protocol and returns null; any other failure ends the match.</summary>
     private async Task<PlayerReply?> CallPlayerAsync(TurnRequest turn, PlayerCall request, CancellationToken cancellationToken)
@@ -185,6 +194,29 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         return answer.ToJsonString();
     }
 
+    private string BestAnswer(TurnRequest turn, IGameOracle oracle, PositionAssessment assessment, SeededRng rng)
+    {
+        var answer = new JsonObject
+        {
+            ["thought"] = turn.Thought == FieldRule.Forbidden ? null : context.Prompts.Arena("optimal.thought"),
+            ["message"] = turn.Message == FieldRule.Required ? context.Prompts.Arena("sample.messages").Split('\n')[0] : null,
+            ["move"] = oracle.ChooseMove(turn, assessment, rng),
+        };
+        if (turn.Estimate != FieldRule.Forbidden)
+        {
+            answer["estimate"] = EstimateFor(assessment.Value);
+        }
+
+        return answer.ToJsonString();
+    }
+
+    private static int EstimateFor(PositionValue value) => value switch
+    {
+        PositionValue.Won => 100,
+        PositionValue.Lost => 0,
+        _ => 50,
+    };
+
     private Task WriteCallAsync(TurnRequest turn, PlayerCall request, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, bool tokenLimit, CancellationToken cancellationToken)
     {
         var fields = parsed.HasJson ? new ParsedFields(parsed.Thought, parsed.Message, parsed.Move, parsed.FromReasoning, parsed.ExtraKeys, parsed.Estimate) : null;
@@ -202,6 +234,8 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
 
     private sealed class TurnState
     {
+        public PositionAssessment? Assessment { get; init; }
+
         public Evaluation? LastEvaluation { get; set; }
 
         public bool NeverAnswered => LastEvaluation is null;

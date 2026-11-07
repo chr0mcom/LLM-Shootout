@@ -23,8 +23,10 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
     public async Task<MatchOutcome> RunAsync(MatchPlan plan, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(plan);
+        var game = plan.Definition.Create(plan.Setup);
+        MatchPreflight.Ensure(plan, game);
         await using var writer = new ProtocolWriter(plan.Directory) { Observer = observer };
-        var context = CreateContext(plan, writer);
+        var context = CreateContext(plan, game, writer);
         MatchLog.Started(_logger, plan.Definition.Id, plan.Setup.Seed, plan.Directory);
         await writer.AppendAsync(StartedEvent(plan), cancellationToken);
 
@@ -59,9 +61,8 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         }
     }
 
-    private MatchContext CreateContext(MatchPlan plan, ProtocolWriter writer)
+    private MatchContext CreateContext(MatchPlan plan, IGame game, ProtocolWriter writer)
     {
-        var game = plan.Definition.Create(plan.Setup);
         var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options, plan.Setup.Communication);
         var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner);
         return new MatchContext(plan, game, prompts, new AnswerEvaluator(plan.Options, prompts), writer, new PlayerGateway(cost), guard, time);
@@ -89,9 +90,9 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         var turns = context.Game.PendingTurns.ToArray();
         var assessments = Assess(context.Game, turns);
         var results = new List<TurnResult>(turns.Length);
-        foreach (var turn in turns)
+        for (var i = 0; i < turns.Length; i++)
         {
-            results.Add(await executor.ExecuteAsync(turn, cancellationToken));
+            results.Add(await executor.ExecuteAsync(turns[i], assessments[i], cancellationToken));
         }
 
         foreach (var (turn, result) in turns.Zip(results))

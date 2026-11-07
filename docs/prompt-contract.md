@@ -208,7 +208,7 @@ given setup. The standard questions are the same for every game.
 
 ### Players without a model
 
-A player without a model, such as `random`, answers the debriefing without thinking, and its answers agree with what it did, so a report never
+A player without a model, such as `random` or `optimal`, answers the debriefing without thinking, and its answers agree with what it did, so a report never
 shows a contradiction that the player could not have made. The answers are deterministic: a scale gets its middle value, a
 boolean `false`, a choice its first value, and text and reasons the template `debrief.sample.text`. A question can name its own
 answer through `DebriefingQuestion.SampleAnswer`; `rules_followed` answers `true`. A `scripted` player answers as its script says,
