@@ -1,4 +1,3 @@
-using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;

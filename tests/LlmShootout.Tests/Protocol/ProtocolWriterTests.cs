@@ -1,4 +1,3 @@
-using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Protocol;
 
 namespace LlmShootout.Tests.Protocol;
