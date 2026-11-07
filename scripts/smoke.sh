@@ -20,6 +20,9 @@ step "models (saved sample response, no network)"
 step "play: one match with random players"
 "${SHOOTOUT[@]}" play split-or-steal --a random --b random --seed 7 --out "$WORK"
 
+step "play: Nim with random players"
+"${SHOOTOUT[@]}" play nim --a random --b random --seed 7 --out "$WORK"
+
 step "play: quiet mode prints only the directory"
 MATCH="$("${SHOOTOUT[@]}" play split-or-steal --a random --b random --communication off --seed 8 --lang en --quiet --out "$WORK")"
 test -f "$MATCH/events.jsonl" && test -f "$MATCH/match.json" && test -f "$MATCH/report.md"
