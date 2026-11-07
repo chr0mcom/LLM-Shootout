@@ -99,7 +99,9 @@ public sealed class SeriesAndReportTests : IDisposable
             var seats = records.SelectMany(r => Seat.All.Where(s => r.Started.Players[s].Name == player.Player).Select(s => (Record: r, Seat: s))).ToArray();
             var guesses = seats.Sum(x => x.Record.Turns(x.Seat).Count());
             var hits = seats.Sum(x => x.Record.Result!.Seats[x.Seat].Score);
-            Assert.Equal(["guesses", "hit-rate", "never"], player.Metrics.Select(m => m.Key));
+            var guessSum = seats.Sum(x => x.Record.Turns(x.Seat).Sum(t => double.Parse(t.Move!, System.Globalization.CultureInfo.InvariantCulture)));
+            Assert.Equal(["guesses", "hit-rate", "never", "mean-guess"], player.Metrics.Select(m => m.Key));
+            Assert.Equal((MetricKind.Mean, guessSum / guesses, (guessSum, (double)guesses)), (player.Metrics[3].Kind, player.Metrics[3].Value!.Value, (player.Metrics[3].Numerator, player.Metrics[3].Denominator!.Value)));
             Assert.Equal((double)guesses, player.Metrics[0].Value);
             Assert.Equal(hits / guesses, player.Metrics[1].Value);
             Assert.Equal((hits, (double)guesses), (player.Metrics[1].Numerator, player.Metrics[1].Denominator!.Value));
@@ -119,6 +121,7 @@ public sealed class SeriesAndReportTests : IDisposable
         var report = await File.ReadAllTextAsync(Path.Combine(directory, "series-report.md"), TestContext.Current.CancellationToken);
         Assert.Contains("## Metrics of alpha", report, StringComparison.Ordinal);
         Assert.Contains("| Never measurable | n/a | 0 / 0 |", report, StringComparison.Ordinal);
+        Assert.Matches(@"\| Mean guess \| \d+\.\d{4} \| [\d.]+ / \d+ \|", report);
         using var json = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(directory, "series.json"), TestContext.Current.CancellationToken));
         var never = json.RootElement.GetProperty("players")[0].GetProperty("metrics")[2];
         Assert.Equal("never", never.GetProperty("key").GetString());

@@ -8,8 +8,14 @@ public enum MetricKind
     /// <summary>The numerators of all matches are added.</summary>
     Sum,
 
-    /// <summary>The sum of all numerators is divided by the sum of all denominators.</summary>
+    /// <summary>The sum of all numerators is divided by the sum of all denominators and shown as a share in percent.</summary>
     Ratio,
+
+    /// <summary>
+    /// The sum of all numerators is divided by the sum of all denominators and shown as a plain number, for a mean such as the Brier
+    /// score, which is not a share.
+    /// </summary>
+    Mean,
 }
 
 /// <summary>A count and the number it is measured against. For a <see cref="MetricKind.Sum"/> only the numerator counts.</summary>

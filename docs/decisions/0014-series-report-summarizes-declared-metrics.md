@@ -2,6 +2,8 @@
 
 Status: accepted (2026-11-07)
 
+Amended 2026-11-07: a third kind, `MetricKind.Mean`, divides like `Ratio` but is shown as a plain number instead of a percentage (for the Brier score of Nim).
+
 ## Context
 The series report listed point totals and averages per seat, invalid answers and refusals per seat, a column for the message setting of
 every match, and, through `IGameAnalyzer.AnalyzeSeries`, whatever sections a game wanted to add. The series focuses on game strength and rule

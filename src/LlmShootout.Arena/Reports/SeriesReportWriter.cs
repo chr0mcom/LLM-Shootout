@@ -99,6 +99,7 @@ public static class SeriesReportWriter
     {
         { Value: null } => t["report.series.na"],
         { Kind: MetricKind.Ratio } => metric.Value.Value.ToString("P1", CultureInfo.InvariantCulture),
+        { Kind: MetricKind.Mean } => metric.Value.Value.ToString("0.0000", CultureInfo.InvariantCulture),
         _ => metric.Value.Value.ToString("0.##", CultureInfo.InvariantCulture),
     };
 
@@ -124,7 +125,7 @@ public static class SeriesReportWriter
         var denominator = parts.Sum(p => p.Denominator);
         var (shownDenominator, value) = metric.Kind switch
         {
-            MetricKind.Ratio => ((double?)denominator, denominator == 0 ? null : (double?)(numerator / denominator)),
+            MetricKind.Ratio or MetricKind.Mean => ((double?)denominator, denominator == 0 ? null : (double?)(numerator / denominator)),
             _ => (null, parts.Length == 0 ? null : (double?)numerator),
         };
         return new SeriesMetricValue(metric.Key, definition.Templates.Render(metric.Label, language), metric.Kind, numerator, shownDenominator, value);

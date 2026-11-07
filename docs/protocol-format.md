@@ -225,8 +225,8 @@ completed and aborted matches, total cost with the number of estimated and unkno
 
 - `entries`: one object per match with `directory`, `firstSeat`, `outcome` (absent for an aborted match) and `costUsd`.
 - `players`: one object per player name that took part, over both seats, with `metrics`. It is empty unless the game declares
-  series metrics (see [Adding a game](adding-a-game.md)). Every metric has `key`, `label`, `kind` (`Sum` or `Ratio`),
-  `numerator`, `denominator` (only for a ratio) and `value`. A ratio is the sum of all numerators divided by the sum of all
+  series metrics (see [Adding a game](adding-a-game.md)). Every metric has `key`, `label`, `kind` (`Sum`, `Ratio` or `Mean`),
+  `numerator`, `denominator` (not for a sum) and `value`. A ratio or a mean is the sum of all numerators divided by the sum of all
   denominators. `value` is always written; it is `null` ("n/a" in the report) if nothing could be measured, for example
   when the denominator is 0.
 

@@ -37,6 +37,8 @@ public sealed class NumberGuessDefinition : IGameDefinition
             Hits per guess
             ## metric.never
             Never measurable
+            ## metric.mean_guess
+            Mean guess
             ## estimate_meaning
             Your estimated chance of guessing correctly with this guess, in percent.
             """,
@@ -61,6 +63,8 @@ public sealed class NumberGuessDefinition : IGameDefinition
             Treffer je Tipp
             ## metric.never
             Nie messbar
+            ## metric.mean_guess
+            Mittlerer Tipp
             ## estimate_meaning
             Deine geschätzte Trefferchance mit diesem Tipp in Prozent.
             """,
@@ -73,7 +77,7 @@ public sealed class NumberGuessDefinition : IGameDefinition
     public IGameAnalyzer? Analyzer { get; } = new NumberGuessAnalyzer();
 }
 
-/// <summary>Test analyzer: declares one sum, one ratio and one ratio without a denominator for the series report.</summary>
+/// <summary>Test analyzer: declares one sum, one ratio, one ratio without a denominator and one mean for the series report.</summary>
 public sealed class NumberGuessAnalyzer : IGameAnalyzer
 {
     public IReadOnlyList<SeriesMetric> SeriesMetrics { get; } =
@@ -81,6 +85,7 @@ public sealed class NumberGuessAnalyzer : IGameAnalyzer
         new("guesses", TemplateRef.Of("metric.guesses"), MetricKind.Sum, (match, seat) => new Fraction(match.Turns(seat).Count())),
         new("hit-rate", TemplateRef.Of("metric.hit_rate"), MetricKind.Ratio, (match, seat) => match.Result is { } result ? new Fraction(result.Seats[seat].Score, match.Turns(seat).Count()) : null),
         new("never", TemplateRef.Of("metric.never"), MetricKind.Ratio, (_, _) => new Fraction(0, 0)),
+        new("mean-guess", TemplateRef.Of("metric.mean_guess"), MetricKind.Mean, (match, seat) => new Fraction(match.Turns(seat).Sum(t => double.Parse(t.Move!, System.Globalization.CultureInfo.InvariantCulture)), match.Turns(seat).Count())),
     ];
 
     public IReadOnlyList<ReportSection> AnalyzeMatch(MatchRecord match) => [];
