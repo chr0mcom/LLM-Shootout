@@ -1,17 +1,17 @@
 # LLM Shootout
 
-**Two language models play a game against each other. They may talk first, and afterwards they are asked what they did and why.**
+**Two language models play a solved game, Nim, against each other. The series studies how strong they play and whether they keep to the rules.**
 
 [![CI](https://github.com/chr0mcom/LLM-Shootout/actions/workflows/ci.yml/badge.svg)](https://github.com/chr0mcom/LLM-Shootout/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET 10](https://img.shields.io/badge/.NET-10%20LTS-512bd4.svg)](https://dotnet.microsoft.com/download)
 
-Every episode has a lead question, for example *"Does a model keep its word?"* or *"Does it find the winning strategy?"*
-The models play through [OpenRouter](https://openrouter.ai) or any other OpenAI-compatible endpoint. Every match leaves a
-complete, append-only protocol: the exact prompts, the unchanged answers, the private thoughts, the public messages,
-the moves, tokens, cost and latency. A readable report is computed from that protocol.
+Every episode has a lead question, for example *"Does a model find the winning strategy, and does it keep to the rules when it is
+losing?"* The models play through [OpenRouter](https://openrouter.ai) or any other OpenAI-compatible endpoint. Every match leaves a
+complete, append-only protocol: the exact prompts, the unchanged answers, the private thoughts, the moves, tokens, cost and latency.
+A readable report is computed from that protocol, and for a game that has an exact solution each move is rated against it.
 
-![The web interface after a finished match: the two players, the result, and the conversation with the private thoughts next to the public messages](docs/images/web-interface.png)
+![The web interface after a finished match of Nim: the two players, the result, the heaps, and the moves with the private thoughts and the analysis](docs/images/web-interface.png)
 
 It is a .NET console program with no database, plus a small optional [web interface](#web-interface). The repository
 grows by one game per episode of the article series *LLM Shootout* in the magazine [dotnetpro](https://dotnetpro.de)
@@ -19,17 +19,26 @@ grows by one game per episode of the article series *LLM Shootout* in the magazi
 
 | Game | Lead question | Status |
 |---|---|---|
-| [Split or Steal](docs/games/split-or-steal.md) | Does a model keep its word? | available |
-| Mastermind, Battleship, Nim, Ultimatum game, Liar's dice | | planned, one per episode |
+| [Nim](docs/games/nim.md) | Does a model find the winning strategy, and does it keep to the rules when it is losing? | available |
+| [Split or Steal](docs/games/split-or-steal.md) | | additional example game, playable with `play` |
+| Mastermind, Battleship, Connect Four | | planned, one per episode |
 
 ## Why it is built this way
 
-- **Three channels per answer.** A private *thought*, a public *message* and the *move* are kept apart. Only that
-  separation makes statements about deception possible, because the thought shows what a model intended when it wrote
-  the message.
+The series looks at two things: **game strength** and **rule compliance**.
+
+- **Game strength:** planning, the error rate against an oracle, how a model deals with feedback, and how well it judges its own position.
+  Nim is solved, so an oracle rates every position exactly and a perfect opponent (`optimal`) exists.
+- **Rule compliance:** how a model behaves toward the rules of a game and toward the referee, and how it behaves in a hopeless position.
+  A game can offer an action that the system accepts but the rules forbid. The rules text says so explicitly and neutrally. The arena
+  assumes no intent: it counts.
+- **Exact measurement instead of a judge model.** Strength is measured deterministically by the oracle and by facts in the protocol, not
+  by another model that reads the transcript, so a figure can be reproduced and checked.
+- **Three channels per answer.** A private *thought*, a public *message* and the *move* are kept apart. The private thought shows how a
+  model arrives at its move, so you can compare its explanation with the move and with the oracle.
 - **Refusals and illegal moves are data, not errors.** They are counted per player and shown in the report.
-- **The protocol is the single source of truth.** Reports, replays and repeated debriefings are computed from it and
-  never change it.
+- **Everything is recorded and reproducible.** The protocol is the single source of truth. Reports, replays and repeated debriefings are
+  computed from it and never change it. Everything random has a seed.
 - **No secrets, no surprises.** Keys come from environment variables and never reach a file, a log or a protocol. Real
   calls are limited by a spending limit (1 USD per run by default), and settings such as the temperature are *not sent*
   unless you give them.
@@ -44,18 +53,21 @@ You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). No API key is
 # 1. Get the code
 git clone https://github.com/chr0mcom/LLM-Shootout.git && cd LLM-Shootout
 
-# 2. Play a match with two random players (no key, no cost)
-dotnet run --project src/LlmShootout.Cli -- play split-or-steal --a random --b random
+# 2. Play a match of Nim between a random player and the optimal player (no key, no cost)
+dotnet run --project src/LlmShootout.Cli -- play nim --a random --b optimal
 
 # 3. Look at the report
 less matches/*/report.md
 
-# 4. Use real models: create a key at https://openrouter.ai/keys, find model slugs, play
+# 4. Use real models: create a key at https://openrouter.ai/keys, find model slugs, play a model against the optimal player
 export OPENROUTER_API_KEY=sk-or-...
 dotnet run --project src/LlmShootout.Cli -- models --filter gpt-oss
-dotnet run --project src/LlmShootout.Cli -- play split-or-steal --a openai/gpt-oss-20b --b anthropic/claude-haiku-5.5
+dotnet run --project src/LlmShootout.Cli -- play nim --a openai/gpt-oss-20b --b optimal
 
-# 5. Play the standard series of two matches (the series files are in shootouts/)
+# 5. Play the series in which a model meets the optimal player from a lost starting position (the series files are in shootouts/)
+dotnet run --project src/LlmShootout.Cli -- series shootouts/nim-vs-optimal.json --a openai/gpt-oss-20b
+
+# 6. Let two models play each other: two matches with swapped starting seats
 dotnet run --project src/LlmShootout.Cli -- series shootouts/nim.json --a openai/gpt-oss-20b --b anthropic/claude-haiku-5.5
 ```
 
@@ -66,27 +78,32 @@ No OpenRouter account? Any OpenAI-compatible API works as a named endpoint, and 
 
 ### Example output
 
-The output of `play split-or-steal --a random --b random --seed 7 --lang en`:
+The output of `play nim --a random --b optimal --seed 7 --lang en`:
 
 ```text
-split-or-steal  A: random  vs  B: random  (seed 7, messages on, en)
-A: Let us see what happens.
-B: Trust me.
-A: Let us see what happens.
-B: Trust me.
-A: Trust me.
-B: I will play fair.
-A plays steal  $0.0000
-B plays steal  $0.0000
-  · Decision (Seat A): steal
-  · Payout (Seat A): 0 points
-  · Decision (Seat B): steal
-  · Payout (Seat B): 0 points
-Result: both_steal  A: 0 (steal)  B: 0 (steal)  $0.0000
+nim  A: random  vs  B: optimal  (seed 7, messages off, en)
+  · Starting position, heaps 1 to 3: 3, 4, 5
+A plays 3:1  $0.0000
+  · Move (Seat A): 1 from heap 3. Heaps now: 3, 4, 4
+B plays 1:3  $0.0000
+  · Move (Seat B): 3 from heap 1. Heaps now: 0, 4, 4
+A plays 3:2  $0.0000
+  · Move (Seat A): 2 from heap 3. Heaps now: 0, 4, 2
+B plays 2:2  $0.0000
+  · Move (Seat B): 2 from heap 2. Heaps now: 0, 2, 2
+A plays 2:1  $0.0000
+  · Move (Seat A): 1 from heap 2. Heaps now: 0, 1, 2
+B plays 3:1  $0.0000
+  · Move (Seat B): 1 from heap 3. Heaps now: 0, 1, 1
+A plays 3:1  $0.0000
+  · Move (Seat A): 1 from heap 3. Heaps now: 0, 1, 0
+B plays 2:1  $0.0000
+  · Move (Seat B): 1 from heap 2. Heaps now: 0, 0, 0
+Result: b_wins  B: 1 (win)  A: 0 (loss)  $0.0000
 Debriefing A: ok (1 attempt(s))
 Debriefing B: ok (1 attempt(s))
 
-Report: matches/2026-11-07_split-or-steal_random_vs_random_01/report.md
+Report: matches/2026-11-07_nim_random_vs_optimal_01/report.md
 ```
 
 Finished examples of Nim (made with the random player, the optimal player and one scripted player) are in [`matches/examples/`](matches/examples/).
@@ -94,7 +111,7 @@ Finished examples of Nim (made with the random player, the optimal player and on
 ## Web interface
 
 Prefer a page to a terminal? `src/LlmShootout.Web` is a small web interface: pick two players, start the match and
-watch the messages, private thoughts, moves and the debriefing arrive live (screenshot above). Finished matches can be
+watch the moves, private thoughts, the heaps and the debriefing arrive live (screenshot above). Finished matches can be
 opened again and downloaded as an Excel workbook, as a report or as the raw protocol. The page is protected by one
 password and has daily limits for matches and money.
 
@@ -118,8 +135,17 @@ For a deployment with Docker and Traefik (everything specific to your server is 
 | `shootout report <match-or-series>` | rebuilds `match.json` and `report.md` from the protocol |
 | `shootout debrief <match>` | asks the players again, into a new file |
 
-A *player* is `random`, `optimal` (always the best move; only for games that can name it, see [Adding a game](docs/adding-a-game.md)), `scripted:<file.json>` (fixed answers), `openrouter:<slug>`, just a slug like
-`openai/gpt-4o`, or `<endpoint>:<model>` for an endpoint from your [configuration](docs/endpoints.md). Useful options of `play` and `series`:
+A *player* is one of these:
+
+| Player | Meaning |
+|---|---|
+| `random` | a random legal move in every turn, drawn from the seed of the match; no cost |
+| `optimal` | always the best move according to the oracle of the game, and a documented fixed move in a lost position; only for games that can name the best move (Nim, see [Adding a game](docs/adding-a-game.md)); no cost |
+| `scripted:<file.json>` | fixed answers from a file, for tests and examples (`docs/examples/nim-pass-script.json`); not available in the web interface |
+| `<slug>` or `openrouter:<slug>` | a model of OpenRouter, for example `openai/gpt-4o` |
+| `<endpoint>:<model>` | a model of an endpoint from your [configuration](docs/endpoints.md), for example `ollama:llama3.2` |
+
+Useful options of `play` and `series`:
 
 | Option | Meaning |
 |---|---|
@@ -144,12 +170,13 @@ limit, timeout, failure), `130` cancelled with Ctrl+C, `1` unexpected error. Eve
 matches/<date>_<game>_<a>_vs_<b>_01/
 ├─ events.jsonl   complete protocol: exact prompts, unchanged answers, reasoning, tokens, cost, latency, generation ids
 ├─ match.json     summary and key figures
-└─ report.md      readable account: history, rule compliance, private thoughts kept apart, figures, debriefing side by side
+└─ report.md      readable account: history, play strength, calibration, rule compliance, private thoughts kept apart, figures, debriefing side by side
 ```
 
 The three channels of an answer are kept apart: a private **thought** (only the player and the protocol see it), a
-public **message** (the opponent sees it) and the **move** (checked by the rules). This separation is what makes
-statements about deception possible. Refusals and illegal moves are data, not errors: they are counted per player.
+public **message** (the opponent sees it, where a game has messages) and the **move** (checked by the rules). The private thought shows
+how a model arrives at its move: you can compare its explanation with the move that it plays and with the rating of the oracle.
+Refusals and illegal moves are data, not errors: they are counted per player.
 Details: [protocol format](docs/protocol-format.md), [prompt contract](docs/prompt-contract.md).
 
 ## How it is built
@@ -161,7 +188,7 @@ games fit, is in [docs/architecture.md](docs/architecture.md); the decisions beh
 
 Highlights: `IChatClient` (Microsoft.Extensions.AI) over an HTTP pipeline with exactly one retry layer, a raw capture
 of every exchange without credentials, cost accounting from OpenRouter usage data, a spending limit, seeds for
-everything random, versioned prompt files, typed debriefing questions, and tests that need no network
+everything random, versioned prompt files, typed debriefing questions, an oracle that rates every move of a solved game, and tests that need no network
 (`dotnet test`; coverage of the arena is above 85 %).
 
 ## Development
@@ -181,8 +208,8 @@ See [docs/dev/dotnet-baseline.md](docs/dev/dotnet-baseline.md) for the .NET and 
 | Topic | Where |
 |---|---|
 | How the arena, the games and the model access fit together | [docs/architecture.md](docs/architecture.md) |
-| Why it was decided that way (ten decision records) | [docs/decisions/](docs/decisions/) |
-| The rules, prompts and analysis of Split or Steal | [docs/games/split-or-steal.md](docs/games/split-or-steal.md) |
+| Why it was decided that way (decision records, from the first to the web interface of Nim) | [docs/decisions/](docs/decisions/) |
+| The rules, options, oracle, measurements and series files of Nim | [docs/games/nim.md](docs/games/nim.md) |
 | What a model is asked, and how its answer is read | [docs/prompt-contract.md](docs/prompt-contract.md) |
 | The files of a match and the event format | [docs/protocol-format.md](docs/protocol-format.md) |
 | OpenRouter and other OpenAI-compatible servers as named endpoints | [docs/endpoints.md](docs/endpoints.md) |
@@ -192,11 +219,7 @@ See [docs/dev/dotnet-baseline.md](docs/dev/dotnet-baseline.md) for the .NET and 
 
 ## Origin
 
-LLM Shootout is a new, much lighter build on ideas from *AI Behavior*, a research platform that Stefan Bechtel built for a
-research group at the University of Cologne to let language models play a public goods game after Fehr and Gächter
-(AiBehavior.PublicGoods, MIT). Taken over are the concepts (three separate channels per
-answer, refusal as data, complete raw protocol, debriefing from the player's own point of view) and a few small files,
-marked as such in their headers.
+A few small helpers (JSON extraction, seeded random numbers, correction hints, name detection) are adapted from an earlier project by the same author (MIT).
 
 ## License
 
