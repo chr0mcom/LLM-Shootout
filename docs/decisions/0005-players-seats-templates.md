@@ -19,7 +19,7 @@ Status: accepted (2026-11-06), amended 2026-11-07
 
 ## Advisor input
 Opus: structured views and templates instead of finished strings (multi-language, tests on records); `PlayerCall`
-independent of `TurnRequest`; keep `SampleLegalMove`, add `AllowedValues`. Codex: structured projections, sampler
+independent of `TurnRequest`; keep `SampleLegalMove`, add `AllowedValues`. Codex suggested structured projections, sampler
 bound to the concrete turn, enum vs struct for seats (struct suggested, enum accepted by Opus). Adopted except
 `Seat` as struct: the enum is shorter in print and JSON, and the break for three seats is limited to one file.
 

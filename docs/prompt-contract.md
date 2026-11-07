@@ -32,11 +32,11 @@ Every call builds the prompt from scratch (see [ADR 0004](decisions/0004-statele
    - *Your task now*: the instruction of the turn and the answer format.
 3. **On a retry**, two more messages: the seat's invalid answer (assistant) and a correction hint (user).
 
-Example (`--lang en`, first message of a match with communication):
+Example (`--lang en`, first message of a match with messages between players):
 
 ```text
 === System ===
-You are taking part in an experiment. Two language models play a game against each other. Your opponent is another language model.
+You are taking part in an experiment. Two players play a game against each other. You are one of them, the other one is your opponent.
 Play to achieve the best possible result for yourself, and follow the rules.
 In every turn you answer with exactly one JSON object and nothing else.
 Every text you write yourself is written in English. Write move values exactly as the task names them.
@@ -45,13 +45,13 @@ The game is called Split or Steal. There is a pot of 100 points in the middle. [
 
 === User ===
 ### Current situation
-Talking phase: 0 of 6 messages have been written so far. The pot holds 100 points.
+Message phase: 0 of 6 messages have been written so far. The pot holds 100 points.
 
 ### History so far
 (nothing has happened yet)
 
 ### Your task now
-Write your message 1 of 3 to your opponent. You decide only after the talking phase.
+Write your message 1 of 3. The decision follows after the message phase.
 
 Answer with a single JSON object of this shape and no text before or after it:
 {"thought": ..., "message": ..., "move": ...}
@@ -69,7 +69,7 @@ Answer with a single JSON object of this shape and no text before or after it:
 - **thought** is private. The opponent never sees it; it is stored in the protocol. A thought that is too long is
   shortened and marked (`thoughtTruncated`); it never makes a turn invalid.
 - **message** is public. Whether it is forbidden, optional or required is decided by the turn
-  (`TurnRequest.Message`). Without communication the prompt does not mention messages at all and the key does not
+  (`TurnRequest.Message`). Without messages between players the prompt does not mention messages at all and the key does not
   exist in the schema.
 - **move** is checked by the rules of the game (`IGame.Check`).
 

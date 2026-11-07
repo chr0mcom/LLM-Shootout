@@ -17,14 +17,17 @@ the instruction for the turn. A retry appends the seat's invalid answer and the 
 The arena keeps one timeline of public messages and public facts in order, plus the private facts of each seat.
 `IGame.ViewFor` only shows the current state (a board, own dice). No game keeps a second history, and prompts,
 debriefing and reports all read the same timeline.
-Own earlier thoughts are shown (default: the last 10, `ThoughtMemory` option, 0 for none). Reason: the lead
-question of the first episode is "does a model keep its word". Without its own earlier notes, a broken promise
-could be plain forgetting. Thoughts of the opponent are never shown.
+Own earlier thoughts are shown (default: the last 10, `ThoughtMemory` option, 0 for none). Reason: the private
+thought shows how a model arrives at its move. Seeing its own recent thoughts lets a model carry a plan from turn
+to turn, and a reader can compare explanation, move and, where a game has an oracle, the best move. Thoughts of
+the opponent are never shown.
 
 ## Advisor input
 Both advisors agreed on stateless prompts. Opus pointed out the split-history risk (messages in the arena,
 moves in the game) and asked for one timeline; adopted. Codex wanted thoughts off by default to avoid
-self-anchoring, Opus wanted the last N. Decision: last 10, configurable, because the memory question above outweighs the anchoring risk.
+self-anchoring, Opus wanted the last N. Decision: last 10, configurable, because a plan that spans several turns needs the memory, which outweighs the anchoring risk.
 
 ## Consequences
 The prompt grows with the match but is bounded by the match length. Prompt snapshot tests make every change visible.
+
+Amended 2026-11-07: the reason for showing own earlier thoughts is the plan across turns and the comparison of explanation, move and oracle; the series focuses on game strength and rule compliance.

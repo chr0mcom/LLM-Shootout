@@ -25,7 +25,7 @@ Game options come as JSON from series files; `IGameDefinition.Create` validates 
 Game specific report sections come from an optional `IGameAnalyzer` that reads only protocol events.
 
 **Addendum (final review):** `IGame.Start()` returns the hidden starting state as facts before the first round, because facts
-otherwise exist only after `Apply`; without it the first round's dice of Liar's dice or a drawn Mastermind code would be missing from the
+otherwise exist only after `Apply`; without it a drawn Mastermind code or a Battleship layout would be missing from the
 protocol and from the debriefing. The default reports nothing.
 
 ## Advisor input
@@ -35,3 +35,5 @@ analyzer per game, and role assignment as an option. All adopted.
 
 ## Consequences
 Games never see raw model answers. `Apply` must tolerate `Exhausted`. Reports for a game never touch the arena.
+
+Amended 2026-11-07: the examples of hidden starting state name the planned games of the new focus.

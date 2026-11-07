@@ -3,7 +3,7 @@
 Status: accepted (2026-11-07)
 
 ## Context
-The series report listed point totals and averages per seat, invalid answers and refusals per seat, a column for the communication setting of
+The series report listed point totals and averages per seat, invalid answers and refusals per seat, a column for the message setting of
 every match, and, through `IGameAnalyzer.AnalyzeSeries`, whatever sections a game wanted to add. The series focuses on game strength and rule
 compliance. Which numbers describe a player over several matches differs from game to game; the arena cannot know it. Sums of points and
 generic counters per seat say little when the seats are not equivalent (who starts, who plays first) and mix numbers of different meaning.
@@ -18,12 +18,12 @@ generic counters per seat say little when the seats are not equivalent (who star
 - Metrics are grouped by the player name (`match_started.players[seat].name`), so a player's matches on both seats are combined.
 - The series report has an overview (game, matches, cost), the list of matches (number, directory, starting seat, outcome, cost) and one table per
   player that contains exactly the declared metrics. A game without declared metrics has no table per player.
-- Removed: point totals and averages, the general rows for invalid answers and refusals per seat, `SeriesEntry.Communication`, and every column or
-  comparison that depends on the communication setting.
+- Removed: point totals and averages, the general rows for invalid answers and refusals per seat, the message setting as a property of a listed
+  match, and every column or comparison that depends on it.
 - The directory of a series match is `NN-<seat>-first`, for example `01-A-first`. Directories of older series (`01-talk-A-first`) are still read by
   `shootout report`, which only needs the match directories to contain an `events.jsonl`.
 
 ## Consequences
 - What a series reports is decided in one place per game, in a few lines that a reader can print.
-- `series.json` changes shape: `pointsTotal` is gone, `players` is new, `entries[].communication` became `entries[].firstSeat`.
+- `series.json` changes shape: `pointsTotal` is gone, `players` is new, the message setting of an entry became `entries[].firstSeat`.
 - The report of a series is computed from the match protocols alone and can be rebuilt with `shootout report`.

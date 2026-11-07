@@ -105,9 +105,9 @@ after the match.
 
 Every row works without changing the arena. "Turn kinds" are `TurnRequest.Kind` values.
 
-| Game | Turns (`PendingTurns`) | Hidden information | Move format | Communication | Special needs and how they are met |
+| Game | Turns (`PendingTurns`) | Hidden information | Move format | Messages between players | Special needs and how they are met |
 |---|---|---|---|---|---|
-| Split or Steal | `talk` x 6 alternating (message required, move forbidden), then one simultaneous `decide` (move required, message forbidden) | Decisions are hidden until `Apply` | enum `split`/`steal` | Alternating speaker | Simultaneity is the round protocol itself. Reveal and payout are public facts. Exhausted attempts yield the `no_decision` outcome |
+| Split or Steal (an additional example game, playable with `play`) | with messages: `talk` x 6 alternating (message required, move forbidden); then one simultaneous `decide` (move required, message forbidden) | Decisions are hidden until `Apply` | enum `split`/`steal` | Optional message phase with an alternating speaker | Simultaneity is the round protocol itself. Reveal and payout are public facts. Exhausted attempts yield the `no_decision` outcome. The general report shows course, decisions, points and counters; the game has no analysis of its own |
 | Mastermind | `set-code` (only the code maker, once), then alternating `guess` | Code is private to the code maker (private fact) | four colors, for example `RGBY` | Optional message with each guess | Roles are a game option, so swapped roles are configuration. The game computes feedback and emits it as a public fact. Many turns: the whole timeline goes into every prompt, so a long game grows its prompts (a history limit is a possible later option; see the final report) |
 | Battleship | simultaneous `place`, then alternating `shoot` | Each layout is private; own board and shots in `ViewFor` | layout text, coordinates `B7` | Message with each shot | Layout is random per seed or chosen by the model (`place` turn). The board is a pre-rendered text value in the view template |
 | Nim | alternating `take` | none | `heap count`, for example `2 3` | Optional | The oracle runs inside `Apply` and emits an `Analysis` fact with the verdict. The report aggregates the error rate per model; no prompt ever shows it |
@@ -134,3 +134,7 @@ with a hidden starting state, and one that throws. All run through the unchanged
 | Cost metering and the spending limit | [0008](decisions/0008-cost-gateway.md) |
 | Named endpoints for other OpenAI-compatible APIs | [0009](decisions/0009-named-endpoints.md) |
 | The web interface | [0010](decisions/0010-web-interface.md) |
+| Identity and description of the opponent | [0011](decisions/0011-identity-and-description-of-the-opponent.md) |
+| The judge infrastructure is removed | [0012](decisions/0012-judge-infrastructure-removed.md) |
+| Standard debriefing and consistent sample answers | [0013](decisions/0013-standard-debriefing-and-consistent-sample-answers.md) |
+| The series report summarizes only the metrics a game declares | [0014](decisions/0014-series-report-summarizes-declared-metrics.md) |
