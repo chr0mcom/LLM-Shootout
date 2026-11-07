@@ -98,6 +98,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
             await RecordTurnAsync(context, turn, result, cancellationToken);
         }
 
+        await RecordRuleViolationsAsync(context, turns, results, cancellationToken);
         var resolution = context.Game.Apply([.. results.Select(r => r.Submission)]);
         await RecordFactsAsync(context, turns[0].TurnId, resolution.Facts, turns, cancellationToken);
     }
@@ -107,11 +108,26 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
         foreach (var fact in facts)
         {
             var turnId = turns?.FirstOrDefault(t => t.Seat == fact.Seat)?.TurnId ?? defaultTurnId;
-            context.Timeline.AddFact(turnId, fact);
-            await context.Writer.AppendAsync(
-                new FactEvent(time.GetUtcNow(), turnId, fact.Kind, fact.Audience, fact.Seat, context.Prompts.RenderFact(fact, null), fact.Description, fact.Data),
-                cancellationToken);
+            await AppendFactAsync(context, turnId, fact, context.Prompts.RenderFact(fact, null), cancellationToken);
         }
+    }
+
+    /// <summary>Records an accepted move that the rules forbid, after the turns and before the game applies them.</summary>
+    private async Task RecordRuleViolationsAsync(MatchContext context, TurnRequest[] turns, List<TurnResult> results, CancellationToken cancellationToken)
+    {
+        foreach (var (turn, result) in turns.Zip(results).Where(pair => pair.Second.Submission.Kind == MoveKind.RuleViolation))
+        {
+            var fact = ArenaFacts.RuleViolation(turn, result.Submission.Move!, result.ViolationCode!);
+            await AppendFactAsync(context, turn.TurnId, fact, context.Prompts.RenderArena(fact.Description), cancellationToken);
+        }
+    }
+
+    private async Task AppendFactAsync(MatchContext context, string turnId, GameFact fact, string text, CancellationToken cancellationToken)
+    {
+        context.Timeline.AddFact(turnId, fact);
+        await context.Writer.AppendAsync(
+            new FactEvent(time.GetUtcNow(), turnId, fact.Kind, fact.Audience, fact.Seat, text, fact.Description, fact.Data),
+            cancellationToken);
     }
 
     private async Task RecordTurnAsync(MatchContext context, TurnRequest turn, TurnResult result, CancellationToken cancellationToken)
@@ -130,7 +146,8 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
                 result.InvalidAnswers,
                 result.Refusals,
                 result.TokenLimitHits,
-                result.Estimate),
+                result.Estimate,
+                result.Submission.Kind == MoveKind.Regular ? null : result.Submission.Kind),
             cancellationToken);
 
         if (result.MessageAllowed)

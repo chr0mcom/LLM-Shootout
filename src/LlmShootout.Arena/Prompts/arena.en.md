@@ -122,6 +122,9 @@ at most {max} words
 ## allowed.estimate
 a whole number from 0 to 100
 
+## fact.rule_violation
+Seat {seat} played `{move}` in {turn}. The rules forbid it (code: {code}).
+
 ## sample.thought
 Random move.
 

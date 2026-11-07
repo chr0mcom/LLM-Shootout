@@ -22,6 +22,7 @@ namespace LlmShootout.Arena.Matches;
 /// <param name="Refusals">Number of refusals.</param>
 /// <param name="TokenLimitHits">Number of answers cut off by the token limit.</param>
 /// <param name="Estimate">The self-assessment from 0 to 100, or null if none was asked for or none was usable.</param>
+/// <param name="ViolationCode">The code of the broken rule if the accepted move was a rule violation, otherwise null.</param>
 public sealed record TurnResult(
     TurnSubmission Submission,
     bool MessageAllowed,
@@ -34,7 +35,8 @@ public sealed record TurnResult(
     int InvalidAnswers,
     int Refusals,
     int TokenLimitHits,
-    int? Estimate = null);
+    int? Estimate = null,
+    string? ViolationCode = null);
 
 /// <summary>
 /// Plays one turn of one seat: builds the prompt, calls the player, classifies the answer, and retries with a
@@ -148,8 +150,9 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             context.Thoughts.Add(turn.Seat, thought);
         }
 
+        var played = status == SubmissionStatus.Played;
         return new TurnResult(
-            new TurnSubmission(turn.TurnId, turn.Seat, status == SubmissionStatus.Played ? evaluation.Move : null, status),
+            new TurnSubmission(turn.TurnId, turn.Seat, played ? evaluation.Move : null, status, played ? evaluation.MoveKind : MoveKind.Regular),
             turn.Message != FieldRule.Forbidden,
             evaluation.Message,
             evaluation.Silent || (turn.Message == FieldRule.Required && evaluation.Message is null),
@@ -160,7 +163,8 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             state.InvalidAnswers,
             state.Refusals,
             state.TokenLimitHits,
-            evaluation.Estimate);
+            evaluation.Estimate,
+            played && evaluation.MoveKind == MoveKind.RuleViolation ? evaluation.ViolationCode : null);
     }
 
     private string SampleAnswer(TurnRequest turn, SeededRng rng)

@@ -11,7 +11,7 @@ namespace LlmShootout.Arena.Protocol;
 /// </summary>
 public static class ProtocolVersion
 {
-    /// <summary>The version that is written. Version 2 added the self-assessment (<c>estimate</c>) of a turn.</summary>
+    /// <summary>The version that is written. Version 2 added the self-assessment (<c>estimate</c>) and the kind of a move (<c>moveKind</c>) of a turn.</summary>
     public const int Current = 2;
 
     /// <summary>The oldest version a reader still understands.</summary>
@@ -95,7 +95,10 @@ public sealed record MessageEvent(
     bool Truncated,
     IReadOnlyList<string> IdentityHits) : MatchEvent(At);
 
-/// <summary>The final outcome of one turn of one seat.</summary>
+/// <summary>
+/// The final outcome of one turn of one seat. <c>MoveKind</c> is written only for a resignation or a rule violation;
+/// null means a regular move (and is what every protocol of version 1 means).
+/// </summary>
 public sealed record TurnEvent(
     DateTimeOffset At,
     string TurnId,
@@ -109,7 +112,8 @@ public sealed record TurnEvent(
     int InvalidAnswers,
     int Refusals,
     int TokenLimitHits = 0,
-    int? Estimate = null) : MatchEvent(At);
+    int? Estimate = null,
+    MoveKind? MoveKind = null) : MatchEvent(At);
 
 /// <summary>A fact reported by the game.</summary>
 public sealed record FactEvent(

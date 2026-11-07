@@ -33,6 +33,7 @@ public sealed class LegacyProtocolTests : IDisposable
 
         Assert.NotEmpty(match.Turns());
         Assert.All(match.Turns(), turn => Assert.Null(turn.Estimate));
+        Assert.All(match.Turns(), turn => Assert.Null(turn.MoveKind));
         Assert.All(match.Events, e => Assert.Equal(1, e.SchemaVersion));
     }
 

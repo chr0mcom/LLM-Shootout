@@ -11,7 +11,12 @@ public enum SubmissionStatus
 }
 
 /// <summary>An answered turn, handed to the game together with the other turns of the same round.</summary>
-public sealed record TurnSubmission(string TurnId, Seat Seat, string? Move, SubmissionStatus Status);
+/// <param name="TurnId">The turn that was answered.</param>
+/// <param name="Seat">The seat that answered.</param>
+/// <param name="Move">The normalized move, or null if none was required or the attempts were exhausted.</param>
+/// <param name="Status">Whether a move was delivered.</param>
+/// <param name="Kind">What the move is: regular, resignation or rule violation. <see cref="MoveKind.Regular"/> without a move.</param>
+public sealed record TurnSubmission(string TurnId, Seat Seat, string? Move, SubmissionStatus Status, MoveKind Kind = MoveKind.Regular);
 
 /// <summary>Who may see a fact.</summary>
 public enum FactAudience

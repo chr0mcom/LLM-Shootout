@@ -122,6 +122,9 @@ höchstens {max} Wörter
 ## allowed.estimate
 eine ganze Zahl von 0 bis 100
 
+## fact.rule_violation
+Sitz {seat} hat in {turn} `{move}` gespielt. Die Regeln verbieten es (Code: {code}).
+
 ## sample.thought
 Zufälliger Zug.
 

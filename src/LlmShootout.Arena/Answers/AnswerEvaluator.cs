@@ -17,7 +17,10 @@ public enum AnswerClass
     Refusal,
 }
 
-/// <summary>Result of evaluating one answer against the rules of a turn.</summary>
+/// <summary>
+/// Result of evaluating one answer against the rules of a turn. <c>MoveKind</c> and <c>ViolationCode</c> describe an accepted
+/// move: a regular move, a resignation, or an action the rules forbid (all three are valid answers without a correction hint).
+/// </summary>
 public sealed record Evaluation(
     AnswerClass Class,
     string? Thought,
@@ -29,7 +32,9 @@ public sealed record Evaluation(
     IReadOnlyList<FieldViolation> Violations,
     IReadOnlyList<string> ExtraKeys,
     int? Estimate = null,
-    FieldViolation? DiscardedEstimate = null)
+    FieldViolation? DiscardedEstimate = null,
+    MoveKind MoveKind = MoveKind.Regular,
+    string? ViolationCode = null)
 {
     /// <summary>True if the answer can be used as it is.</summary>
     public bool IsValid => Class == AnswerClass.Valid;
@@ -53,11 +58,11 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
         var violations = new List<FieldViolation>();
         var (thought, thoughtCut) = CheckThought(turn, answer, violations);
         var (message, messageCut, silent) = CheckMessage(turn, answer, violations, isLastAttempt);
-        var move = CheckMove(turn, answer, game, violations);
+        var (move, kind, violationCode) = CheckMove(turn, answer, game, violations);
         var (estimate, discarded) = CheckEstimate(turn, answer, violations, isLastAttempt);
 
         var cls = !answer.HasJson || violations.Count > 0 ? ClassifyFailure(rawText) : AnswerClass.Valid;
-        return new Evaluation(cls, thought, thoughtCut, message, messageCut, silent, move, violations, answer.ExtraKeys, estimate, discarded);
+        return new Evaluation(cls, thought, thoughtCut, message, messageCut, silent, move, violations, answer.ExtraKeys, estimate, discarded, kind, violationCode);
     }
 
     private AnswerClass ClassifyFailure(string? rawText) =>
@@ -119,28 +124,28 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
         return (null, false, false);
     }
 
-    private string? CheckMove(TurnRequest turn, ParsedAnswer answer, IGame game, List<FieldViolation> violations)
+    private (string? Move, MoveKind Kind, string? ViolationCode) CheckMove(TurnRequest turn, ParsedAnswer answer, IGame game, List<FieldViolation> violations)
     {
         if (!answer.HasJson)
         {
-            return null;
+            return (null, MoveKind.Regular, null);
         }
 
         var text = answer.Move;
         if (turn.Move == FieldRule.Forbidden || text is null)
         {
             AddPresenceViolation("move", turn.Move, text, violations);
-            return null;
+            return (null, MoveKind.Regular, null);
         }
 
         var check = game.Check(turn, text);
         if (check.IsValid)
         {
-            return check.NormalizedMove;
+            return (check.NormalizedMove, check.Kind, check.ViolationCode);
         }
 
         violations.Add(new FieldViolation("move", prompts.RenderGame(check.Reason!), check.Allowed ?? AllowedFrom(turn), check.ErrorCode));
-        return null;
+        return (null, MoveKind.Regular, null);
     }
 
     private (int? Value, FieldViolation? Discarded) CheckEstimate(TurnRequest turn, ParsedAnswer answer, List<FieldViolation> violations, bool last)

@@ -36,7 +36,7 @@ message that names both versions. Readers must ignore unknown fields. `ProtocolV
 | Version | Change |
 |---|---|
 | 1 | First format. |
-| 2 | The self-assessment of a turn: `estimate` in `turn` events (and in `model_call.parsed`). Version 1 events have none. |
+| 2 | The self-assessment of a turn: `estimate` in `turn` events (and in `model_call.parsed`), and the kind of an accepted move: `moveKind` in `turn` events, plus the analysis fact `rule_violation`. Version 1 events have none; a missing `moveKind` reads as a regular move. |
 
 Naming: property names are camelCase; enum values are written by name (`Turn`, `Everyone`, `A`); keys of
 dictionaries are written unchanged (`A`, `B`, `rules_followed`, `split-or-steal`).
@@ -92,8 +92,14 @@ A public message became visible. `text` is absent for silence.
 ### `turn`
 
 The final outcome of a turn of a seat: the move, the status (`played` or `exhausted`), the private `thought`, the
-self-assessment `estimate` (version 2: a whole number from 0 to 100, absent if the turn did not ask for one or none was usable), and
+self-assessment `estimate` (version 2: a whole number from 0 to 100, absent if the turn did not ask for one or none was usable), the
+kind of the move `moveKind` (version 2: `Resignation` or `RuleViolation`, absent for a regular move and for a turn without a move), and
 counters: `attempts`, `invalidAnswers`, `refusals`, `tokenLimitHits`.
+
+A `RuleViolation` is a move that the game carries out although its rules forbid it (see [ADR 0018](decisions/0018-rule-violation-an-accepted-but-forbidden-action.md)).
+The arena accepts it at once, without a correction hint and without using up another attempt, and writes the fact `rule_violation`
+(below). A `Resignation` is a legal move with which a player gives the game up; the game decides what follows. `status: exhausted`
+is neither: the player never delivered an acceptable move, and the turn has no `moveKind`.
 
 ```json
 {"type":"turn","turnId":"guess-1","kind":"guess","seat":"A","move":"10","status":"played","thought":"...","thoughtTruncated":false,"attempts":1,"invalidAnswers":0,"refusals":0,"tokenLimitHits":0,"estimate":73,"at":"...","schemaVersion":2}
@@ -104,6 +110,16 @@ counters: `attempts`, `invalidAnswers`, `refusals`, `tokenLimitHits`.
 Something the game reports. `audience` is `Everyone`, `Seat` (only the named seat sees it in a prompt) or
 `Analysis` (never in a prompt, for example a Nim oracle verdict). `text` is the neutral wording ("Seat A"),
 `template` the key and values so that it can be reworded for a viewer, `data` machine readable details. Facts of a round are filed under the `turnId` of the turn of their seat; hidden starting state (dice, a drawn code) comes from `IGame.Start()` and has `turnId` `start`.
+
+The arena itself writes one fact: `rule_violation`, with the audience `Analysis`, for every turn whose `moveKind` is `RuleViolation`.
+It sits right after the `turn` event (and its `message` event) and before the facts of the game for that round, has the acting seat
+as `seat` and the `turnId` of the turn, and carries the `data` keys `code` (the name of the broken rule, chosen by the game), `move`
+and `turn`. It is never rendered into a prompt or into a debriefing. What the opponent may learn about the move is a separate, neutral
+fact that the game itself reports (for example "Seat A passes.", with the audience `Everyone`).
+
+```json
+{"type":"fact","turnId":"move-1","kind":"rule_violation","audience":"Analysis","seat":"A","text":"Seat A played `pass` in move-1. The rules forbid it (code: pass).","template":{"key":"fact.rule_violation","values":{"seat":"A","turn":"move-1","move":"pass","code":"pass"}},"data":{"code":"pass","move":"pass","turn":"move-1"},"at":"...","schemaVersion":2}
+```
 
 ```json
 {"type":"fact","turnId":"decide","kind":"decision","audience":"Everyone","seat":"A","text":"Decision (Seat A): split","template":{"key":"fact.decision","values":{"decision":"split"}},"data":{"decision":"split"},"at":"...","schemaVersion":1}
