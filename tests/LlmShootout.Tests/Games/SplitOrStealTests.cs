@@ -6,7 +6,7 @@ using LlmShootout.Games.SplitOrSteal;
 
 namespace LlmShootout.Tests.Games;
 
-public class SplitOrStealTests
+public sealed class SplitOrStealTests
 {
     private static readonly SplitOrStealDefinition Definition = new();
 

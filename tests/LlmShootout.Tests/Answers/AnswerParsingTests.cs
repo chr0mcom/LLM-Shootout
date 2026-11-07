@@ -7,7 +7,7 @@ using LlmShootout.Tests.TestGames;
 
 namespace LlmShootout.Tests.Answers;
 
-public class AnswerParsingTests
+public sealed class AnswerParsingTests
 {
     [Fact]
     public void Reads_plain_json()

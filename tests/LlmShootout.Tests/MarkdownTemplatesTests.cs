@@ -3,7 +3,7 @@ using LlmShootout.Arena.Templates;
 
 namespace LlmShootout.Tests;
 
-public class MarkdownTemplatesTests
+public sealed class MarkdownTemplatesTests
 {
     private static readonly MarkdownTemplates Templates = MarkdownTemplates.FromText(new Dictionary<string, string>
     {

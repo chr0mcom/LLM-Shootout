@@ -16,7 +16,7 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
         ]}
         """;
 
-    private readonly string _cache = Path.Combine(Path.GetTempPath(), "llm-shootout-tests", Guid.NewGuid().ToString("N"));
+    private readonly string _cache = TempDirectory.Create("tests");
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 11, 6, 12, 0, 0, TimeSpan.Zero));
 
     public void Dispose()

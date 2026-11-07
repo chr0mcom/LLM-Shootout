@@ -10,7 +10,7 @@ namespace LlmShootout.Tests;
 
 public sealed class MatchHarness : IDisposable
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "llm-shootout-tests", Guid.NewGuid().ToString("N"));
+    private readonly string _root = TempDirectory.Create("tests");
 
     public MatchHarness(decimal maxCostUsd = 100m)
     {

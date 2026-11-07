@@ -5,7 +5,7 @@ namespace LlmShootout.Tests.Cli;
 /// <summary>Runs the built application as a child process, the way a reader would.</summary>
 public sealed class CliProcessTests : IDisposable
 {
-    private readonly string _work = Path.Combine(Path.GetTempPath(), "llm-shootout-cli", Guid.NewGuid().ToString("N"));
+    private readonly string _work = TempDirectory.Create("cli");
 
     public void Dispose()
     {

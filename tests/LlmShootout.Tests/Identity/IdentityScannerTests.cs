@@ -2,7 +2,7 @@ using LlmShootout.Arena.Identity;
 
 namespace LlmShootout.Tests.Identity;
 
-public class IdentityScannerTests
+public sealed class IdentityScannerTests
 {
     private static readonly IdentityScannerSettings Defaults = new();
 

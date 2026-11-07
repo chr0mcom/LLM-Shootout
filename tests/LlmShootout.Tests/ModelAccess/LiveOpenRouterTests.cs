@@ -12,7 +12,7 @@ namespace LlmShootout.Tests.ModelAccess;
 /// Talks to the real OpenRouter. Runs only with OPENROUTER_API_KEY and LLMSHOOTOUT_LIVE_TESTS=1; costs a few cents.
 /// The model can be changed with LLMSHOOTOUT_LIVE_MODEL.
 /// </summary>
-public class LiveOpenRouterTests
+public sealed class LiveOpenRouterTests
 {
     private static bool Enabled =>
         Environment.GetEnvironmentVariable("LLMSHOOTOUT_LIVE_TESTS") == "1"
@@ -28,7 +28,7 @@ public class LiveOpenRouterTests
         var catalog = new ModelCatalog(new HttpClient { BaseAddress = options.BaseAddress }, options, TimeProvider.System);
         var factory = new PlayerFactory(options, catalog, TimeProvider.System);
         var player = await factory.CreateAsync(slug, 1, TestContext.Current.CancellationToken);
-        var directory = Path.Combine(Path.GetTempPath(), "llm-shootout-live", Guid.NewGuid().ToString("N"));
+        var directory = TempDirectory.Create("live");
 
         try
         {

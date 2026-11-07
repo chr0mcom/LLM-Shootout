@@ -13,7 +13,7 @@ internal sealed class ShootoutFactory(bool blockingPlayers = false, int loginAtt
 {
     public const string Password = "correct-horse-battery";
 
-    public string Root { get; } = root ?? Path.Combine(Path.GetTempPath(), "llm-shootout-web-tests", Guid.NewGuid().ToString("N"));
+    public string Root { get; } = root ?? TempDirectory.Create("web");
 
     public string Matches => Path.Combine(Root, "matches");
 

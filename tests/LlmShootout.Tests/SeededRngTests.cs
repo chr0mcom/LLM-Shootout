@@ -2,7 +2,7 @@ using LlmShootout.Arena.Randomness;
 
 namespace LlmShootout.Tests;
 
-public class SeededRngTests
+public sealed class SeededRngTests
 {
     [Fact]
     public void Same_seed_yields_same_sequence()

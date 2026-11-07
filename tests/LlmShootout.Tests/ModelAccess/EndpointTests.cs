@@ -10,7 +10,7 @@ public sealed class EndpointTests : IDisposable
 {
     private const string ProxyModels = """{"object":"list","data":[{"id":"claude-sonnet-latest","object":"model","owned_by":"anthropic"},{"id":"claude-opus-5-5"}]}""";
 
-    private readonly string _cache = Path.Combine(Path.GetTempPath(), "llm-shootout-tests", Guid.NewGuid().ToString("N"));
+    private readonly string _cache = TempDirectory.Create("tests");
 
     public void Dispose()
     {

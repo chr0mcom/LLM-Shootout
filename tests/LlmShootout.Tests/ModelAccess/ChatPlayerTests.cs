@@ -5,7 +5,7 @@ using LlmShootout.Arena.Players;
 
 namespace LlmShootout.Tests.ModelAccess;
 
-public class ChatPlayerTests
+public sealed class ChatPlayerTests
 {
     private const string Key = "sk-or-v1-SUPERSECRETKEY";
 

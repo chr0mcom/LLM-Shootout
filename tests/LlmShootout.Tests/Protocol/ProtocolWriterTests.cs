@@ -8,7 +8,7 @@ public sealed class ProtocolWriterTests
     [Fact]
     public async Task Protocol_writer_appends_lines_that_survive_reopening()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "llm-shootout-tests", Guid.NewGuid().ToString("N"));
+        var dir = TempDirectory.Create("tests");
         try
         {
             await using (var writer = new ProtocolWriter(dir))
