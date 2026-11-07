@@ -48,6 +48,23 @@ Entscheidung (Sitz B): steal
 Auszahlung (Sitz B): 100 Punkte
 
 
+## Regeltreue
+
+Abgelehnte Antworten wurden mit einem Korrekturhinweis wiederholt. Ein Regelverstoß ist ein Zug, den das Spiel angenommen und ausgeführt hat, obwohl die Regeln ihn verbieten. Ein Zug ist erschöpft, wenn der Spieler in keinem Versuch einen annehmbaren Zug geliefert hat. Die drei Fälle werden getrennt gezählt.
+
+| Kennzahl | Sitz A | Sitz B |
+|---|---|---|
+| Abgelehnte Antworten: ungültig | 0 | 0 |
+| Abgelehnte Antworten: Verweigerungen | 0 | 0 |
+| Abgelehnte Antworten: durch das Längenlimit abgeschnitten | 0 | 0 |
+| Regelverstöße | 0 | 0 |
+| Aufgaben | 0 | 0 |
+| Erschöpfte Züge (in keinem Versuch ein annehmbarer Zug) | 0 | 0 |
+| Antwort der Nachbefragung auf „rules_followed“ | true | true |
+
+Es wurden keine Regelverstöße festgehalten.
+
+
 ## Gedanken (privat, nur für die Auswertung)
 
 Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Protokoll.
@@ -72,9 +89,6 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 |---|---|---|
 | Modell (angefordert / geliefert) | random / - | random / - |
 | Züge | 4 | 4 |
-| Regelwidrige oder ungültige Antworten | 0 | 0 |
-| Verweigerungen | 0 | 0 |
-| Durch das Längenlimit abgeschnittene Antworten | 0 | 0 |
 | Gekürzte Gedanken | 0 | 0 |
 | Gekürzte Nachrichten | 0 | 0 |
 | Schweigen | 0 | 0 |

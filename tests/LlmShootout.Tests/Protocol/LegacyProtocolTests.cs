@@ -48,4 +48,21 @@ public sealed class LegacyProtocolTests : IDisposable
         Assert.Equal("split-or-steal", summary.GameId);
         Assert.Contains("Split or Steal", report, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void The_rule_compliance_section_of_an_old_protocol_shows_only_what_the_protocol_records()
+    {
+        var match = LoadVersion1();
+
+        var report = MatchReportWriter.BuildReport(new SplitOrStealDefinition(), match);
+        var summary = MatchReportWriter.Summarize(match);
+
+        Assert.Contains("## Regeltreue", report, StringComparison.Ordinal);
+        Assert.Contains("| Abgelehnte Antworten: ungültig |", report, StringComparison.Ordinal);
+        Assert.Contains("| Erschöpfte Züge (in keinem Versuch ein annehmbarer Zug) |", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("| Regelverstöße |", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("| Aufgaben |", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("Es wurden keine Regelverstöße festgehalten", report, StringComparison.Ordinal);
+        Assert.False(summary.ResultWithRuleViolation);
+    }
 }

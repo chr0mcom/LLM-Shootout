@@ -144,7 +144,7 @@ limit, timeout, failure), `130` cancelled with Ctrl+C, `1` unexpected error. Eve
 matches/<date>_<game>_<a>_vs_<b>_01/
 ├─ events.jsonl   complete protocol: exact prompts, unchanged answers, reasoning, tokens, cost, latency, generation ids
 ├─ match.json     summary and key figures
-└─ report.md      readable account: history, private thoughts kept apart, figures, debriefing side by side
+└─ report.md      readable account: history, rule compliance, private thoughts kept apart, figures, debriefing side by side
 ```
 
 The three channels of an answer are kept apart: a private **thought** (only the player and the protocol see it), a

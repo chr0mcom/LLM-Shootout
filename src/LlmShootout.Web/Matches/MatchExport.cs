@@ -2,6 +2,7 @@ using System.Globalization;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
+using LlmShootout.Arena.Reports;
 
 namespace LlmShootout.Web.Matches;
 
@@ -29,6 +30,7 @@ internal static class MatchExport
             Row("First seat", match.Started.FirstSeat.ToString()),
             Row("Seed", match.Started.Seed),
             Row("Outcome", match.Result?.Outcome ?? "not finished"),
+            Row("Result with rule violation", PlayMetrics.ResultWithRuleViolation(match) ? "yes" : "no"),
         };
         if (match.Aborted is { } aborted)
         {
@@ -45,6 +47,7 @@ internal static class MatchExport
             rows.Add(Row($"Seat {seat}: result", result?.Label));
             rows.Add(Row($"Seat {seat}: invalid answers", match.InvalidAnswers(seat)));
             rows.Add(Row($"Seat {seat}: refusals", match.Refusals(seat)));
+            rows.Add(Row($"Seat {seat}: rule violations", PlayMetrics.For(match, seat).RuleViolations));
         }
 
         rows.Add(Row("Model calls", match.Calls.Count()));

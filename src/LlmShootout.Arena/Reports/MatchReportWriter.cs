@@ -35,6 +35,7 @@ public static class MatchReportWriter
             started.Seed,
             started.FirstSeat,
             match.Result?.Outcome,
+            PlayMetrics.ResultWithRuleViolation(match),
             seats,
             match.CostUsd,
             match.CostEstimatedCalls,
@@ -51,6 +52,7 @@ public static class MatchReportWriter
         var infos = calls.Select(c => c.Call).OfType<Players.ModelCallInfo>().ToArray();
         var player = match.Started.Players[seat];
         var result = match.Result?.Seats[seat];
+        var play = PlayMetrics.For(match, seat);
         return new SeatSummary(
             player.Name,
             player.RequestedModel,
@@ -58,9 +60,12 @@ public static class MatchReportWriter
             result?.Score,
             result?.Label,
             match.Turns(seat).Count(),
-            match.InvalidAnswers(seat),
-            match.Refusals(seat),
-            match.TokenLimitHits(seat),
+            play.InvalidAnswers,
+            play.Refusals,
+            play.TokenLimitHits,
+            play.RuleViolations,
+            play.Resignations,
+            play.ExhaustedTurns,
             match.Turns(seat).Count(t => t.ThoughtTruncated),
             match.Messages(seat).Count(m => m.Truncated),
             match.Messages(seat).Count(m => m.Silent),
@@ -89,6 +94,7 @@ public static class MatchReportWriter
             sb.AppendLine().AppendLine("## " + section.Title).AppendLine().AppendLine(section.Markdown);
         }
 
+        RuleComplianceSection.Append(sb, match, t);
         AppendThoughts(sb, match, t);
         AppendMetrics(sb, summary, t);
         AppendDebrief(sb, match, t);
@@ -213,9 +219,6 @@ public static class MatchReportWriter
         sb.AppendLine("## " + t["report.metrics"]).AppendLine().AppendLine(t["report.metrics.header"]);
         SeatRow(sb, t["report.metric.model"], s, x => $"{x.RequestedModel ?? x.Player} / {x.DeliveredModel ?? "-"}");
         SeatRow(sb, t["report.metric.turns"], s, x => x.Turns.ToString(CultureInfo.InvariantCulture));
-        SeatRow(sb, t["report.metric.invalid"], s, x => x.InvalidAnswers.ToString(CultureInfo.InvariantCulture));
-        SeatRow(sb, t["report.metric.refusals"], s, x => x.Refusals.ToString(CultureInfo.InvariantCulture));
-        SeatRow(sb, t["report.metric.token_limit"], s, x => x.TokenLimitHits.ToString(CultureInfo.InvariantCulture));
         SeatRow(sb, t["report.metric.thoughts_truncated"], s, x => x.ThoughtsTruncated.ToString(CultureInfo.InvariantCulture));
         SeatRow(sb, t["report.metric.messages_truncated"], s, x => x.MessagesTruncated.ToString(CultureInfo.InvariantCulture));
         SeatRow(sb, t["report.metric.silent"], s, x => x.SilentMessages.ToString(CultureInfo.InvariantCulture));

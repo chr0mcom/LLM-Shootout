@@ -146,10 +146,32 @@ The model calls of the debriefing are `model_call` events with `purpose: Debrief
 
 ## match.json
 
-Numbers only, computed from the protocol: game, date, duration, `aborted`, `outcome`, and per seat the player, requested
-and delivered model, score and label, turns, invalid answers, refusals, token-limit hits, shortened thoughts and
+Numbers only, computed from the protocol: game, date, duration, `aborted`, `outcome`, `resultWithRuleViolation`, and per seat the
+player, requested and delivered model, score and label, turns, the counts described below, shortened thoughts and
 messages, silences, identity hits, tokens, cost and whether the debriefing was valid. Plus total cost, number of
 calls, number of calls with unknown cost, version, commit and template hashes.
+
+The counts of a seat come from one class (`PlayMetrics`), which the report, `match.json` and the series metrics of a game share:
+
+| Key | Counts |
+|---|---|
+| `invalidAnswers`, `refusals`, `tokenLimitHits` | rejected answers, split by why they were rejected: not usable, declined to play, cut off by the output limit |
+| `ruleViolations` | accepted moves that the rules forbid (`moveKind: RuleViolation`) |
+| `resignations` | turns in which the seat gave the game up (`moveKind: Resignation`) |
+| `exhaustedTurns` | turns that ended `exhausted`: no acceptable move in any attempt. Not a rule violation |
+
+`resultWithRuleViolation` is true if the game ended and either seat made an accepted but forbidden move before the end. It is false for
+a match that was aborted before a result. The mark exists only in `match.json` and in the report: it is never part of a prompt or of
+the context of the debriefing, which sees the outcome and the labels of the game exactly as the game reports them. A protocol of version 1
+has no kinds of move, so its counts of violations and resignations are 0 and the report leaves those rows out.
+
+## report.md
+
+Overview, result, history (with the analysis facts marked), the sections of the game's analyzer, **Rule compliance**, the private thoughts
+kept apart, the figures per seat and the debriefing of both seats side by side. The section Rule compliance is the same for every game:
+the rejected answers per player (invalid, refusals, cut off by the length limit), the rule violations per player with turn, move and the name of the
+broken rule, resignations, and the exhausted turns **apart from** the violations. Next to the counted behavior it shows the answer to the
+debriefing question `rules_followed` (only if the debriefing asked it), and it marks a result that was reached with a rule violation.
 
 ## series.json
 

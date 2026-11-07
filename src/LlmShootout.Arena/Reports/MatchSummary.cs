@@ -4,7 +4,11 @@ using LlmShootout.Arena.Games;
 
 namespace LlmShootout.Arena.Reports;
 
-/// <summary>Numbers of one seat in one match.</summary>
+/// <summary>
+/// Numbers of one seat in one match. <c>InvalidAnswers</c>, <c>Refusals</c> and <c>TokenLimitHits</c> count rejected answers,
+/// <c>RuleViolations</c> accepted moves that the rules forbid, <c>Resignations</c> given-up games, and <c>ExhaustedTurns</c> turns
+/// without an acceptable move after all attempts; the last three are separate from each other and from the rejected answers.
+/// </summary>
 public sealed record SeatSummary(
     string Player,
     string? RequestedModel,
@@ -15,6 +19,9 @@ public sealed record SeatSummary(
     int InvalidAnswers,
     int Refusals,
     int TokenLimitHits,
+    int RuleViolations,
+    int Resignations,
+    int ExhaustedTurns,
     int ThoughtsTruncated,
     int MessagesTruncated,
     int SilentMessages,
@@ -25,7 +32,10 @@ public sealed record SeatSummary(
     decimal CostUsd,
     bool? DebriefValid);
 
-/// <summary>The content of <c>match.json</c>: everything the report shows, as numbers.</summary>
+/// <summary>
+/// The content of <c>match.json</c>: everything the report shows, as numbers. <c>ResultWithRuleViolation</c> is true if the game
+/// ended and a seat made an accepted but forbidden move before the end. It appears here and in the report only, never in a prompt or a debriefing.
+/// </summary>
 public sealed record MatchSummary(
     string GameId,
     DateTimeOffset StartedAt,
@@ -37,6 +47,7 @@ public sealed record MatchSummary(
     long Seed,
     Seat FirstSeat,
     string? Outcome,
+    bool ResultWithRuleViolation,
     IReadOnlyDictionary<Seat, SeatSummary> Seats,
     decimal CostUsd,
     int CostEstimatedCalls,

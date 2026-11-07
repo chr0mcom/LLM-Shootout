@@ -48,6 +48,23 @@ Decision (Seat B): steal
 Payout (Seat B): 100 points
 
 
+## Rule compliance
+
+Rejected answers were repeated with a correction hint. A rule violation is a move that the game accepted and carried out although its rules forbid it. A turn is exhausted if the player delivered no acceptable move in any attempt. The three are counted separately.
+
+| Metric | Seat A | Seat B |
+|---|---|---|
+| Rejected answers: invalid | 0 | 0 |
+| Rejected answers: refusals | 0 | 0 |
+| Rejected answers: cut off by the length limit | 0 | 0 |
+| Rule violations | 0 | 0 |
+| Resignations | 0 | 0 |
+| Exhausted turns (no acceptable move in any attempt) | 0 | 0 |
+| Debriefing answer to "rules_followed" | true | true |
+
+No rule violations were recorded.
+
+
 ## Thoughts (private, for the analysis only)
 
 The opponent never saw these thoughts. The exact wording is in the protocol.
@@ -72,9 +89,6 @@ The opponent never saw these thoughts. The exact wording is in the protocol.
 |---|---|---|
 | Model (requested / delivered) | random / - | random / - |
 | Turns | 4 | 4 |
-| Invalid or rule-breaking answers | 0 | 0 |
-| Refusals | 0 | 0 |
-| Answers cut off by the length limit | 0 | 0 |
 | Shortened thoughts | 0 | 0 |
 | Shortened messages | 0 | 0 |
 | Silence | 0 | 0 |

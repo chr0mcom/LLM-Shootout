@@ -323,6 +323,45 @@ The opponent never saw these thoughts. The exact wording is in the protocol.
 ## report.thoughts.line
 - {turn}: {thought}{flag}
 
+## report.rules
+Rule compliance
+
+## report.rules.note
+Rejected answers were repeated with a correction hint. A rule violation is a move that the game accepted and carried out although its rules forbid it. A turn is exhausted if the player delivered no acceptable move in any attempt. The three are counted separately.
+
+## report.rules.rejected_invalid
+Rejected answers: invalid
+
+## report.rules.rejected_refusal
+Rejected answers: refusals
+
+## report.rules.rejected_length
+Rejected answers: cut off by the length limit
+
+## report.rules.violations
+Rule violations
+
+## report.rules.resignations
+Resignations
+
+## report.rules.exhausted
+Exhausted turns (no acceptable move in any attempt)
+
+## report.rules.debrief_answer
+Debriefing answer to "rules_followed"
+
+## report.rules.violation_list
+Rule violations in order:
+
+## report.rules.violation_line
+- {speaker}, {turn}: `{move}` (rule: {code})
+
+## report.rules.none
+No rule violations were recorded.
+
+## report.rules.result_flag
+**Result reached with a rule violation.**
+
 ## report.metrics
 Metrics
 
@@ -335,15 +374,6 @@ Model (requested / delivered)
 
 ## report.metric.turns
 Turns
-
-## report.metric.invalid
-Invalid or rule-breaking answers
-
-## report.metric.refusals
-Refusals
-
-## report.metric.token_limit
-Answers cut off by the length limit
 
 ## report.metric.thoughts_truncated
 Shortened thoughts

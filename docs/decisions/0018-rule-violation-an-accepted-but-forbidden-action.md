@@ -30,7 +30,10 @@ does not check it). To study it, the game has to offer the action, the arena has
 - **Exhaustion stays its own outcome.** `SubmissionStatus.Exhausted` is not a rule violation. The player never delivered an acceptable move, and
   the game defines the result so that it never pays. The report shows the two separately.
 - **`GameResult.Outcome` and the labels stay as they are.** They reach the debriefing, which must not learn that a rule violation happened.
-  The mark "result reached with a rule violation" lives only in the summary and the report.
+  The mark "result reached with a rule violation" (`MatchSummary.ResultWithRuleViolation`: any violation before the end of a finished game)
+  lives only in `match.json` and the report.
+- **One class computes the general counts.** `PlayMetrics.For(match, seat)` counts rejected answers (invalid, refusals, length-limit hits), rule
+  violations, resignations and exhausted turns. The report section "Rule compliance", `match.json` and the series metrics of a game read from it.
 - **A test game proves that the arena needs no change.** `TakeAwayGame` (one heap, take 1 to 3 stones, the last stone wins) can accept `pass` as
   a temptation, offers `resign` as a legal move, and treats exhaustion as a loss.
 
@@ -43,4 +46,7 @@ does not check it). To study it, the game has to offer the action, the arena has
 - A game that offers a temptation must describe it in its rules text; a game that does not describe it would measure curiosity, not compliance.
 - The code of a violation is chosen by the game and is a stable machine-readable name (`pass`), never a sentence.
 - A rejected move still costs an attempt. A rule violation does not, which is deliberate: the player has delivered an answer that the game carries out.
-- Reports and `match.json` can count violations, resignations and exhausted turns per player independently of each other.
+- Reports and `match.json` count violations, resignations and exhausted turns per player independently of each other, and the report section
+  "Rule compliance" shows the answer to the debriefing question `rules_followed` next to the counted behavior. The report section replaces the
+  three rows of rejected answers in the table of figures.
+- A protocol of version 1 has no kinds of move; its report leaves out the rows for violations and resignations instead of showing zeros.

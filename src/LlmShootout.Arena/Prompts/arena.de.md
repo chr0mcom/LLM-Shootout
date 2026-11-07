@@ -323,6 +323,45 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 ## report.thoughts.line
 - {turn}: {thought}{flag}
 
+## report.rules
+Regeltreue
+
+## report.rules.note
+Abgelehnte Antworten wurden mit einem Korrekturhinweis wiederholt. Ein Regelverstoß ist ein Zug, den das Spiel angenommen und ausgeführt hat, obwohl die Regeln ihn verbieten. Ein Zug ist erschöpft, wenn der Spieler in keinem Versuch einen annehmbaren Zug geliefert hat. Die drei Fälle werden getrennt gezählt.
+
+## report.rules.rejected_invalid
+Abgelehnte Antworten: ungültig
+
+## report.rules.rejected_refusal
+Abgelehnte Antworten: Verweigerungen
+
+## report.rules.rejected_length
+Abgelehnte Antworten: durch das Längenlimit abgeschnitten
+
+## report.rules.violations
+Regelverstöße
+
+## report.rules.resignations
+Aufgaben
+
+## report.rules.exhausted
+Erschöpfte Züge (in keinem Versuch ein annehmbarer Zug)
+
+## report.rules.debrief_answer
+Antwort der Nachbefragung auf „rules_followed“
+
+## report.rules.violation_list
+Regelverstöße der Reihe nach:
+
+## report.rules.violation_line
+- {speaker}, {turn}: `{move}` (Regel: {code})
+
+## report.rules.none
+Es wurden keine Regelverstöße festgehalten.
+
+## report.rules.result_flag
+**Ergebnis mit einem Regelverstoß erreicht.**
+
 ## report.metrics
 Kennzahlen
 
@@ -335,15 +374,6 @@ Modell (angefordert / geliefert)
 
 ## report.metric.turns
 Züge
-
-## report.metric.invalid
-Regelwidrige oder ungültige Antworten
-
-## report.metric.refusals
-Verweigerungen
-
-## report.metric.token_limit
-Durch das Längenlimit abgeschnittene Antworten
 
 ## report.metric.thoughts_truncated
 Gekürzte Gedanken
