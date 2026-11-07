@@ -24,7 +24,7 @@ directories; a series that was not read from a file uses the id of the game. A s
   requested and delivered model, the OpenRouter generation id, tokens, cost, latency and the raw HTTP exchange (without headers, so without the API key).
 - **Derived data lives elsewhere.** `report.md`, `match.json` and repeated debriefings are separate
   files. A test checks that `events.jsonl` stays byte-identical.
-- **Readable.** Umlauts are written as they are (not as `ä`), so lines can be quoted.
+- **Readable.** Umlauts are written as they are (not as the escape sequence `\u00e4`), so lines can be quoted.
 
 ## Versioning
 

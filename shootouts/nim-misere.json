@@ -1,5 +1,5 @@
 {
-  // Misere Nim: whoever takes the last stone loses. Two matches on the heaps 3, 4 and 5 with swapped starting seats.
+  // Misère Nim: whoever takes the last stone loses. Two matches on the heaps 3, 4 and 5 with swapped starting seats.
   // Pass the two models with --a and --b.
   "game": "nim",
   "seed": 2029,

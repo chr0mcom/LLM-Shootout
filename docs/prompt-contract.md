@@ -25,7 +25,7 @@ The hash of each file is stored in the `match_started` event, so a protocol says
 
 Every call builds the prompt from scratch (see [ADR 0004](decisions/0004-stateless-prompts-and-timeline.md)):
 
-1. **System message:** a short introduction, the kind of opponent, and the rules and role of the seat.
+1. **System message:** a short introduction that calls the other player "your opponent", and the rules and role of the seat.
 2. **User message**, with four sections:
    - *Current situation*: the state the game shows this seat (a board, own dice, the phase).
    - *History so far*: public messages and public game facts in order, from the seat's point of view ("You",

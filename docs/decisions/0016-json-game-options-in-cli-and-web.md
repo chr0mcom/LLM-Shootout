@@ -10,7 +10,7 @@ with options could only be played with its defaults from the page.
 ## Decision
 - `RunOptionSet.ParseGameOptions` reads every value with `JsonNode.Parse` first. If that throws a `JsonException`, the value is text.
   `pot=1000` is a number, `misere=true` a boolean, `heaps=[1,4,5]` an array, `limits={"count":3,"max":9}` an object, `temptation=pass`
-  text, and `x="1"` forces the text 1. The pair is split at the first `=`; key and value are trimmed.
+  text, and `--game-option 'x="1"'` forces the text 1 (the single quotes keep the shell from removing the double quotes). The pair is split at the first `=`; key and value are trimmed.
 - The same key twice is a `UsageException`; before, the last value silently won.
 - Compatibility: values that were numbers or booleans before and read the same as JSON do not change. Differences, all in values that no
   game used so far: `1.5` is now a number (it was text), `null` is the JSON null (it was text), and `007`, `+5` and `True` are text (the
