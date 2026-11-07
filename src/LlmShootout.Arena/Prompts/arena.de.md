@@ -1,4 +1,4 @@
-# Arena-Vorlagen (Deutsch). Version 1. Jede Änderung ändert den Hash im Protokoll.
+# Arena-Vorlagen (Deutsch). Jede Änderung ändert den Hash im Protokoll.
 
 ## system
 Du nimmst an einem Experiment teil. Zwei Sprachmodelle spielen ein Spiel gegeneinander. Dein Gegner ist {opponent}.

@@ -74,7 +74,7 @@ public sealed class MatchRecord
     /// <summary>Refusals of a seat.</summary>
     public int Refusals(Seat seat) => Turns(seat).Sum(t => t.Refusals);
 
-    /// <summary>The decision of a seat from the <c>decision</c> fact, or null.</summary>
+    /// <summary>A value from the data of the first fact of a kind about a seat (for example the decision of Split or Steal), or null.</summary>
     public string? FactData(Seat seat, string kind, string key) =>
         Facts.FirstOrDefault(f => f.Kind == kind && f.Seat == seat)?.Data?.GetValueOrDefault(key);
 

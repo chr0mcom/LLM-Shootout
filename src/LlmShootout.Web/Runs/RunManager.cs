@@ -7,6 +7,7 @@ using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Randomness;
 using LlmShootout.Arena.Reports;
 using LlmShootout.Arena.Series;
+using LlmShootout.Arena.Templates;
 using LlmShootout.Games;
 using Microsoft.Extensions.Options;
 
@@ -106,7 +107,7 @@ internal sealed class RunManager(IPlayerSource players, UsageLedger usage, IOpti
     {
         var definition = GameCatalog.Find(request.Game ?? string.Empty)
             ?? throw new StartRejectedException($"Unknown game '{request.Game}'. Available: {string.Join(", ", GameCatalog.All.Select(g => g.Id))}.");
-        var language = (request.Language ?? "de").ToLowerInvariant();
+        var language = (request.Language ?? ArenaTemplates.DefaultLanguage).ToLowerInvariant();
         if (language is not ("de" or "en"))
         {
             throw new StartRejectedException("Language must be 'de' or 'en'.");

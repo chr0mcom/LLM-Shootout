@@ -3,6 +3,7 @@ using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.Reports;
 using LlmShootout.Arena.Series;
+using LlmShootout.Arena.Templates;
 using LlmShootout.Cli.Output;
 using Spectre.Console;
 
@@ -45,7 +46,7 @@ public static class SeriesCommand
                 },
             };
 
-            var plan = new SeriesPlan(definition, series, players.A, players.B, settings.Language ?? series.Language ?? "de", settings.Match, directory);
+            var plan = new SeriesPlan(definition, series, players.A, players.B, settings.Language ?? series.Language ?? ArenaTemplates.DefaultLanguage, settings.Match, directory);
             var summary = await runner.RunAsync(plan, ct);
 
             env.Console.WriteLine(settings.Quiet ? directory : $"Series report: {Path.Combine(directory, SeriesReportWriter.ReportFile)}");

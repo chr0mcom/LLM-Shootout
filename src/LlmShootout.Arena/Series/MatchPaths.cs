@@ -9,11 +9,11 @@ public static class MatchPaths
 {
     /// <summary>The next free directory for a single match.</summary>
     public static string Match(string baseDirectory, DateTimeOffset date, string gameId, string playerA, string playerB) =>
-        Unique(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}");
+        FirstFree(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}", i => string.Create(CultureInfo.InvariantCulture, $"_{i:00}"));
 
     /// <summary>The next free directory for a series.</summary>
     public static string Series(string baseDirectory, DateTimeOffset date, string gameId, string playerA, string playerB) =>
-        Unique(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}_series");
+        FirstFree(baseDirectory, $"{date:yyyy-MM-dd}_{gameId}_{Slug(playerA)}_vs_{Slug(playerB)}_series", i => i == 1 ? string.Empty : $"-{i}");
 
     /// <summary>The directory of match <paramref name="number"/> (1-based) inside a series directory.</summary>
     public static string SeriesMatch(string seriesDirectory, int number, bool communication, Seat firstSeat) =>
@@ -29,16 +29,7 @@ public static class MatchPaths
         return slug.Length == 0 ? "player" : slug;
     }
 
-    private static string Unique(string baseDirectory, string name)
-    {
-        if (name.EndsWith("_series", StringComparison.Ordinal))
-        {
-            return FirstFree(baseDirectory, name, suffix: i => i == 1 ? string.Empty : $"-{i}");
-        }
-
-        return FirstFree(baseDirectory, name, suffix: i => string.Create(CultureInfo.InvariantCulture, $"_{i:00}"));
-    }
-
+    /// <summary>The first name that is free in the folder; <paramref name="suffix"/> turns the attempt number into the ending (the first attempt may have none).</summary>
     private static string FirstFree(string baseDirectory, string name, Func<int, string> suffix)
     {
         for (var i = 1; ; i++)

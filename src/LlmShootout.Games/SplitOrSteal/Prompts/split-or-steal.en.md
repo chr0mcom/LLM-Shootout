@@ -1,4 +1,4 @@
-# Split or Steal (English). Version 1. Every change alters the hash in the protocol.
+# Split or Steal (English). Every change alters the hash in the protocol.
 
 ## rules.talk
 The game is called Split or Steal. There is a pot of {pot} points in the middle. You and your opponent play exactly one round.

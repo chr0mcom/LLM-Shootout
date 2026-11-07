@@ -27,6 +27,9 @@ public sealed record SeriesPlan(
 /// <summary>Runs the matches of a series one after the other and writes <c>series.json</c> and <c>series-report.md</c>.</summary>
 public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
 {
+    internal const int RandomSeedOffsetA = 1000;
+    internal const int RandomSeedOffsetB = 2000;
+
     /// <summary>Called after each finished match, for progress output.</summary>
     public Action<int, MatchOutcome>? OnMatchFinished { get; set; }
 
@@ -34,7 +37,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
     public async Task<SeriesSummary> RunAsync(SeriesPlan plan, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        PlanMatches(plan);
+        ValidateGameOptions(plan);
         var records = new List<MatchRecord>();
         var number = 0;
         foreach (var match in plan.File.Matches)
@@ -70,7 +73,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
         return new MatchPlan(
             plan.Definition,
             new GameSetup(seed, match.Communication, plan.Language, first, match.Options),
-            new Dictionary<Seat, IPlayer> { [Seat.A] = Fresh(plan.PlayerA, seed + 1), [Seat.B] = Fresh(plan.PlayerB, seed + 2) },
+            new Dictionary<Seat, IPlayer> { [Seat.A] = Fresh(plan.PlayerA, seed + RandomSeedOffsetA), [Seat.B] = Fresh(plan.PlayerB, seed + RandomSeedOffsetB) },
             plan.Options with { RevealIdentity = match.RevealIdentity },
             MatchPaths.SeriesMatch(plan.Directory, number, match.Communication, first));
     }
@@ -78,7 +81,8 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
     /// <summary>Random players are created anew for every match from the match seed, so a match does not depend on the matches before it.</summary>
     private static IPlayer Fresh(IPlayer player, long seed) => player is RandomPlayer ? new RandomPlayer(seed) : player;
 
-    private static void PlanMatches(SeriesPlan plan)
+    /// <summary>Creates every game once, so that wrong options are found before the first paid match.</summary>
+    private static void ValidateGameOptions(SeriesPlan plan)
     {
         var number = 0;
         foreach (var match in plan.File.Matches)

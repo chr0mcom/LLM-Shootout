@@ -1,4 +1,4 @@
-# Arena templates (English). Version 1. Every change alters the hash in the protocol.
+# Arena templates (English). Every change alters the hash in the protocol.
 
 ## system
 You are taking part in an experiment. Two language models play a game against each other. Your opponent is {opponent}.

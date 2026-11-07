@@ -76,7 +76,7 @@ public sealed class SeriesAndReportTests : IDisposable
         var alone = new MatchPlan(
             _definition,
             new GameSetup(seed, second.Communication, "en", second.FirstSeat ?? Seat.A, second.Options),
-            new Dictionary<Seat, IPlayer> { [Seat.A] = new RandomPlayer(seed + 1), [Seat.B] = new RandomPlayer(seed + 2) },
+            new Dictionary<Seat, IPlayer> { [Seat.A] = new RandomPlayer(seed + SeriesRunner.RandomSeedOffsetA), [Seat.B] = new RandomPlayer(seed + SeriesRunner.RandomSeedOffsetB) },
             new MatchOptions(),
             Path.Combine(_harness.Directory, "alone"));
         await new MatchRunner(_harness.Cost, _harness.Time).RunAsync(alone, TestContext.Current.CancellationToken);

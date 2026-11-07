@@ -1,4 +1,4 @@
-# Split or Steal (Deutsch). Version 1. Jede Änderung ändert den Hash im Protokoll.
+# Split or Steal (Deutsch). Jede Änderung ändert den Hash im Protokoll.
 
 ## rules.talk
 Das Spiel heißt Split or Steal. In der Mitte liegt ein Topf mit {pot} Punkten. Du und dein Gegner spielt genau eine Runde.

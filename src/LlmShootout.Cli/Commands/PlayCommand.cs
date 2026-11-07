@@ -7,6 +7,7 @@ using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Randomness;
 using LlmShootout.Arena.Reports;
 using LlmShootout.Arena.Series;
+using LlmShootout.Arena.Templates;
 using LlmShootout.Cli.Output;
 using Spectre.Console;
 
@@ -43,7 +44,7 @@ public static class PlayCommand
             var setup = new GameSetup(
                 matchSeed,
                 parse.GetRequiredValue(communication) == "on",
-                settings.Language ?? "de",
+                settings.Language ?? ArenaTemplates.DefaultLanguage,
                 firstSeat,
                 RunOptionSet.ParseGameOptions(parse.GetValue(gameOption)));
 
