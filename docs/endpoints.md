@@ -21,7 +21,7 @@ environment variables. An example is in [`docs/examples/shootout.settings.cli-pr
   "Endpoints": {
     "claude": {
       "BaseAddress": "http://127.0.0.1:8090/v1/claude",
-      "ApiKeyVariable": "CLI_PROXY_API_KEY",
+      "ApiKeyVariable": "LLMSHOOTOUT_PROXY_API_KEY",
       "FlatRate": true
     }
   }
@@ -42,7 +42,7 @@ export LLMSHOOTOUT_Endpoints__claude__FlatRate=true
 | `FlatRate` | `true` if calls are covered by a subscription. A call without a reported cost then counts as 0 USD. Default `false` |
 | `Kind` | `OpenAiCompatible` (default) or `OpenRouter` |
 
-The name is case-insensitive and must not be `openrouter`, `random` or `scripted`.
+The name is case-insensitive. `openrouter`, `random` and `scripted` are reserved and refused, because they already mean something in a player specification.
 
 ## Keeping the keys in one place
 
@@ -82,7 +82,7 @@ The gateway of the hosting server offers two backends below one address, so ther
 
 On the host the proxy listens on the loopback address; inside the Docker network `proxy` it is `http://cli-proxy:8090`.
 The proxy requires a bearer key for `chat/completions`. Each consumer has its own key in the allowlist of the
-hosting server (see `docs/cli-proxy-openai-gateway.md` there); the example file reads it from `LLMSHOOTOUT_PROXY_API_KEY`.
+gateway (set up where the gateway is deployed); the example file reads it from `LLMSHOOTOUT_PROXY_API_KEY`.
 
 Things to know about this gateway:
 

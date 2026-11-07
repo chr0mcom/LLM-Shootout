@@ -66,10 +66,10 @@ public sealed class MatchingPenniesGame : IGame
     public TurnResolution Apply(IReadOnlyList<TurnSubmission> submissions)
     {
         var choices = submissions.ToDictionary(s => s.Seat, s => s.Move);
-        var match = choices[Seat.A] is not null && choices[Seat.A] == choices[Seat.B];
+        var (winner, outcome) = Decide(choices[Seat.A], choices[Seat.B]);
         Result = new GameResult(
-            match ? "match" : "mismatch",
-            new Dictionary<Seat, SeatResult> { [Seat.A] = new(match ? 1 : 0, match ? "win" : "loss"), [Seat.B] = new(match ? 0 : 1, match ? "loss" : "win") });
+            outcome,
+            Seat.All.ToDictionary(seat => seat, seat => new SeatResult(seat == winner ? 1 : 0, seat == winner ? "win" : "loss")));
         return new TurnResolution([.. submissions.Select(s => new GameFact(
             "choice",
             FactAudience.Everyone,
@@ -77,6 +77,15 @@ public sealed class MatchingPenniesGame : IGame
             TemplateRef.Of("fact.choice", ("choice", s.Move ?? "-")),
             new Dictionary<string, string> { ["choice"] = s.Move ?? "-" }))]);
     }
+
+    /// <summary>A seat that gave no valid choice loses; if both failed, nobody wins.</summary>
+    private static (Seat? Winner, string Outcome) Decide(string? a, string? b) => (a, b) switch
+    {
+        (null, null) => (null, "no_decision"),
+        (null, _) => (Seat.B, "no_decision_a"),
+        (_, null) => (Seat.A, "no_decision_b"),
+        _ => a == b ? (Seat.A, "match") : (Seat.B, "mismatch"),
+    };
 
     public string? SampleLegalMove(TurnRequest turn, SeededRng rng) => Moves[rng.NextInt(Moves.Length)];
 }

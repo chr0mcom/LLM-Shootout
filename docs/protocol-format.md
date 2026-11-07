@@ -80,7 +80,7 @@ A public message became visible. `text` is absent for silence.
 {"type":"message","turnId":"talk-1","seat":"A","text":"Let us split.","silent":false,"truncated":false,"identityHits":[],"at":"...","schemaVersion":1}
 ```
 
-`identityHits` entries look like `opponent:Alias:ChatGPT` (`self`, `opponent` or `ambiguous`; the marker type comes from the scanner).
+`identityHits` entries look like `opponent:Provider:ChatGPT` (`self`, `opponent` or `ambiguous`; the marker type comes from the scanner).
 
 ### `turn`
 

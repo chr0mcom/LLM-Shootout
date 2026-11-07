@@ -4,7 +4,7 @@ Two language models play a game against each other through [OpenRouter](https://
 send each other short messages, and afterwards they are asked about their behavior. Every episode has a lead question,
 for example *"Does a model keep its word?"* or *"Does it find the winning strategy?"*
 
-The application is a .NET console program with no database and no web UI. The repository grows by one game per
+The application is a .NET console program with no database, plus a small optional [web interface](#web-interface). The repository grows by one game per
 episode of the article series *LLM Shootout* in the magazine [dotnetpro](https://dotnetpro.de) (author: Stefan Bechtel).
 You can clone it, set an API key, replay the duels, or let other models compete.
 
@@ -42,6 +42,8 @@ No OpenRouter account? Any OpenAI-compatible API works as a named endpoint, and 
 `--a claude:claude-sonnet-latest --b codex:gpt-6.1-sol`. `scripts/shootout.sh` loads your keys from one file. See [docs/endpoints.md](docs/endpoints.md).
 
 ### Example output
+
+The output of `play split-or-steal --a random --b random --seed 7 --lang en`:
 
 ```text
 split-or-steal  A: random  vs  B: random  (seed 7, communication on, en)
@@ -104,7 +106,7 @@ A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slu
 | `--out <dir>` | where to write the match directories (default `matches`) |
 | `--temperature`, `--reasoning-effort`, `--max-output-tokens`, `--timeout` | model settings; **not sent unless given** |
 
-Exit codes: `0` success, `2` wrong usage (the message says what to do), `3` the run was aborted or ended early (cost
+Exit codes: `0` success, `2` wrong usage, or a problem with the setup or the network (the message says what to do), `3` the run was aborted or ended early (cost
 limit, timeout, failure), `130` cancelled with Ctrl+C, `1` unexpected error. Every command also runs without a terminal, with redirected input and output.
 
 ## What you get per match

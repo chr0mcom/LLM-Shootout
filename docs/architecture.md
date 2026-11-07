@@ -8,15 +8,17 @@ The decisions behind this are in [`docs/decisions/`](decisions/).
 
 | Project | Contents |
 |---|---|
-| `LlmShootout.Arena` | Game abstraction (`Games/`), match runner (`Matches/`), prompts and templates (`Prompting/`, `Templates/`, `Prompts/`), answer parsing and validation (`Answers/`), protocol (`Protocol/`), debriefing (`Debriefing/`), series (`Series/`), reports (`Reports/`), judge annotations (`Annotation/`), model access (`OpenRouter/`), identity scanner (`Identity/`), players (`Players/`) |
+| `LlmShootout.Arena` | Game abstraction (`Games/`), match runner (`Matches/`), prompts and templates (`Prompting/`, `Templates/`, `Prompts/`), answer parsing and validation (`Answers/`), protocol (`Protocol/`), debriefing (`Debriefing/`), series (`Series/`), reports (`Reports/`), judge annotations (`Annotation/`), model access (`ModelAccess/`), identity scanner (`Identity/`), players (`Players/`) |
 | `LlmShootout.Games` | One folder per game: rules, wording templates, debriefing questions, report analysis. Registered in `GameCatalog` |
 | `LlmShootout.Cli` | Commands (`play`, `series`, `games`, `models`, `replay`, `report`, `debrief`, `annotate`), live view, Generic Host setup |
-| `LlmShootout.Tests` | Unit tests with fakes, prompt snapshots, the two test-only games |
+| `LlmShootout.Web` | The web interface: login, starting and following a match live, history, Excel export ([docs/web.md](web.md)) |
+| `LlmShootout.Tests` | Unit tests with fakes, prompt snapshots, process tests of the command line, in-memory tests of the web interface, small test-only games |
 
 ## Components
 
 ```mermaid
 flowchart LR
+  Web[Web interface<br/>RunManager, live stream] --> Runner
   CLI[Cli commands] --> Series[SeriesRunner]
   CLI --> Runner[MatchRunner]
   CLI --> Deb2[Debriefer / Annotator<br/>on stored matches]
@@ -114,8 +116,9 @@ Every row works without changing the arena. "Turn kinds" are `TurnRequest.Kind` 
 | Human against model (later) | unchanged | unchanged | unchanged | unchanged | `ConsolePlayer : IPlayer` prints the prompt and reads text. Nothing else changes |
 | Three seats (later) | list of pending turns has up to three entries | per seat | unchanged | unchanged | A documented later change, not free: add `Seat.C` and a real opponent concept (`Seat.Opponent`, `IdentityGuard`, the debriefing outcome and the report columns are two-seat today), and replace "opponent" in the templates with names. The runner and the turn protocol already loop over `Seat.All` |
 
-Two test-only games, in the test project, prove the claim: a number guessing game (alternating, hidden number,
-"higher/lower" feedback) and a role swap game over several rounds. Both run through the unchanged arena.
+Test-only games in the test project prove the claim: a number guessing game (alternating, hidden number,
+"higher/lower" feedback), a role swap game over several rounds, matching pennies (simultaneous), a sealed-bid game, a game
+with a hidden starting state, and one that throws. All run through the unchanged arena.
 
 ## Where things are decided
 
@@ -129,3 +132,5 @@ Two test-only games, in the test project, prove the claim: a number guessing gam
 | Model access pipeline, what Microsoft.Extensions.AI carries | [0006](decisions/0006-model-access-pipeline.md) |
 | One retry layer, timeouts | [0007](decisions/0007-single-retry-layer-and-timeout.md) |
 | Cost metering and the spending limit | [0008](decisions/0008-cost-gateway.md) |
+| Named endpoints for other OpenAI-compatible APIs | [0009](decisions/0009-named-endpoints.md) |
+| The web interface | [0010](decisions/0010-web-interface.md) |

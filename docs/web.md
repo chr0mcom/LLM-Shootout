@@ -40,7 +40,7 @@ export LLMSHOOTOUT_PROXY_API_KEY=...      # key of the cli-proxy gateway, see en
 ```
 
 ```bash
-docker compose build --no-cache web && docker compose up -d web      # https://shootout.stefan-bechtel.de
+GIT_COMMIT=$(git rev-parse --short=12 HEAD) docker compose build --no-cache web && docker compose up -d web   # https://shootout.stefan-bechtel.de
 # without Docker, for development:
 source ~/.config/llm-shootout/env
 dotnet run --project src/LlmShootout.Web --urls http://127.0.0.1:5088
@@ -61,7 +61,7 @@ After changing the env file, run `docker compose up -d web` again; the container
 
 ## Security notes
 
-- Everything except the login page, its stylesheet and `/health` needs the session. API calls without it get 401, pages
+- Everything except the login page (with its script, stylesheet and icon) and `/health` needs the session. API calls without it get 401, pages
   redirect to `/login`. The check runs before static files are served.
 - The password is compared in constant time. Failed logins are limited per client address and answered after a short delay.
 - The session is a cookie that is `HttpOnly`, `Secure` and `SameSite=Strict`, valid for 12 hours of activity. Its signing

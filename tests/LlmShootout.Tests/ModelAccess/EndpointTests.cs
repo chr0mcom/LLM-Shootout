@@ -81,6 +81,19 @@ public sealed class EndpointTests : IDisposable
     }
 
     [Theory]
+    [InlineData("random")]
+    [InlineData("Scripted")]
+    [InlineData("openrouter")]
+    public void A_reserved_name_cannot_be_an_endpoint(string name)
+    {
+        var definitions = new Dictionary<string, EndpointDefinition> { [name] = new() { BaseAddress = new Uri("http://localhost/v1") } };
+
+        var ex = Assert.Throws<ArgumentException>(() => new EndpointRegistry(definitions));
+
+        Assert.Contains("reserved", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
     [InlineData("claude", "LLMSHOOTOUT_CLAUDE_API_KEY")]
     [InlineData("my-proxy.1", "LLMSHOOTOUT_MY_PROXY_1_API_KEY")]
     public void The_default_key_variable_is_derived_from_the_name(string name, string variable) =>

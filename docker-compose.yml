@@ -1,6 +1,8 @@
-# Web interface of LLM Shootout at https://shootout.stefan-bechtel.de
-# Secrets (web password, OpenRouter token, proxy key) live in ~/.config/llm-shootout/env, never in this file.
-#   docker compose build --no-cache web && docker compose up -d web
+# Web interface of LLM Shootout. This is the deployment of the author (host name, Traefik middleware and the gateway
+# `cli-proxy` are specific to that server); adapt the labels and endpoints to yours.
+# Secrets (web password, OpenRouter token, proxy key) live in a file outside the repository, by default
+# ~/.config/llm-shootout/env (set LLMSHOOTOUT_ENV_FILE for another path), never in this file.
+#   GIT_COMMIT=$(git rev-parse --short=12 HEAD) docker compose build --no-cache web && docker compose up -d web
 name: llm-shootout
 
 services:
@@ -14,7 +16,7 @@ services:
     restart: unless-stopped
     stop_grace_period: 20s
     env_file:
-      - /home/developer/.config/llm-shootout/env
+      - ${LLMSHOOTOUT_ENV_FILE:-${HOME}/.config/llm-shootout/env}
     environment:
       LLMSHOOTOUT_Endpoints__claude__BaseAddress: http://cli-proxy:8090/v1/claude
       LLMSHOOTOUT_Endpoints__claude__FlatRate: "true"

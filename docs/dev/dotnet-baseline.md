@@ -6,7 +6,7 @@ Research date: 2026-11-06. All versions were checked on that day.
 
 | Item | Choice | Why |
 |---|---|---|
-| Runtime / SDK | .NET 10 (LTS), SDK 10.0.403 | .NET 11 is at release candidate 3 (go-live license), not generally available. See [ADR 0001](../decisions/0001-dotnet-10-csharp-14.md). |
+| Runtime / SDK | .NET 10 (LTS), SDK 10.0.100 or newer (`global.json` rolls forward to the latest feature band) | .NET 11 is at release candidate 3 (go-live license), not generally available. See [ADR 0001](../decisions/0001-dotnet-10-csharp-14.md). |
 | Language | C# 14 | Ships with .NET 10. |
 | Where the version lives | `Directory.Build.props` (`TargetFramework`, `LangVersion`) | Updating to .NET 11 is a one-line change. |
 
@@ -89,11 +89,14 @@ Versions and licenses checked on NuGet on 2026-11-06.
 | Microsoft.Extensions.AI / .OpenAI | 10.11.0 | MIT | used |
 | Microsoft.Extensions.Http.Resilience | 10.11.0 | MIT | used |
 | Microsoft.Extensions.Hosting | 10.0.14 | MIT | used (CLI) |
+| Microsoft.Extensions.Options.DataAnnotations | 10.0.14 | MIT | validated options |
+| Microsoft.NET.Sdk.Web (ASP.NET Core shared framework) | 10.0 | MIT | web interface |
 | System.CommandLine | 2.0.14 | MIT | used for the command line |
 | Spectre.Console | 0.57.2 | MIT | used for console output |
 | xunit.v3.mtp-v2 | 4.0.2 | Apache-2.0 | test framework |
 | coverlet.MTP | 10.1.0 | MIT | code coverage |
 | Microsoft.Extensions.TimeProvider.Testing | 10.11.0 | MIT | `FakeTimeProvider` |
+| Microsoft.AspNetCore.Mvc.Testing | 10.0.14 | MIT | starts the web interface in memory for tests |
 | Verify | 33.3.4 | OSMF EULA | rejected (not a permissive license), snapshots via a small own helper |
 | FluentAssertions 8+ | 8.x | commercial | rejected; xUnit `Assert` is enough |
 | Microsoft.Testing.Extensions.CodeCoverage | 18.12.0 | Microsoft license text | rejected in favor of coverlet.MTP (MIT) |
@@ -108,7 +111,7 @@ Analyzers: the built-in .NET analyzers at `AnalysisLevel` `latest-recommended` w
 |---|---|
 | `System.Text.Json` source generation with polymorphic events (`[JsonPolymorphic]`, `[JsonDerivedType]`) | `Protocol/MatchEvents.cs`, `Protocol/ProtocolJson.cs` |
 | `System.Text.Json` strict reading (`RespectRequiredConstructorParameters`, `UnmappedMemberHandling.Disallow`) | `Series/SeriesFile.cs` |
-| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `OpenRouter/ChatClientFactory.cs`, `OpenRouter/ChatPlayer.cs` |
+| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `ModelAccess/ChatClientFactory.cs`, `OpenRouter/ChatPlayer.cs` |
 | `Microsoft.Extensions.Http.Resilience` (`ResilienceHandler`, custom pipeline) | `OpenRouter/ChatClientFactory.cs` |
 | Generic Host, options pattern with validation (`ValidateDataAnnotations`), logging to stderr | `src/LlmShootout.Cli/Program.cs` |
 | `DelegatingHandler` for request rewriting and raw capture | `OpenRouter/EndpointRequestHandler.cs`, `OpenRouter/RawCaptureHandler.cs` |

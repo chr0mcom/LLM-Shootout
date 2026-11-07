@@ -10,4 +10,5 @@ docs/
 scripts/
 shootouts/
 shootout.settings.json
+# Only Markdown files at the root are excluded. The prompt templates are Markdown files below src/ and must stay.
 *.md

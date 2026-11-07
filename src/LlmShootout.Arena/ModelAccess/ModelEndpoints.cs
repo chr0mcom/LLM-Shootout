@@ -48,8 +48,15 @@ public sealed class EndpointRegistry
     public EndpointRegistry(IEnumerable<KeyValuePair<string, EndpointDefinition>>? definitions = null, Func<string, string?>? environment = null)
     {
         _definitions = new Dictionary<string, EndpointDefinition>(definitions ?? [], StringComparer.OrdinalIgnoreCase);
+        if (_definitions.Keys.FirstOrDefault(name => ReservedNames.Contains(name, StringComparer.OrdinalIgnoreCase)) is { } reserved)
+        {
+            throw new ArgumentException($"The endpoint name '{reserved}' is reserved: it already means something in a player specification. Choose another name.", nameof(definitions));
+        }
+
         _environment = environment ?? Environment.GetEnvironmentVariable;
     }
+
+    private static readonly string[] ReservedNames = ["openrouter", "random", "scripted"];
 
     /// <summary>The name of the built-in OpenRouter endpoint.</summary>
     public const string OpenRouterName = "openrouter";

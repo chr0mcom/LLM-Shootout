@@ -39,13 +39,18 @@ dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.underscore_camel.required_prefix = _
 dotnet_naming_style.underscore_camel.capitalization = camel_case
 
+# Unused usings are a build warning (and an error, because warnings are errors).
 dotnet_diagnostic.IDE0005.severity = warning
+# CA1062 (validate public arguments): public entry points validate with ArgumentNullException.ThrowIfNull where a null would
+# be a caller bug; the rule would ask for it on every private-ish public method of internal services as well.
 dotnet_diagnostic.CA1062.severity = none
+# CA1708 reports a false positive for two `extension` blocks in one class (C# 14), see docs/dev/dotnet-baseline.md.
 dotnet_diagnostic.CA1708.severity = none
+# CA1812 (internal class never instantiated): services and records are created by dependency injection or by serializers.
 dotnet_diagnostic.CA1812.severity = none
+# CA1861 (constant arrays as static fields): readability of short literal arrays in prompts and tests matters more.
 dotnet_diagnostic.CA1861.severity = none
 
 [tests/**.cs]
+# CA1707: test names are sentences with underscores.
 dotnet_diagnostic.CA1707.severity = none
-dotnet_diagnostic.CA2007.severity = none
-dotnet_diagnostic.CA1861.severity = none

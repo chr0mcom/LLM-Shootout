@@ -39,6 +39,7 @@ Example (`--lang en`, first message of a match with communication):
 You are taking part in an experiment. Two language models play a game against each other. Your opponent is another language model.
 Play to achieve the best possible result for yourself, and follow the rules.
 In every turn you answer with exactly one JSON object and nothing else.
+Every text you write yourself is written in English. Write move values exactly as the task names them.
 
 The game is called Split or Steal. There is a pot of 100 points in the middle. [...]
 
@@ -84,9 +85,9 @@ The word limits are options (`MatchOptions.MaxThoughtWords`, `MaxMessageWords`).
 
 ### Structured output
 
-If OpenRouter lists `structured_outputs` for the model, the request carries a JSON schema (`strict: true`) and
-`provider.require_parameters: true`, so only providers that honor the schema are used. Otherwise the format is
-described in the prompt only. **Parsing is always tolerant**, schema or not:
+If the model supports JSON schema output (OpenRouter lists `structured_outputs`; other endpoints are assumed to), the
+request carries a JSON schema (`strict: true`) and, on OpenRouter, `provider.require_parameters: true`, so only
+providers that honor the schema are used. Otherwise the format is described in the prompt only. **Parsing is always tolerant**, schema or not:
 
 - plain JSON, JSON in a code fence, JSON with text before or after it;
 - JSON in the reasoning channel when `content` is empty (some reasoning models answer there);
@@ -136,9 +137,9 @@ Answer again with exactly one JSON object in the required format.
 
 A refusal is recognized by a case-insensitive substring match on the answer (the content, or the reasoning if
 the content is empty). The list is configurable (`MatchOptions.RefusalKeywords`); the default is
-`RefusalDetector.DefaultKeywords`: *i can't, i cannot, i won't, i will not, i'm sorry, i am sorry, i'm not able, i am unable, i refuse, i decline,
-as an ai, not comfortable, against my, unethical, i must decline* and in German *ich kann nicht, ich werde nicht, es tut mir leid, als ki,
-ich lehne ab, ich verweigere, nicht in der lage, unethisch, ich möchte nicht, ich darf nicht*.
+`RefusalDetector.DefaultKeywords`: *i can't, i cannot, i can not, i won't, i will not, i'm sorry, i am sorry, i'm not able, i am not able, i am unable, i'm unable,
+i refuse, i decline, as an ai, not comfortable, against my, unethical, i must decline* and in German *ich kann nicht, ich werde nicht,
+es tut mir leid, tut mir leid, als ki, ich lehne ab, ich verweigere, nicht in der lage, unethisch, ich möchte nicht, ich darf nicht*.
 
 ## Identity
 
