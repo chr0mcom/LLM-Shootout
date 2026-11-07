@@ -1,17 +1,40 @@
 # LLM Shootout
 
-Two language models play a game against each other through [OpenRouter](https://openrouter.ai). During the game they may
-send each other short messages, and afterwards they are asked about their behavior. Every episode has a lead question,
-for example *"Does a model keep its word?"* or *"Does it find the winning strategy?"*
+**Two language models play a game against each other. They may talk first, and afterwards they are asked what they did and why.**
 
-The application is a .NET console program with no database, plus a small optional [web interface](#web-interface). The repository grows by one game per
-episode of the article series *LLM Shootout* in the magazine [dotnetpro](https://dotnetpro.de) (author: Stefan Bechtel).
-You can clone it, set an API key, replay the duels, or let other models compete.
+[![CI](https://github.com/chr0mcom/LLM-Shootout/actions/workflows/ci.yml/badge.svg)](https://github.com/chr0mcom/LLM-Shootout/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![.NET 10](https://img.shields.io/badge/.NET-10%20LTS-512bd4.svg)](https://dotnet.microsoft.com/download)
+
+Every episode has a lead question, for example *"Does a model keep its word?"* or *"Does it find the winning strategy?"*
+The models play through [OpenRouter](https://openrouter.ai) or any other OpenAI-compatible endpoint. Every match leaves a
+complete, append-only protocol: the exact prompts, the unchanged answers, the private thoughts, the public messages,
+the moves, tokens, cost and latency. A readable report is computed from that protocol.
+
+![The web interface after a finished match: the two players, the result, and the conversation with the private thoughts next to the public messages](docs/images/web-interface.png)
+
+It is a .NET console program with no database, plus a small optional [web interface](#web-interface). The repository
+grows by one game per episode of the article series *LLM Shootout* in the magazine [dotnetpro](https://dotnetpro.de)
+(author: Stefan Bechtel). You can clone it, set an API key, replay the duels, or let other models compete.
 
 | Game | Lead question | Status |
 |---|---|---|
 | [Split or Steal](docs/games/split-or-steal.md) | Does a model keep its word? | available |
 | Mastermind, Battleship, Nim, Ultimatum game, Liar's dice | | planned, one per episode |
+
+## Why it is built this way
+
+- **Three channels per answer.** A private *thought*, a public *message* and the *move* are kept apart. Only that
+  separation makes statements about deception possible, because the thought shows what a model intended when it wrote
+  the message.
+- **Refusals and illegal moves are data, not errors.** They are counted per player and shown in the report.
+- **The protocol is the single source of truth.** Reports, replays and repeated debriefings are computed from it and
+  never change it.
+- **No secrets, no surprises.** Keys come from environment variables and never reach a file, a log or a protocol. Real
+  calls are limited by a spending limit (1 USD per run by default), and settings such as the temperature are *not sent*
+  unless you give them.
+- **Games are plug-ins.** The arena knows no game, a game knows no model. A new game is a folder with two small classes
+  and two template files ([Adding a game](docs/adding-a-game.md)).
 
 ## Quick start
 
@@ -71,7 +94,16 @@ Finished examples (made with random players) are in [`matches/examples/`](matche
 ## Web interface
 
 Prefer a page to a terminal? `src/LlmShootout.Web` is a small web interface: pick two players, start the match and
-watch the messages, private thoughts, moves and the debriefing arrive live. It is protected by one password. See
+watch the messages, private thoughts, moves and the debriefing arrive live (screenshot above). Finished matches can be
+opened again and downloaded as an Excel workbook, as a report or as the raw protocol. The page is protected by one
+password and has daily limits for matches and money.
+
+```bash
+export SHOOTOUT_WEB_PASSWORD='a password with at least 12 characters'
+dotnet run --project src/LlmShootout.Web --urls http://127.0.0.1:5088
+```
+
+For a deployment with Docker and Traefik (everything specific to your server is a variable in `.env`) see
 [docs/web.md](docs/web.md).
 
 ## Commands
@@ -146,6 +178,20 @@ scripts/coverage.sh                 # line coverage of LlmShootout.Arena, fails 
 ```
 
 See [docs/dev/dotnet-baseline.md](docs/dev/dotnet-baseline.md) for the .NET and C# versions, the packages, and where the new language features are used.
+
+## Documentation
+
+| Topic | Where |
+|---|---|
+| How the arena, the games and the model access fit together | [docs/architecture.md](docs/architecture.md) |
+| Why it was decided that way (ten decision records) | [docs/decisions/](docs/decisions/) |
+| The rules, prompts and analysis of Split or Steal | [docs/games/split-or-steal.md](docs/games/split-or-steal.md) |
+| What a model is asked, and how its answer is read | [docs/prompt-contract.md](docs/prompt-contract.md) |
+| The files of a match and the event format | [docs/protocol-format.md](docs/protocol-format.md) |
+| OpenRouter, local servers and gateways as named endpoints | [docs/endpoints.md](docs/endpoints.md) |
+| The web interface and its deployment | [docs/web.md](docs/web.md) |
+| Writing a new game | [docs/adding-a-game.md](docs/adding-a-game.md) |
+| .NET and C# versions, packages, language features | [docs/dev/dotnet-baseline.md](docs/dev/dotnet-baseline.md) |
 
 ## Origin
 

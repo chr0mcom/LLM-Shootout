@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Build (warnings are errors)
+        run: dotnet build --nologo
+      - name: Test (fakes only, no network)
+        run: dotnet test --no-build
+      - name: Format
+        run: dotnet format --verify-no-changes --no-restore
