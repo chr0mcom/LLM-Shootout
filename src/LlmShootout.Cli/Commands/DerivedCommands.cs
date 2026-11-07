@@ -56,7 +56,7 @@ public static class DerivedCommands
             };
 
             var file = $"debrief.{env.Time.GetUtcNow():yyyyMMdd-HHmmss}.jsonl";
-            var cost = new CostMeter(settings.MaxCostUsd);
+            var cost = new CostMeter(settings.Match.MaxCostUsd);
             await using (var writer = new ProtocolWriter(record.Directory, file))
             {
                 await new Debriefer(new PlayerGateway(cost), env.Time).RunAsync(definition, record, players, record.Started.Options, writer, ct);
@@ -88,7 +88,7 @@ public static class DerivedCommands
             var settings = run.Read(parse, env.BaseOptions);
             var directory = parse.GetRequiredValue(path);
             var player = await env.CreatePlayerAsync(parse.GetRequiredValue(judge), 1, settings.Endpoint, ct);
-            var annotator = new Annotator(new PlayerGateway(new CostMeter(settings.MaxCostUsd)), env.Time);
+            var annotator = new Annotator(new PlayerGateway(new CostMeter(settings.Match.MaxCostUsd)), env.Time);
             foreach (var matchDirectory in MatchDirectories(directory))
             {
                 var record = MatchRecord.Load(matchDirectory);
@@ -114,10 +114,10 @@ public static class DerivedCommands
 
         return CliEnvironment.Validate(options with
         {
-            Temperature = parse.GetValue(run.Temperature) is null && recorded.TryGetValue("temperature", out var t) ? float.Parse(t, CultureInfo.InvariantCulture) : options.Temperature,
-            ReasoningEffort = parse.GetValue(run.ReasoningEffort) is null && recorded.TryGetValue("reasoningEffort", out var e) ? e : options.ReasoningEffort,
-            MaxOutputTokens = parse.GetValue(run.MaxOutputTokens) is null && recorded.TryGetValue("maxOutputTokens", out var m) ? int.Parse(m, CultureInfo.InvariantCulture) : options.MaxOutputTokens,
-            CallTimeout = parse.GetValue(run.Timeout) is null && recorded.TryGetValue("callTimeoutSeconds", out var c) ? TimeSpan.FromSeconds(double.Parse(c, CultureInfo.InvariantCulture)) : options.CallTimeout,
+            Temperature = parse.GetValue(run.Temperature) is null && recorded.TryGetValue(PlayerSettingKeys.Temperature, out var t) ? float.Parse(t, CultureInfo.InvariantCulture) : options.Temperature,
+            ReasoningEffort = parse.GetValue(run.ReasoningEffort) is null && recorded.TryGetValue(PlayerSettingKeys.ReasoningEffort, out var e) ? e : options.ReasoningEffort,
+            MaxOutputTokens = parse.GetValue(run.MaxOutputTokens) is null && recorded.TryGetValue(PlayerSettingKeys.MaxOutputTokens, out var m) ? int.Parse(m, CultureInfo.InvariantCulture) : options.MaxOutputTokens,
+            CallTimeout = parse.GetValue(run.Timeout) is null && recorded.TryGetValue(PlayerSettingKeys.CallTimeoutSeconds, out var c) ? TimeSpan.FromSeconds(double.Parse(c, CultureInfo.InvariantCulture)) : options.CallTimeout,
         });
     }
 

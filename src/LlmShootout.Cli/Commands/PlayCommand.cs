@@ -47,7 +47,7 @@ public static class PlayCommand
                 firstSeat,
                 RunOptionSet.ParseGameOptions(parse.GetValue(gameOption)));
 
-            var cost = new CostMeter(settings.MaxCostUsd);
+            var cost = new CostMeter(settings.Match.MaxCostUsd);
             var players = new Dictionary<Seat, IPlayer>
             {
                 [Seat.A] = await env.CreatePlayerAsync(specA, matchSeed + 1, settings.Endpoint, ct),

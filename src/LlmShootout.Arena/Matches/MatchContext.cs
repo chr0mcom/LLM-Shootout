@@ -12,7 +12,6 @@ public sealed class MatchContext(
     PromptBuilder prompts,
     AnswerEvaluator evaluator,
     ProtocolWriter writer,
-    CostMeter cost,
     PlayerGateway gateway,
     Identity.IdentityGuard identityGuard,
     TimeProvider time)
@@ -31,9 +30,6 @@ public sealed class MatchContext(
 
     /// <summary>The protocol.</summary>
     public ProtocolWriter Writer { get; } = writer;
-
-    /// <summary>The spending meter of the application run.</summary>
-    public CostMeter Cost { get; } = cost;
 
     /// <summary>The door to all players.</summary>
     public PlayerGateway Gateway { get; } = gateway;

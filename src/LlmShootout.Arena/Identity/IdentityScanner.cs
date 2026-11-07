@@ -1,6 +1,5 @@
 // Adapted from AiBehavior.PublicGoods (MIT, same author).
 using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace LlmShootout.Arena.Identity;
@@ -73,9 +72,7 @@ public static class IdentityScanner
             .ThenBy(x => x.CanonicalToken, StringComparer.Ordinal)
             .ToArray();
 
-        var fingerprintSource = string.Join('|', tokens.Select(x => $"{x.MarkerType}:{x.NormalizedToken}"));
-        var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintSource)));
-        return new IdentityTokenSet(PromptIdentityFormatter.Format(model), tokens, fingerprint);
+        return new IdentityTokenSet(tokens);
     }
 
     /// <summary>
@@ -141,7 +138,7 @@ public static class IdentityScanner
                     matches.Add(new MatchSpan(
                         originalStart,
                         originalEnd,
-                        new IdentityLeakMatch(token.MarkerType, token.CanonicalToken, token.CanonicalToken)));
+                        new IdentityLeakMatch(token.MarkerType, token.CanonicalToken)));
                     startIndex = hit + token.NormalizedToken.Length;
                 }
                 else

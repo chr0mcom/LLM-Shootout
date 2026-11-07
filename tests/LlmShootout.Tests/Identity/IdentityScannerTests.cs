@@ -88,13 +88,13 @@ public class IdentityScannerTests
     }
 
     [Fact]
-    public void Token_set_has_a_stable_fingerprint_and_display_name()
+    public void Token_sets_are_deterministic_and_list_the_longest_names_first()
     {
         var a = IdentityScanner.BuildTokenSet(new ModelIdentity("openai/gpt-4o", "gpt-4o-2024-08-06"), Defaults);
         var b = IdentityScanner.BuildTokenSet(new ModelIdentity("openai/gpt-4o", "gpt-4o-2024-08-06"), Defaults);
 
-        Assert.Equal(a.Fingerprint, b.Fingerprint);
-        Assert.Equal("openai/gpt-4o (gpt-4o-2024-08-06)", a.Identity);
+        Assert.Equal(a.Tokens.Select(t => t.CanonicalToken), b.Tokens.Select(t => t.CanonicalToken));
+        Assert.Equal(a.Tokens.Select(t => t.NormalizedToken.Length).OrderByDescending(n => n), a.Tokens.Select(t => t.NormalizedToken.Length));
     }
 
     [Theory]

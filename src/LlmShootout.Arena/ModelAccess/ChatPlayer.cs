@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.Globalization;
 using System.Text.Json;
 using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Players;
@@ -14,6 +15,8 @@ namespace LlmShootout.Arena.ModelAccess;
 /// </summary>
 public sealed class ChatPlayer(IChatClient client, string modelSlug, EndpointOptions options, bool useJsonSchema, TimeProvider time, ModelInfo? pricing = null) : IPlayer
 {
+    private const int MaxErrorTextLength = 300;
+
     /// <inheritdoc />
     public string Name => $"{options.EndpointName}:{modelSlug}";
 
@@ -36,50 +39,46 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, EndpointOpt
         }
         catch (Exception ex) when (ex is TimeoutRejectedException or TimeoutException || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
         {
-            throw new PlayerFailureException($"Call to '{modelSlug}' timed out after {options.CallTimeout.TotalSeconds:0} s.", isTimeout: true, inner: ex)
-            {
-                Call = FailedCall(scope.Capture, time.GetElapsedTime(started)),
-                RawExchange = scope.Capture.RenderExchange(),
-            };
+            throw Failure($"Call to '{modelSlug}' timed out after {options.CallTimeout.TotalSeconds:0} s.", ex, scope.Capture, started, isTimeout: true);
         }
         catch (ClientResultException ex)
         {
             var what = ex.Status == 0 ? $"Connection to {Label} failed" : $"{Label} returned HTTP {ex.Status}";
-            throw new PlayerFailureException($"{what} for '{modelSlug}': {Shorten(ex.Message)}", ex)
-            {
-                Call = FailedCall(scope.Capture, time.GetElapsedTime(started)),
-                RawExchange = scope.Capture.RenderExchange(),
-            };
+            throw Failure($"{what} for '{modelSlug}': {Shorten(ex.Message)}", ex, scope.Capture, started);
         }
         catch (HttpRequestException ex)
         {
-            throw new PlayerFailureException($"Connection to {Label} failed for '{modelSlug}': {ex.Message}", ex)
-            {
-                Call = FailedCall(scope.Capture, time.GetElapsedTime(started)),
-                RawExchange = scope.Capture.RenderExchange(),
-            };
+            throw Failure($"Connection to {Label} failed for '{modelSlug}': {ex.Message}", ex, scope.Capture, started);
         }
     }
+
+    /// <summary>A failed call, with what is known about it and the raw exchange (without credentials).</summary>
+    private PlayerFailureException Failure(string message, Exception inner, CallCapture capture, long started, bool isTimeout = false) =>
+        new(message, isTimeout, inner)
+        {
+            Call = FailedCall(capture, time.GetElapsedTime(started)),
+            RawExchange = capture.RenderExchange(),
+        };
 
     private static Dictionary<string, string> DescribeSettings(EndpointOptions options)
     {
         var settings = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["callTimeoutSeconds"] = options.CallTimeout.TotalSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            [PlayerSettingKeys.CallTimeoutSeconds] = options.CallTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture),
         };
         if (options.Temperature is { } temperature)
         {
-            settings["temperature"] = temperature.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            settings[PlayerSettingKeys.Temperature] = temperature.ToString(CultureInfo.InvariantCulture);
         }
 
         if (options.ReasoningEffort is { } effort)
         {
-            settings["reasoningEffort"] = effort;
+            settings[PlayerSettingKeys.ReasoningEffort] = effort;
         }
 
         if (options.MaxOutputTokens is { } tokens)
         {
-            settings["maxOutputTokens"] = tokens.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            settings[PlayerSettingKeys.MaxOutputTokens] = tokens.ToString(CultureInfo.InvariantCulture);
         }
 
         return settings;
@@ -118,27 +117,12 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, EndpointOpt
     private PlayerReply ToReply(ChatResponse response, CallCapture capture, TimeSpan latency)
     {
         var fields = capture.Fields();
-        var delivered = fields.Model ?? response.ModelId;
-        if (delivered is not null)
+        var info = BuildCallInfo(response, fields, capture, latency);
+        if (info.DeliveredModel is not null)
         {
-            Model = new ModelIdentity(modelSlug, delivered);
+            Model = new ModelIdentity(modelSlug, info.DeliveredModel);
         }
 
-        var promptTokens = fields.PromptTokens ?? (int?)response.Usage?.InputTokenCount;
-        var completionTokens = fields.CompletionTokens ?? (int?)response.Usage?.OutputTokenCount;
-        var info = new ModelCallInfo(
-            modelSlug,
-            delivered,
-            fields.Provider,
-            fields.GenerationId ?? response.ResponseId,
-            promptTokens,
-            completionTokens,
-            fields.ReasoningTokens,
-            fields.CostUsd,
-            latency,
-            fields.FinishReason ?? response.FinishReason?.Value,
-            Math.Max(capture.HttpAttempts, 1),
-            fields.CostUsd is null ? Estimate(promptTokens, completionTokens) : null);
         if (fields.ErrorMessage is not null || info.FinishReason == "error")
         {
             throw new PlayerFailureException($"{Label} reported an error for '{modelSlug}': {Shorten(fields.ErrorMessage ?? "finish_reason error")}")
@@ -149,8 +133,29 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, EndpointOpt
         }
 
         var content = string.IsNullOrWhiteSpace(fields.Content) ? response.Text : fields.Content;
-        var notice = string.IsNullOrWhiteSpace(content) && !string.IsNullOrWhiteSpace(fields.Refusal) ? Shorten(fields.Refusal) : null;
-        return new PlayerReply(string.IsNullOrWhiteSpace(content) ? null : content, fields.Reasoning, info, capture.RenderExchange(), notice);
+        var hasContent = !string.IsNullOrWhiteSpace(content);
+        var notice = !hasContent && !string.IsNullOrWhiteSpace(fields.Refusal) ? Shorten(fields.Refusal) : null;
+        return new PlayerReply(hasContent ? content : null, fields.Reasoning, info, capture.RenderExchange(), notice);
+    }
+
+    /// <summary>What the response body says wins; the chat abstraction fills what the body does not carry.</summary>
+    private ModelCallInfo BuildCallInfo(ChatResponse response, CompletionFields fields, CallCapture capture, TimeSpan latency)
+    {
+        var promptTokens = fields.PromptTokens ?? (int?)response.Usage?.InputTokenCount;
+        var completionTokens = fields.CompletionTokens ?? (int?)response.Usage?.OutputTokenCount;
+        return new ModelCallInfo(
+            modelSlug,
+            fields.Model ?? response.ModelId,
+            fields.Provider,
+            fields.GenerationId ?? response.ResponseId,
+            promptTokens,
+            completionTokens,
+            fields.ReasoningTokens,
+            fields.CostUsd,
+            latency,
+            fields.FinishReason ?? response.FinishReason?.Value,
+            Math.Max(capture.HttpAttempts, 1),
+            fields.CostUsd is null ? Estimate(promptTokens, completionTokens) : null);
     }
 
     private string Label => options.Kind == EndpointKind.OpenRouter ? "OpenRouter" : $"endpoint '{options.EndpointName}'";
@@ -170,5 +175,5 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, EndpointOpt
     private ModelCallInfo FailedCall(CallCapture capture, TimeSpan latency) =>
         new(modelSlug, null, null, null, null, null, null, null, latency, null, Math.Max(capture.HttpAttempts, 1), options.FlatRate ? 0m : null);
 
-    private static string Shorten(string text) => text.Length <= 300 ? text : text[..300];
+    private static string Shorten(string text) => text.Length <= MaxErrorTextLength ? text : text[..MaxErrorTextLength];
 }

@@ -52,7 +52,7 @@ public sealed class SeriesRunner(MatchRunner runner, CostMeter cost)
             await MatchReportWriter.WriteAsync(plan.Definition, record, cancellationToken);
             records.Add(record);
             OnMatchFinished?.Invoke(number, outcome);
-            if (outcome.AbortReason == "cost_limit")
+            if (outcome.AbortReason == AbortReason.CostLimit)
             {
                 break;
             }

@@ -212,7 +212,7 @@ internal sealed class RunManager(IPlayerSource players, UsageLedger usage, IOpti
     private static string StatusOf(MatchOutcome outcome) => outcome.AbortReason switch
     {
         null => RunStatus.Finished,
-        "cancelled" => RunStatus.Cancelled,
+        AbortReason.Cancelled => RunStatus.Cancelled,
         _ => RunStatus.Aborted,
     };
 }

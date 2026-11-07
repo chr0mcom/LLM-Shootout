@@ -23,56 +23,65 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
     public async Task<MatchOutcome> RunAsync(MatchPlan plan, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        var game = plan.Definition.Create(plan.Setup);
-        var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options, plan.Setup.Communication);
-        var evaluator = new AnswerEvaluator(plan.Options, prompts);
-
         await using var writer = new ProtocolWriter(plan.Directory) { Observer = observer };
-        var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner, plan.Options.RedactIdentity);
-        var context = new MatchContext(plan, game, prompts, evaluator, writer, cost, new PlayerGateway(cost), guard, time);
-        var (startCost, startUnknown) = (cost.TotalUsd, cost.UnknownCalls);
-        GameResult? finished = null;
+        var context = CreateContext(plan, writer);
         MatchLog.Started(_logger, plan.Definition.Id, plan.Setup.Seed, plan.Directory);
         await writer.AppendAsync(StartedEvent(plan), cancellationToken);
 
+        GameResult? finished = null;
         try
         {
-            var executor = new TurnExecutor(context, _logger);
-            await RecordFactsAsync(context, "start", game.Start().Facts, null, cancellationToken);
-            while (game.PendingTurns.Count > 0)
-            {
-                await PlayRoundAsync(context, executor, cancellationToken);
-            }
-
-            var result = game.Result ?? throw new InvalidOperationException($"Game '{plan.Definition.Id}' ended without a result.");
-            finished = result;
-            await writer.AppendAsync(new MatchFinishedEvent(time.GetUtcNow(), result, cost.TotalUsd - startCost, cost.UnknownCalls - startUnknown), cancellationToken);
-            MatchLog.Finished(_logger, result.Outcome);
+            finished = await PlayGameAsync(context, cancellationToken);
             if (plan.Options.Debrief)
             {
                 await new Debriefer(context.Gateway, time).RunAsync(plan.Definition, MatchRecord.Load(plan.Directory), plan.Players, plan.Options, writer, cancellationToken);
             }
 
-            return new MatchOutcome(plan.Directory, result, null, null);
+            return new MatchOutcome(plan.Directory, finished, null, null);
         }
         catch (BudgetExceededException ex)
         {
-            return await AbortAsync(context, "cost_limit", ex.Message, finished);
+            return await AbortAsync(context, AbortReason.CostLimit, ex.Message, finished);
         }
         catch (PlayerFailureException ex)
         {
-            return await AbortAsync(context, ex.IsTimeout ? "timeout" : "player_failure", ex.Message, finished);
+            return await AbortAsync(context, ex.IsTimeout ? AbortReason.Timeout : AbortReason.PlayerFailure, ex.Message, finished);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await AbortAsync(context, "cancelled", "The run was cancelled.", finished);
+            await AbortAsync(context, AbortReason.Cancelled, "The run was cancelled.", finished);
             throw;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
-            await AbortAsync(context, "internal_error", $"{ex.GetType().Name}: {ex.Message}", finished);
+            await AbortAsync(context, AbortReason.InternalError, $"{ex.GetType().Name}: {ex.Message}", finished);
             throw;
         }
+    }
+
+    private MatchContext CreateContext(MatchPlan plan, ProtocolWriter writer)
+    {
+        var game = plan.Definition.Create(plan.Setup);
+        var prompts = new PromptBuilder(ArenaTemplates.Default, plan.Definition.Templates, plan.Setup.Language, plan.Options, plan.Setup.Communication);
+        var guard = new IdentityGuard(seat => plan.Players[seat].Model, plan.Options.IdentityScanner, plan.Options.RedactIdentity);
+        return new MatchContext(plan, game, prompts, new AnswerEvaluator(plan.Options, prompts), writer, new PlayerGateway(cost), guard, time);
+    }
+
+    /// <summary>Plays all rounds, records the result, and returns it.</summary>
+    private async Task<GameResult> PlayGameAsync(MatchContext context, CancellationToken cancellationToken)
+    {
+        var (startCost, startUnknown) = (cost.TotalUsd, cost.UnknownCalls);
+        var executor = new TurnExecutor(context, _logger);
+        await RecordFactsAsync(context, "start", context.Game.Start().Facts, null, cancellationToken);
+        while (context.Game.PendingTurns.Count > 0)
+        {
+            await PlayRoundAsync(context, executor, cancellationToken);
+        }
+
+        var result = context.Game.Result ?? throw new InvalidOperationException($"Game '{context.Plan.Definition.Id}' ended without a result.");
+        await context.Writer.AppendAsync(new MatchFinishedEvent(time.GetUtcNow(), result, cost.TotalUsd - startCost, cost.UnknownCalls - startUnknown), cancellationToken);
+        MatchLog.Finished(_logger, result.Outcome);
+        return result;
     }
 
     private async Task PlayRoundAsync(MatchContext context, TurnExecutor executor, CancellationToken cancellationToken)
@@ -114,7 +123,7 @@ public sealed class MatchRunner(CostMeter cost, TimeProvider time, ILogger<Match
                 turn.Kind,
                 turn.Seat,
                 result.Submission.Move,
-                result.Submission.Status.ToString().ToLowerInvariant(),
+                TurnStatus.Of(result.Submission.Status),
                 result.Thought,
                 result.ThoughtTruncated,
                 result.Attempts,

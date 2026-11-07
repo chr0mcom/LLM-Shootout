@@ -1,6 +1,4 @@
 // Adapted from AiBehavior.PublicGoods (MIT, same author).
-using System.Globalization;
-
 namespace LlmShootout.Arena.Randomness;
 
 /// <summary>
@@ -41,11 +39,4 @@ public sealed class SeededRng
 
     /// <summary>Returns true with probability <paramref name="p"/> (clamped to [0, 1]).</summary>
     public bool NextBool(double p) => NextDouble() < Math.Clamp(p, 0.0, 1.0);
-
-    /// <summary>Serializes the full generator state.</summary>
-    public string Serialize() => _state.ToString(CultureInfo.InvariantCulture);
-
-    /// <summary>Restores a generator from a state produced by <see cref="Serialize"/>.</summary>
-    public static SeededRng Deserialize(string state) =>
-        new(ulong.Parse(state, CultureInfo.InvariantCulture));
 }

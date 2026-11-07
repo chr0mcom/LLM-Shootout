@@ -25,10 +25,10 @@ public sealed record IdentityScannerSettings(
 public sealed record IdentityToken(string CanonicalToken, string NormalizedToken, IdentityLeakMarkerType MarkerType);
 
 /// <summary>All searchable names of one model plus a fingerprint for the protocol.</summary>
-public sealed record IdentityTokenSet(string Identity, IReadOnlyList<IdentityToken> Tokens, string Fingerprint);
+public sealed record IdentityTokenSet(IReadOnlyList<IdentityToken> Tokens);
 
 /// <summary>A single hit in a message.</summary>
-public sealed record IdentityLeakMatch(IdentityLeakMarkerType MarkerType, string MatchedToken, string CanonicalToken);
+public sealed record IdentityLeakMatch(IdentityLeakMarkerType MarkerType, string CanonicalToken);
 
 /// <summary>Result of scanning one message.</summary>
 /// <param name="HasLeak">True if at least one name was found.</param>

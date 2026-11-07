@@ -19,10 +19,10 @@ public sealed class LiveView(IAnsiConsole console, bool showThoughts, CostMeter?
             case MatchStartedEvent s:
                 Line($"[bold]{Markup.Escape(s.GameId)}[/]  A: {Markup.Escape(s.Players[Arena.Games.Seat.A].Name)}  vs  B: {Markup.Escape(s.Players[Arena.Games.Seat.B].Name)}  [dim](seed {s.Seed}, communication {(s.Communication ? "on" : "off")}, {s.Language})[/]");
                 break;
-            case ModelCallEvent { Purpose: Arena.Players.CallPurpose.Turn } c when c.Class != "valid":
+            case ModelCallEvent { Purpose: Arena.Players.CallPurpose.Turn } c when c.Class != CallClass.Valid:
                 Line($"  [yellow]![/] {c.Seat} attempt {c.Attempt}: {c.Class}{Detail(c)}");
                 break;
-            case ModelCallEvent { Purpose: Arena.Players.CallPurpose.Debrief } c when c.Class != "valid":
+            case ModelCallEvent { Purpose: Arena.Players.CallPurpose.Debrief } c when c.Class != CallClass.Valid:
                 Line($"  [yellow]![/] debriefing {c.Seat} attempt {c.Attempt}: {c.Class}");
                 break;
             case MessageEvent m:
@@ -53,7 +53,7 @@ public sealed class LiveView(IAnsiConsole console, bool showThoughts, CostMeter?
             var retries = t.Attempts > 1 ? $", {t.Attempts} attempts" : string.Empty;
             Line($"[bold]{t.Seat}[/] plays [cyan]{Markup.Escape(t.Move)}[/][dim]{retries}{CostText()}[/]");
         }
-        else if (t.Status == "exhausted")
+        else if (t.Status == TurnStatus.Exhausted)
         {
             Line($"[bold]{t.Seat}[/] [red]delivers no valid move[/] after {t.Attempts} attempts");
         }

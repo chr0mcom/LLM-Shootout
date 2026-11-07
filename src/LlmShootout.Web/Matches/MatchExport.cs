@@ -60,16 +60,16 @@ internal static class MatchExport
         {
             switch (e)
             {
-                case ModelCallEvent { Purpose: CallPurpose.Turn } call when call.Class == "valid" && !string.IsNullOrWhiteSpace(call.Parsed?.Thought):
+                case ModelCallEvent { Purpose: CallPurpose.Turn } call when call.Class == CallClass.Valid && !string.IsNullOrWhiteSpace(call.Parsed?.Thought):
                     rows.Add(Row(call.TurnId, call.Seat.ToString(), "Private thought", call.Parsed!.Thought));
                     break;
-                case ModelCallEvent { Purpose: CallPurpose.Turn } call when call.Class != "valid":
+                case ModelCallEvent { Purpose: CallPurpose.Turn } call when call.Class != CallClass.Valid:
                     rows.Add(Row(call.TurnId, call.Seat.ToString(), $"Problem (try {call.Attempt})", $"{call.Class}: {call.Error ?? string.Join("; ", call.Violations)}"));
                     break;
                 case MessageEvent message:
                     rows.Add(Row(message.TurnId, message.Seat.ToString(), "Message", message.Silent ? "(silence)" : message.Text));
                     break;
-                case TurnEvent { Status: "exhausted" } turn:
+                case TurnEvent { Status: TurnStatus.Exhausted } turn:
                     rows.Add(Row(turn.TurnId, turn.Seat.ToString(), "Move", "(no valid answer)"));
                     break;
                 case TurnEvent { Move: not null } turn:

@@ -45,9 +45,6 @@ public sealed class CostMeter(decimal limitUsd, decimal unknownCallReserveUsd = 
     /// </summary>
     public decimal ReservedUsd => UnknownCalls * unknownCallReserveUsd;
 
-    /// <summary>The limit in USD.</summary>
-    public decimal LimitUsd => limitUsd;
-
     /// <summary>Records the cost of a call. Without reported cost the estimate is used; without both the call counts as unknown.</summary>
     public void Record(decimal? costUsd, decimal? estimatedUsd = null)
     {

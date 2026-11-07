@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using LlmShootout.Arena.Answers;
-using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Prompting;
@@ -72,8 +71,15 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         return Finish(turn, state, state.LastEvaluation!, SubmissionStatus.Exhausted, max);
     }
 
-    /// <summary>One model call. Returns the evaluation of the answer, or null if the call timed out.</summary>
+    /// <summary>One model call and the judgement of its answer. Returns the evaluation, or null if the call timed out.</summary>
     private async Task<Evaluation?> TryAttemptAsync(TurnRequest turn, int attempt, bool isLast, TurnState state, CancellationToken cancellationToken)
+    {
+        var request = BuildRequest(turn, attempt, state);
+        var reply = await CallPlayerAsync(turn, request, cancellationToken);
+        return reply is null ? null : await EvaluateAsync(turn, request, reply, isLast, state, cancellationToken);
+    }
+
+    private PlayerCall BuildRequest(TurnRequest turn, int attempt, TurnState state)
     {
         var messages = context.Prompts.BuildTurn(new TurnPromptInput(
             turn.Seat,
@@ -85,30 +91,36 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
             state.PreviousAnswer,
             state.Hint,
             state.AfterRefusal));
-        var request = new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn, context.Plan.Setup.Communication), attempt, rng => SampleAnswer(turn, rng));
+        return new PlayerCall(CallPurpose.Turn, messages, ResponseSchema.ForTurn(turn, context.Plan.Setup.Communication), attempt, rng => SampleAnswer(turn, rng));
+    }
 
-        PlayerReply reply;
+    /// <summary>Calls the player. A timeout is written to the protocol and returns null; any other failure ends the match.</summary>
+    private async Task<PlayerReply?> CallPlayerAsync(TurnRequest turn, PlayerCall request, CancellationToken cancellationToken)
+    {
         try
         {
-            reply = await context.Gateway.CallAsync(context.Plan.Players[turn.Seat], request, cancellationToken);
+            return await context.Gateway.CallAsync(context.Plan.Players[turn.Seat], request, cancellationToken);
         }
         catch (PlayerFailureException ex)
         {
-            await WriteFailureAsync(turn, attempt, messages, ex, cancellationToken);
-            if (ex.IsTimeout)
+            await context.Writer.AppendAsync(ModelCallEvent.Failed(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, request.Attempt, request.Messages, ex), cancellationToken);
+            if (!ex.IsTimeout)
             {
-                return null;
+                throw;
             }
 
-            throw;
+            return null;
         }
+    }
 
+    private async Task<Evaluation> EvaluateAsync(TurnRequest turn, PlayerCall request, PlayerReply reply, bool isLast, TurnState state, CancellationToken cancellationToken)
+    {
         var parsed = AnswerParser.Parse(reply.Content, reply.Reasoning);
         var evaluation = context.Evaluator.Evaluate(turn, parsed, string.IsNullOrWhiteSpace(reply.Content) ? reply.Reasoning : reply.Content, context.Game, isLast);
         state.LastEvaluation = evaluation;
         var tokenLimit = !evaluation.IsValid && reply.Call?.FinishReason == "length";
-        await WriteCallAsync(turn, attempt, messages, reply, parsed, evaluation, tokenLimit, cancellationToken);
-        MatchLog.Classified(logger, turn.TurnId, turn.Seat, attempt, evaluation.Class);
+        await WriteCallAsync(turn, request, reply, parsed, evaluation, tokenLimit, cancellationToken);
+        MatchLog.Classified(logger, turn.TurnId, turn.Seat, request.Attempt, evaluation.Class);
 
         if (!evaluation.IsValid)
         {
@@ -156,33 +168,13 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
         return answer.ToJsonString();
     }
 
-    private Task WriteFailureAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerFailureException ex, CancellationToken cancellationToken) =>
-        context.Writer.AppendAsync(
-            new ModelCallEvent(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, attempt, messages, null, null, null, "technical_error", [], ex.Call, ex.Call?.CostIsUnknown() ?? true, ex.Message, ex.RawExchange),
-            cancellationToken);
-
-    private Task WriteCallAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, bool tokenLimit, CancellationToken cancellationToken)
+    private Task WriteCallAsync(TurnRequest turn, PlayerCall request, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, bool tokenLimit, CancellationToken cancellationToken)
     {
-        var info = reply.Call;
         var fields = parsed.HasJson ? new ParsedFields(parsed.Thought, parsed.Message, parsed.Move, parsed.FromReasoning, parsed.ExtraKeys) : null;
-        var violations = evaluation.Violations.Select(v => $"{v.Key}: {v.Violation}").Concat(reply.Notice is null ? [] : [$"endpoint: {reply.Notice}"]).ToArray();
+        var violations = evaluation.Violations.Select(v => v.Code is null ? $"{v.Key}: {v.Violation}" : $"{v.Key} [{v.Code}]: {v.Violation}").ToArray();
+        var callClass = tokenLimit ? CallClass.TokenLimit : CallClass.Of(evaluation.Class);
         return context.Writer.AppendAsync(
-            new ModelCallEvent(
-                context.Time.GetUtcNow(),
-                turn.TurnId,
-                CallPurpose.Turn,
-                turn.Seat,
-                attempt,
-                messages,
-                reply.Content,
-                reply.Reasoning,
-                fields,
-                tokenLimit ? "token_limit" : evaluation.Class.ToString().ToLowerInvariant(),
-                violations,
-                info,
-                reply.Call?.CostIsUnknown() ?? false,
-                null,
-                reply.RawExchange),
+            ModelCallEvent.Answered(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, request.Attempt, request.Messages, reply, fields, callClass, violations),
             cancellationToken);
     }
 

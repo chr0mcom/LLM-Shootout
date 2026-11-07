@@ -84,8 +84,7 @@ public sealed class RunOptionSet
             parse.GetValue(Language),
             parse.GetValue(Out) ?? "matches",
             parse.GetValue(ShowThoughts),
-            parse.GetValue(Quiet),
-            maxCost);
+            parse.GetValue(Quiet));
     }
 
     /// <summary>Turns <c>key=value</c> pairs into a JSON object: integers, booleans and text are recognized.</summary>
@@ -125,5 +124,4 @@ public sealed record RunSettings(
     string? Language,
     string OutDirectory,
     bool ShowThoughts,
-    bool Quiet,
-    decimal MaxCostUsd);
+    bool Quiet);

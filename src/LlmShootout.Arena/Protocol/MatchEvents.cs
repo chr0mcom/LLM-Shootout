@@ -65,7 +65,19 @@ public sealed record ModelCallEvent(
     ModelCallInfo? Call,
     bool CostUnknown,
     string? Error,
-    string? RawExchange) : MatchEvent(At);
+    string? RawExchange) : MatchEvent(At)
+{
+    /// <summary>The event of a call that failed technically: no answer, the error text and the raw exchange.</summary>
+    public static ModelCallEvent Failed(DateTimeOffset at, string turnId, CallPurpose purpose, Seat seat, int attempt, IReadOnlyList<PromptMessage> messages, PlayerFailureException failure) =>
+        new(at, turnId, purpose, seat, attempt, messages, null, null, null, CallClass.TechnicalError, [], failure.Call, failure.Call?.CostIsUnknown() ?? true, failure.Message, failure.RawExchange);
+
+    /// <summary>
+    /// The event of a call that returned an answer. A message of the endpoint about the answer (for example a gateway that
+    /// could not produce structured output) is added to the problems as <c>endpoint: …</c>.
+    /// </summary>
+    public static ModelCallEvent Answered(DateTimeOffset at, string turnId, CallPurpose purpose, Seat seat, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedFields? parsed, string callClass, IReadOnlyList<string> problems) =>
+        new(at, turnId, purpose, seat, attempt, messages, reply.Content, reply.Reasoning, parsed, callClass, reply.Notice is null ? problems : [.. problems, $"endpoint: {reply.Notice}"], reply.Call, reply.Call?.CostIsUnknown() ?? false, null, reply.RawExchange);
+}
 
 /// <summary>A public message became visible. A null text is silence.</summary>
 public sealed record MessageEvent(

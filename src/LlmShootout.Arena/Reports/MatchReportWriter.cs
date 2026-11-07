@@ -147,7 +147,7 @@ public static class MatchReportWriter
             {
                 MessageEvent m => MessageLine(m, t),
                 TurnEvent { Move: not null } turn => t("report.history.move", [("speaker", Speaker(turn.Seat, t)), ("move", turn.Move), ("attempts", turn.Attempts.ToString(CultureInfo.InvariantCulture))]),
-                TurnEvent { Status: "exhausted" } turn => t("report.history.exhausted", [("speaker", Speaker(turn.Seat, t)), ("attempts", turn.Attempts.ToString(CultureInfo.InvariantCulture))]),
+                TurnEvent { Status: TurnStatus.Exhausted } turn => t("report.history.exhausted", [("speaker", Speaker(turn.Seat, t)), ("attempts", turn.Attempts.ToString(CultureInfo.InvariantCulture))]),
                 FactEvent fact => FactLine(fact, t),
                 _ => null,
             };

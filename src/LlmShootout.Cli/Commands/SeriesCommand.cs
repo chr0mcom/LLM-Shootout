@@ -30,7 +30,7 @@ public static class SeriesCommand
             var specA = settings.PlayerA ?? series.PlayerA ?? throw new UsageException("The series file names no player for seat A. Pass --a <player> (use 'random' to play without an API key).");
             var specB = settings.PlayerB ?? series.PlayerB ?? throw new UsageException("The series file names no player for seat B. Pass --b <player>.");
 
-            var cost = new CostMeter(settings.MaxCostUsd);
+            var cost = new CostMeter(settings.Match.MaxCostUsd);
             var players = (A: await env.CreatePlayerAsync(specA, series.Seed + 1000, settings.Endpoint, ct), B: await env.CreatePlayerAsync(specB, series.Seed + 2000, settings.Endpoint, ct));
             var directory = MatchPaths.Series(settings.OutDirectory, env.Time.GetUtcNow(), definition.Id, players.A.Name, players.B.Name);
             var view = new LiveView(env.Console, settings.ShowThoughts, cost);

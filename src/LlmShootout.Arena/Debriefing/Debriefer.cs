@@ -38,7 +38,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         var rulesGame = definition.Create(setup);
         var prompts = new PromptBuilder(ArenaTemplates.Default, definition.Templates, started.Language, options, started.Communication);
         var questions = StandardQuestions.For(definition.ExtraQuestions(setup), started.Communication, !started.Options.RevealIdentity);
-        var session = new Session(definition, match, prompts, questions, rulesGame, BuildTimeline(match));
+        var session = new Session(match, prompts, questions, rulesGame, BuildTimeline(match));
 
         foreach (var seat in Seat.All)
         {
@@ -54,6 +54,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         }
     }
 
+    /// <summary>Asks one seat, up to <c>maxRetries + 1</c> times, until its answers are complete and valid.</summary>
     private async Task DebriefSeatAsync(Session s, Seat seat, IPlayer player, ProtocolWriter writer, CancellationToken cancellationToken)
     {
         var messages = new List<PromptMessage>
@@ -62,31 +63,23 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
             new(PromptRole.User, BuildUser(s, seat)),
         };
         var schema = DebriefAnswers.Schema(s.Questions);
-        var problems = new List<string>();
         Dictionary<string, string> answers = [];
+        List<string> problems = [];
         var attempts = 0;
 
-        for (var attempt = 1; attempt <= maxRetries + 1; attempt++)
+        while (attempts <= maxRetries)
         {
-            var request = new PlayerCall(CallPurpose.Debrief, [.. messages], schema, attempt, rng => DebriefAnswers.Sample(s.Questions, rng, s.Prompts.Arena("debrief.sample.text")));
-            attempts = attempt;
-            PlayerReply reply;
-            try
+            var request = new PlayerCall(CallPurpose.Debrief, [.. messages], schema, ++attempts, rng => DebriefAnswers.Sample(s.Questions, rng, s.Prompts.Arena("debrief.sample.text")));
+            var (reply, checkedAnswers, found) = await AskOnceAsync(s, seat, player, request, writer, cancellationToken);
+            (answers, problems) = (checkedAnswers, found);
+            if (reply is null)
             {
-                reply = await gateway.CallAsync(player, request, cancellationToken);
-            }
-            catch (PlayerFailureException ex)
-            {
-                await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, null, "technical_error", [], ex.Call, ex.Call?.CostIsUnknown() ?? true, ex.Message, ex.RawExchange), cancellationToken);
-                problems = [ex.Message];
                 break;
             }
 
-            (answers, problems) = Check(s, ReadObject(reply));
-            await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, reply, problems.Count == 0 ? "valid" : "invalid", reply.Notice is null ? problems : [.. problems, $"endpoint: {reply.Notice}"], reply.Call, reply.Call?.CostIsUnknown() ?? false, null, reply.RawExchange), cancellationToken);
             if (problems.Count == 0)
             {
-                await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, true, answers, [], attempt), cancellationToken);
+                await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, true, answers, [], attempts), cancellationToken);
                 return;
             }
 
@@ -95,6 +88,28 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         }
 
         await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, false, answers, problems, attempts), cancellationToken);
+    }
+
+    /// <summary>One question round: the call, the check of the answers, and the protocol event. The reply is null if the call failed technically.</summary>
+    private async Task<(PlayerReply? Reply, Dictionary<string, string> Answers, List<string> Problems)> AskOnceAsync(
+        Session s, Seat seat, IPlayer player, PlayerCall request, ProtocolWriter writer, CancellationToken cancellationToken)
+    {
+        var turnId = $"debrief-{seat}";
+        PlayerReply reply;
+        try
+        {
+            reply = await gateway.CallAsync(player, request, cancellationToken);
+        }
+        catch (PlayerFailureException ex)
+        {
+            await writer.AppendAsync(ModelCallEvent.Failed(time.GetUtcNow(), turnId, CallPurpose.Debrief, seat, request.Attempt, request.Messages, ex), cancellationToken);
+            return (null, [], [ex.Message]);
+        }
+
+        var (answers, problems) = Check(s, ReadObject(reply));
+        var callClass = problems.Count == 0 ? CallClass.Valid : CallClass.Invalid;
+        await writer.AppendAsync(ModelCallEvent.Answered(time.GetUtcNow(), turnId, CallPurpose.Debrief, seat, request.Attempt, request.Messages, reply, null, callClass, problems), cancellationToken);
+        return (reply, answers, problems);
     }
 
     private static JsonObject? ReadObject(PlayerReply reply) =>
@@ -196,19 +211,6 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         return "{" + string.Join(", ", members) + "}";
     }
 
-    private ModelCallEvent CallEvent(
-        Seat seat,
-        int attempt,
-        IReadOnlyList<PromptMessage> messages,
-        PlayerReply? reply,
-        string cls,
-        IReadOnlyList<string> violations,
-        ModelCallInfo? call,
-        bool costUnknown,
-        string? error,
-        string? raw) =>
-        new(time.GetUtcNow(), $"debrief-{seat}", CallPurpose.Debrief, seat, attempt, messages, reply?.Content, reply?.Reasoning, null, cls, violations, call, costUnknown, error, raw);
-
     private static Timeline BuildTimeline(MatchRecord match)
     {
         var timeline = new Timeline();
@@ -229,7 +231,6 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
     }
 
     private sealed record Session(
-        IGameDefinition Definition,
         MatchRecord Match,
         PromptBuilder Prompts,
         IReadOnlyList<DebriefingQuestion> Questions,

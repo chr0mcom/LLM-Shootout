@@ -1,5 +1,4 @@
 using System.Globalization;
-using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Prompting;
 
@@ -135,7 +134,7 @@ public sealed class AnswerEvaluator(MatchOptions options, PromptBuilder prompts)
             return check.NormalizedMove;
         }
 
-        violations.Add(new FieldViolation("move", prompts.RenderGame(check.Reason!), check.Allowed ?? AllowedFrom(turn)));
+        violations.Add(new FieldViolation("move", prompts.RenderGame(check.Reason!), check.Allowed ?? AllowedFrom(turn), check.ErrorCode));
         return null;
     }
 
