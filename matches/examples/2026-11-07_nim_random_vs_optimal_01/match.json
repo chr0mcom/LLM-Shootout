@@ -1,7 +1,7 @@
 {
   "gameId": "nim",
-  "startedAt": "2026-11-07T14:55:52.5940712+00:00",
-  "durationSeconds": 0.2131839,
+  "startedAt": "2026-11-07T15:27:34.4040703+00:00",
+  "durationSeconds": 0.2129146,
   "aborted": false,
   "communication": false,
   "language": "en",
@@ -92,9 +92,9 @@
   "costUnknownCalls": 0,
   "modelCalls": 10,
   "appVersion": "1.0.0",
-  "gitCommit": "339342359cdd",
+  "gitCommit": "8593f9c3a59a",
   "templateHashes": {
-    "arena": "0CC7225972D51BDD",
-    "nim": "73A19C2485AEC807"
+    "arena": "7F7EC597B952302F",
+    "nim": "32B1B0985E62F0CF"
   }
 }

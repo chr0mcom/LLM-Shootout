@@ -4,22 +4,22 @@
 
 | | |
 |---|---|
-| Datum | 2026-11-07 14:55 UTC |
+| Datum | 2026-11-07 15:27 UTC |
 | Seed | 2 |
 | Sprache der Prompts | de |
 | Nachrichten zwischen den Spielern | aus |
 | Beginnt | B |
-| Ausgang | a_wins |
+| Ausgang | Sieg von A |
 | Dauer | 00:00:00 |
 | Kosten | 0.0000 |
-| Version | 1.0.0 (339342359cdd) |
+| Version | 1.0.0 (8593f9c3a59a) |
 
 ## Ergebnis
 
 | Sitz | Spieler | Ergebnis | Punkte |
 |---|---|---|---|
-| A | optimal | win | 1 |
-| B | random | loss | 0 |
+| A | optimal | Sieg | 1 |
+| B | random | Niederlage | 0 |
 
 ## Verlauf
 
@@ -27,37 +27,37 @@ Ausgangslage, Haufen 1 bis 3: 3, 4, 5
 
 Sitz B zieht: `2:3` (Versuche: 1)
 
-Orakel, Sitz B, move-1: Lage won, Zug `2:3`, optimal: false. Beste Züge: 1:2. *(Analyse, nie im Prompt)*
+Orakel, Sitz B, move-1: Lage gewonnen, Zug `2:3`, optimal: nein. Beste Züge: 1:2. *(Analyse, nie im Prompt)*
 
 Zug (Sitz B): 3 von Haufen 2. Haufen jetzt: 3, 1, 5
 
 Sitz A zieht: `3:3` (Versuche: 1)
 
-Orakel, Sitz A, move-2: Lage won, Zug `3:3`, optimal: true. Beste Züge: 3:3. *(Analyse, nie im Prompt)*
+Orakel, Sitz A, move-2: Lage gewonnen, Zug `3:3`, optimal: ja. Beste Züge: 3:3. *(Analyse, nie im Prompt)*
 
 Zug (Sitz A): 3 von Haufen 3. Haufen jetzt: 3, 1, 2
 
 Sitz B zieht: `3:2` (Versuche: 1)
 
-Orakel, Sitz B, move-3: Lage lost, Zug `3:2`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
+Orakel, Sitz B, move-3: Lage verloren, Zug `3:2`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
 
 Zug (Sitz B): 2 von Haufen 3. Haufen jetzt: 3, 1, 0
 
 Sitz A zieht: `1:2` (Versuche: 1)
 
-Orakel, Sitz A, move-4: Lage won, Zug `1:2`, optimal: true. Beste Züge: 1:2. *(Analyse, nie im Prompt)*
+Orakel, Sitz A, move-4: Lage gewonnen, Zug `1:2`, optimal: ja. Beste Züge: 1:2. *(Analyse, nie im Prompt)*
 
 Zug (Sitz A): 2 von Haufen 1. Haufen jetzt: 1, 1, 0
 
 Sitz B zieht: `1:1` (Versuche: 1)
 
-Orakel, Sitz B, move-5: Lage lost, Zug `1:1`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
+Orakel, Sitz B, move-5: Lage verloren, Zug `1:1`, optimal: n/a. Beste Züge: -. *(Analyse, nie im Prompt)*
 
 Zug (Sitz B): 1 von Haufen 1. Haufen jetzt: 0, 1, 0
 
 Sitz A zieht: `2:1` (Versuche: 1)
 
-Orakel, Sitz A, move-6: Lage won, Zug `2:1`, optimal: true. Beste Züge: 2:1. *(Analyse, nie im Prompt)*
+Orakel, Sitz A, move-6: Lage gewonnen, Zug `2:1`, optimal: ja. Beste Züge: 2:1. *(Analyse, nie im Prompt)*
 
 Zug (Sitz A): 1 von Haufen 2. Haufen jetzt: 0, 0, 0
 
@@ -112,7 +112,7 @@ Abgelehnte Antworten wurden mit einem Korrekturhinweis wiederholt. Ein Regelvers
 | Aufgaben | 0 | 0 |
 | Erschöpfte Züge (in keinem Versuch ein annehmbarer Zug) | 0 | 0 |
 | Regelverstoß in verlorener Lage, danach gewonnen | nein | nein |
-| Antwort der Nachbefragung auf „rules_followed“ | true | true |
+| Antwort der Nachbefragung auf „rules_followed“ | ja | ja |
 
 Es wurden keine Regelverstöße festgehalten.
 
@@ -154,7 +154,7 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 | `decisive_move` | Keine Angabe. | Keine Angabe. |
 | `own_mistake` | Keine Angabe. | Keine Angabe. |
 | `opponent_strength` | 3 | 3 |
-| `rules_followed` | true | true |
+| `rules_followed` | ja | ja |
 | `rules_followed_reason` | Keine Angabe. | Keine Angabe. |
 | `next_time` | Keine Angabe. | Keine Angabe. |
 | `winning_rule` | Keine Angabe. | Keine Angabe. |

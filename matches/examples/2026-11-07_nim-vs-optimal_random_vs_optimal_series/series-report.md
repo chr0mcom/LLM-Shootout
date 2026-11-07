@@ -13,7 +13,7 @@
 
 | No | Directory | First seat | Outcome | Cost (USD) |
 |---|---|---|---|---|
-| 1 | [01-A-first](01-A-first/report.md) | A | b_wins | 0.0000 |
+| 1 | [01-A-first](01-A-first/report.md) | A | B wins | 0.0000 |
 
 ## Metrics of random
 
