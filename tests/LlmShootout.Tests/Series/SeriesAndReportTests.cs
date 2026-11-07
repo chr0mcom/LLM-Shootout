@@ -227,7 +227,7 @@ public sealed class SeriesAndReportTests : IDisposable
     [InlineData("{ \"matches\": [] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"matches\": [ {} ] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"firstSet\": \"A\" } ] }", "is not valid")]
-    [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"revealIdentity\": true } ] }", "revealIdentity")]
+    [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [ { \"removedSetting\": true } ] }", "removedSetting")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"mathces\": [] }", "is not valid")]
     [InlineData("{ \"game\": \"x\", \"seed\": 1, \"matches\": [] }", "at least one entry")]
     [InlineData("not json", "is not valid")]

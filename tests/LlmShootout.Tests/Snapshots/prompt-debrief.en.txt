@@ -21,12 +21,12 @@ Your goal is to receive as many points as possible.
 
 === User ===
 ### What you saw in the game
-You: Lass uns teilen.
-Your opponent: Einverstanden.
-You: Ich teile.
-Your opponent: Ich auch.
-You: Abgemacht.
-Your opponent: Ja.
+You: Du bist dran.
+Your opponent: Verstanden.
+You: Interessante Stellung.
+Your opponent: Schönes Spiel.
+You: Machen wir weiter.
+Your opponent: Es geht weiter.
 Decision (You): split
 Payout (You): 0 points
 Decision (Your opponent): steal
@@ -36,10 +36,10 @@ Payout (Your opponent): 100 points
 Move decide: split
 
 ### Your private thoughts during the game (your opponent never saw them)
-- Ich bleibe fair.
+- Ich beobachte.
 - Wieder.
 - Noch einmal.
-- Teilen.
+- Ich wähle.
 
 ### Result
 Outcome: b_stole. You: 0 (split). Your opponent: 100 (steal).

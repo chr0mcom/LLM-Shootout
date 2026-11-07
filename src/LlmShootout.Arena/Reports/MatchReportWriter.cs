@@ -69,7 +69,6 @@ public static class MatchReportWriter
             match.Turns(seat).Count(t => t.ThoughtTruncated),
             match.Messages(seat).Count(m => m.Truncated),
             match.Messages(seat).Count(m => m.Silent),
-            match.Messages(seat).Sum(m => m.IdentityHits.Count),
             infos.Sum(i => i.PromptTokens ?? 0),
             infos.Sum(i => i.CompletionTokens ?? 0),
             infos.Sum(i => i.ReasoningTokens ?? 0),
@@ -201,11 +200,6 @@ public static class MatchReportWriter
             flags.Add(t["report.flag.silent"]);
         }
 
-        if (m.IdentityHits.Count > 0)
-        {
-            flags.Add(t.Format("report.flag.identity", ("hits", string.Join(", ", m.IdentityHits))));
-        }
-
         var line = t.Format("report.history.message", ("speaker", Speaker(m.Seat, t)), ("text", m.Text ?? Silence(t)));
         return flags.Count == 0 ? line : $"{line} *({string.Join("; ", flags)})*";
     }
@@ -249,7 +243,6 @@ public static class MatchReportWriter
         SeatRow(sb, t["report.metric.thoughts_truncated"], s, x => x.ThoughtsTruncated.ToString(CultureInfo.InvariantCulture));
         SeatRow(sb, t["report.metric.messages_truncated"], s, x => x.MessagesTruncated.ToString(CultureInfo.InvariantCulture));
         SeatRow(sb, t["report.metric.silent"], s, x => x.SilentMessages.ToString(CultureInfo.InvariantCulture));
-        SeatRow(sb, t["report.metric.identity_hits"], s, x => x.IdentityHits.ToString(CultureInfo.InvariantCulture));
         SeatRow(sb, t["report.metric.tokens"], s, x => $"{x.PromptTokens} / {x.CompletionTokens} / {x.ReasoningTokens}");
         SeatRow(sb, t["report.metric.cost"], s, x => x.CostUsd.ToString("0.0000", CultureInfo.InvariantCulture));
         sb.AppendLine();

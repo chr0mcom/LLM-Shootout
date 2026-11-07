@@ -1,6 +1,6 @@
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Reports;
-using LlmShootout.Games.SplitOrSteal;
+using LlmShootout.Tests.TestGames;
 
 namespace LlmShootout.Tests.Protocol;
 
@@ -17,10 +17,11 @@ public sealed class LegacyProtocolTests : IDisposable
     }
 
     [Fact]
-    public void A_protocol_written_before_the_identity_options_were_removed_still_loads()
+    public void A_protocol_with_an_option_that_no_longer_exists_still_loads()
     {
         var match = LoadVersion1();
 
+        Assert.Contains("removedSetting", File.ReadAllText(Path.Combine(_directory, ProtocolFiles.Events)), StringComparison.Ordinal);
         Assert.Equal(1, match.Started.SchemaVersion);
         Assert.Equal(3, match.Started.Options.MaxAttempts);
         Assert.NotNull(match.Result);
@@ -43,10 +44,10 @@ public sealed class LegacyProtocolTests : IDisposable
         var match = LoadVersion1();
 
         var summary = MatchReportWriter.Summarize(match);
-        var report = MatchReportWriter.BuildReport(new SplitOrStealDefinition(), match);
+        var report = MatchReportWriter.BuildReport(new CodeBreakerDefinition(), match);
 
-        Assert.Equal("split-or-steal", summary.GameId);
-        Assert.Contains("Split or Steal", report, StringComparison.Ordinal);
+        Assert.Equal("code-breaker", summary.GameId);
+        Assert.Contains("Code breaker", report, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -54,15 +55,15 @@ public sealed class LegacyProtocolTests : IDisposable
     {
         var match = LoadVersion1();
 
-        var report = MatchReportWriter.BuildReport(new SplitOrStealDefinition(), match);
+        var report = MatchReportWriter.BuildReport(new CodeBreakerDefinition(), match);
         var summary = MatchReportWriter.Summarize(match);
 
-        Assert.Contains("## Regeltreue", report, StringComparison.Ordinal);
-        Assert.Contains("| Abgelehnte Antworten: ungültig |", report, StringComparison.Ordinal);
-        Assert.Contains("| Erschöpfte Züge (in keinem Versuch ein annehmbarer Zug) |", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("| Regelverstöße |", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("| Aufgaben |", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("Es wurden keine Regelverstöße festgehalten", report, StringComparison.Ordinal);
+        Assert.Contains("## Rule compliance", report, StringComparison.Ordinal);
+        Assert.Contains("| Rejected answers: invalid |", report, StringComparison.Ordinal);
+        Assert.Contains("| Exhausted turns (no acceptable move in any attempt) |", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("| Rule violations |", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("| Resignations |", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("No rule violations were recorded", report, StringComparison.Ordinal);
         Assert.False(summary.ResultWithRuleViolation);
     }
 }

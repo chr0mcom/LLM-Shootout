@@ -21,12 +21,12 @@ Dein Ziel ist es, möglichst viele Punkte zu erhalten.
 
 === User ===
 ### Was du im Spiel gesehen hast
-Du: Lass uns teilen.
-Dein Gegner: Einverstanden.
-Du: Ich teile.
-Dein Gegner: Ich auch.
-Du: Abgemacht.
-Dein Gegner: Ja.
+Du: Du bist dran.
+Dein Gegner: Verstanden.
+Du: Interessante Stellung.
+Dein Gegner: Schönes Spiel.
+Du: Machen wir weiter.
+Dein Gegner: Es geht weiter.
 Entscheidung (Du): split
 Auszahlung (Du): 0 Punkte
 Entscheidung (Dein Gegner): steal
@@ -36,10 +36,10 @@ Auszahlung (Dein Gegner): 100 Punkte
 Zug decide: split
 
 ### Deine privaten Gedanken während des Spiels (dein Gegner hat sie nie gesehen)
-- Ich bleibe fair.
+- Ich beobachte.
 - Wieder.
 - Noch einmal.
-- Teilen.
+- Ich wähle.
 
 ### Ergebnis
 Ausgang: b_stole. Du: 0 (split). Dein Gegner: 100 (steal).

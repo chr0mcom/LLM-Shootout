@@ -89,7 +89,7 @@ A public message became visible. `text` is absent for silence.
 {"type":"message","turnId":"move-1","seat":"A","text":"Your move.","silent":false,"truncated":false,"identityHits":[],"at":"...","schemaVersion":2}
 ```
 
-`identityHits` entries look like `opponent:Provider:ChatGPT` (`self`, `opponent` or `ambiguous`; the marker type comes from the scanner).
+`identityHits` entries look like `opponent:Provider:ChatGPT` (`self`, `opponent` or `ambiguous`; the marker type comes from the scanner). The field is a technical marker; no report, `match.json` or series evaluates it.
 
 ### `turn`
 
@@ -174,7 +174,7 @@ The model calls of the debriefing are `model_call` events with `purpose: Debrief
 
 Numbers only, computed from the protocol: game, date, duration, `aborted`, `outcome`, `resultWithRuleViolation`, and per seat the
 player, requested and delivered model, score and label, turns, the counts described below, shortened thoughts and
-messages, silences, identity hits, tokens, cost and whether the debriefing was valid. Plus total cost, number of
+messages, silences, tokens, cost and whether the debriefing was valid. Plus total cost, number of
 calls, number of calls with unknown cost, version, commit and template hashes.
 
 The counts of a seat come from one class (`PlayMetrics`), which the report, `match.json` and the series metrics of a game share:

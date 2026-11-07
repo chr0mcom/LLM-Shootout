@@ -24,15 +24,15 @@ Your goal is to receive as many points as possible.
 Decision phase. The pot holds 100 points.
 
 ### History so far
-You: Lass uns teilen.
-Your opponent: Einverstanden.
-You: Ich teile.
-Your opponent: Ich auch.
-You: Abgemacht.
-Your opponent: Ja.
+You: Du bist dran.
+Your opponent: Verstanden.
+You: Interessante Stellung.
+Your opponent: Schönes Spiel.
+You: Machen wir weiter.
+Your opponent: Es geht weiter.
 
 ### Your earlier private thoughts (your opponent never sees them)
-- Ich bleibe fair.
+- Ich beobachte.
 - Wieder.
 - Noch einmal.
 

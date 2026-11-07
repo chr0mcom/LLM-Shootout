@@ -326,9 +326,6 @@ gekürzt
 ## report.flag.silent
 Schweigen
 
-## report.flag.identity
-Identitätstreffer: {hits}
-
 ## report.thoughts
 Gedanken (privat, nur für die Auswertung)
 
@@ -473,9 +470,6 @@ Gekürzte Nachrichten
 
 ## report.metric.silent
 Schweigen
-
-## report.metric.identity_hits
-Identitätstreffer in Nachrichten
 
 ## report.metric.tokens
 Tokens (Eingabe / Ausgabe / davon Reasoning)

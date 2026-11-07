@@ -184,7 +184,7 @@ sequenceDiagram
 |---|---|
 | Turn order (alternate, phases) | return one `TurnRequest` at a time, advance your own phase counter in `Apply` |
 | Both decide at once | return one `TurnRequest` per seat |
-| Several rounds, role swap | state in your game; vary `TurnRequest.Kind` (`offer`, `respond`) and the seat per round |
+| Several rounds, role swap | state in your game; vary `TurnRequest.Kind` (`set`, `guess`) and the seat per round |
 | Hidden information per seat | keep it in the game, show it in `ViewFor(seat)` or as a `FactAudience.Seat` fact. **Hidden starting state** (dice, a drawn code, a random layout) is returned from `IGame.Start()` as private facts, so it is in the protocol, in later prompts and in the debriefing |
 | Reveal | a `FactAudience.Everyone` fact in `Apply` |
 | A reference for the strength of a move (an oracle, for example Nim) | implement `IGameOracle` on the game: `Assess(turn)` returns the position for the seat to move (`Won`, `Lost`, `Drawn`, `Unknown`) and all best moves, normalized like the moves of `Check`. The arena asks once per turn before the answers are collected and writes the analysis fact `oracle` for every played move; it never reaches a prompt ([ADR 0019](decisions/0019-oracle-rates-every-move.md)) |

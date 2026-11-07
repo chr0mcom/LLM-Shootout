@@ -52,7 +52,6 @@ public sealed record SeatSummary(
     int ThoughtsTruncated,
     int MessagesTruncated,
     int SilentMessages,
-    int IdentityHits,
     int PromptTokens,
     int CompletionTokens,
     int ReasoningTokens,

@@ -26,7 +26,7 @@ public sealed record MoveFormat(
 
 /// <summary>One thing a seat is asked to do now.</summary>
 /// <param name="TurnId">Stable id inside the match, for example <c>talk-3</c> or <c>decide</c>.</param>
-/// <param name="Kind">Kind of turn, for example <c>talk</c>, <c>decide</c>, <c>offer</c>, <c>respond</c>. Reports group by it.</param>
+/// <param name="Kind">Kind of turn, for example <c>talk</c>, <c>decide</c>, <c>set</c>, <c>guess</c>. Reports group by it.</param>
 /// <param name="Seat">The seat that has to answer.</param>
 /// <param name="Message">Whether a public message is forbidden, optional or required.</param>
 /// <param name="Move">Whether a move is forbidden, optional or required.</param>

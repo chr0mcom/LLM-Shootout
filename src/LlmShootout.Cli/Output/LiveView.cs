@@ -75,11 +75,6 @@ public sealed class LiveView(IAnsiConsole console, bool showThoughts, CostMeter?
             flags.Add("shortened");
         }
 
-        if (m.IdentityHits.Count > 0)
-        {
-            flags.Add("identity: " + string.Join(", ", m.IdentityHits));
-        }
-
         return flags.Count == 0 ? string.Empty : $" [dim]({Markup.Escape(string.Join("; ", flags))})[/]";
     }
 

@@ -24,15 +24,15 @@ Dein Ziel ist es, möglichst viele Punkte zu erhalten.
 Entscheidungsphase. Der Topf enthält 100 Punkte.
 
 ### Bisheriger Verlauf
-Du: Lass uns teilen.
-Dein Gegner: Einverstanden.
-Du: Ich teile.
-Dein Gegner: Ich auch.
-Du: Abgemacht.
-Dein Gegner: Ja.
+Du: Du bist dran.
+Dein Gegner: Verstanden.
+Du: Interessante Stellung.
+Dein Gegner: Schönes Spiel.
+Du: Machen wir weiter.
+Dein Gegner: Es geht weiter.
 
 ### Deine bisherigen privaten Gedanken (dein Gegner sieht sie nie)
-- Ich bleibe fair.
+- Ich beobachte.
 - Wieder.
 - Noch einmal.
 

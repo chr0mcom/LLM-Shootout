@@ -194,7 +194,7 @@ The `IdentityScanner` is a technical marker. It checks every public message for 
 of the other player's model (slug, slug without provider and variant suffix such as `:free`, provider, well-known
 family names like "Claude" or "ChatGPT", also with a German genitive "s"). Hits are written next to the message as
 `subject:type:name` (`self`, `opponent` or `ambiguous`). In self-play, and when both models share a provider, a hit
-cannot be attributed and is marked `ambiguous`. Messages are never changed, and no report section builds on the marker.
+cannot be attributed and is marked `ambiguous`. Messages are never changed, and nothing evaluates the marker: no report, `match.json` or series reads it.
 
 ## Debriefing
 

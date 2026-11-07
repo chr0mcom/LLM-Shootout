@@ -24,7 +24,7 @@ Your goal is to receive as many points as possible.
 Message phase: 1 of 6 messages have been written so far. The pot holds 100 points.
 
 ### History so far
-Your opponent: Lass uns teilen.
+Your opponent: Du bist dran.
 
 ### Your task now
 Write your message 1 of 3. The decision follows after the message phase.

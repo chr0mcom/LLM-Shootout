@@ -326,9 +326,6 @@ shortened
 ## report.flag.silent
 silence
 
-## report.flag.identity
-identity hits: {hits}
-
 ## report.thoughts
 Thoughts (private, for the analysis only)
 
@@ -473,9 +470,6 @@ Shortened messages
 
 ## report.metric.silent
 Silence
-
-## report.metric.identity_hits
-Identity hits in messages
 
 ## report.metric.tokens
 Tokens (input / output / of which reasoning)

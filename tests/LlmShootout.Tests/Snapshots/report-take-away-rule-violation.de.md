@@ -100,7 +100,6 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 | Gekürzte Gedanken | 0 | 0 |
 | Gekürzte Nachrichten | 0 | 0 |
 | Schweigen | 0 | 0 |
-| Identitätstreffer in Nachrichten | 0 | 0 |
 | Tokens (Eingabe / Ausgabe / davon Reasoning) | 0 / 0 / 0 | 0 / 0 / 0 |
 | Kosten (USD) | 0.0000 | 0.0000 |
 

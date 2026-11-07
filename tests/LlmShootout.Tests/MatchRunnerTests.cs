@@ -271,17 +271,19 @@ public sealed class MatchRunnerTests : IDisposable
     [Fact]
     public async Task Private_facts_reach_only_their_seat_and_analysis_facts_no_prompt()
     {
-        var definition = new RoleSwapDefinition();
-        var a = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "6")).Reply(MatchHarness.Answer(move: "accept")).Reply(MatchHarness.Answer(move: "5")).Reply(MatchHarness.Answer(move: "accept"));
-        var b = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "accept")).Reply(MatchHarness.Answer(move: "5")).Reply(MatchHarness.Answer(move: "accept"));
+        var definition = new CodeBreakerDefinition();
+        var a = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "6")).Reply(MatchHarness.Answer(move: "4")).Reply(MatchHarness.Answer(move: "3"));
+        var b = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "5")).Reply(MatchHarness.Answer(move: "8")).Reply(MatchHarness.Answer(move: "3"));
 
         var (outcome, events) = await _harness.RunAsync(definition, a, b, options: new MatchOptions { MaxAttempts = 1 });
 
         Assert.True(outcome.Completed);
-        Assert.Contains("Your private minimum", AllPromptText(b), StringComparison.Ordinal);
-        Assert.DoesNotContain("Your private minimum", a.Calls[0].Messages[1].Text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Offer fair", AllPromptText(a) + AllPromptText(b), StringComparison.Ordinal);
-        Assert.Contains(events.OfType<FactEvent>(), f => f.Audience == FactAudience.Analysis && f.Text.StartsWith("Offer fair", StringComparison.Ordinal));
+        Assert.Contains("Your number is 6", AllPromptText(a), StringComparison.Ordinal);
+        Assert.DoesNotContain("Your number is 6", AllPromptText(b), StringComparison.Ordinal);
+        Assert.Contains("Your number is 8", AllPromptText(b), StringComparison.Ordinal);
+        Assert.DoesNotContain("Your number is 8", AllPromptText(a), StringComparison.Ordinal);
+        Assert.DoesNotContain("Guess within 1", AllPromptText(a) + AllPromptText(b), StringComparison.Ordinal);
+        Assert.Contains(events.OfType<FactEvent>(), f => f.Audience == FactAudience.Analysis && f.Text.StartsWith("Guess within 1: True", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -306,9 +308,9 @@ public sealed class MatchRunnerTests : IDisposable
     }
 
     [Fact]
-    public async Task Role_swap_game_runs_through_the_unchanged_arena()
+    public async Task Code_breaker_game_runs_through_the_unchanged_arena()
     {
-        var (outcome, _) = await _harness.RunAsync(new RoleSwapDefinition(), new RandomPlayer(3), new RandomPlayer(4), communication: true);
+        var (outcome, _) = await _harness.RunAsync(new CodeBreakerDefinition(), new RandomPlayer(3), new RandomPlayer(4), communication: true);
 
         Assert.True(outcome.Completed);
         Assert.Equal("finished", outcome.Result!.Outcome);

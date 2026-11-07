@@ -33,17 +33,17 @@ public sealed class PromptSnapshotTests : IDisposable
     public async Task The_prompts_of_a_match_with_messages_stay_stable(string language)
     {
         var a = Player(
-            MatchHarness.Answer("Ich bleibe fair.", "Lass uns teilen.", null),
-            MatchHarness.Answer("Wieder.", "Ich teile.", null),
-            MatchHarness.Answer("Noch einmal.", "Abgemacht.", null),
+            MatchHarness.Answer("Ich beobachte.", "Du bist dran.", null),
+            MatchHarness.Answer("Wieder.", "Interessante Stellung.", null),
+            MatchHarness.Answer("Noch einmal.", "Machen wir weiter.", null),
             "no json at all",
-            MatchHarness.Answer("Teilen.", null, "split"),
+            MatchHarness.Answer("Ich wähle.", null, "split"),
             SplitOrStealMatchTests.DebriefJson());
         var b = Player(
-            MatchHarness.Answer("Mal sehen.", "Einverstanden.", null),
-            MatchHarness.Answer("Hm.", "Ich auch.", null),
-            MatchHarness.Answer("Gut.", "Ja.", null),
-            MatchHarness.Answer("Stehlen.", null, "steal"),
+            MatchHarness.Answer("Mal sehen.", "Verstanden.", null),
+            MatchHarness.Answer("Hm.", "Schönes Spiel.", null),
+            MatchHarness.Answer("Gut.", "Es geht weiter.", null),
+            MatchHarness.Answer("Ich wähle.", null, "steal"),
             SplitOrStealMatchTests.DebriefJson());
 
         await _harness.RunWithTokenAsync(_definition, a, b, true, new MatchOptions(), 3, null, LlmShootout.Arena.Games.Seat.A, TestContext.Current.CancellationToken, language);

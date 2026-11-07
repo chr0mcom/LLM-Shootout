@@ -100,7 +100,6 @@ The opponent never saw these thoughts. The exact wording is in the protocol.
 | Shortened thoughts | 0 | 0 |
 | Shortened messages | 0 | 0 |
 | Silence | 0 | 0 |
-| Identity hits in messages | 0 | 0 |
 | Tokens (input / output / of which reasoning) | 0 / 0 / 0 | 0 / 0 / 0 |
 | Cost (USD) | 0.0000 | 0.0000 |
 

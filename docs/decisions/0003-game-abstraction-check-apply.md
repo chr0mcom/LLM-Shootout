@@ -15,7 +15,7 @@ The games differ in turn order (alternating, simultaneous, phases), hidden infor
 B. `IGame.PendingTurns` lists what is asked now: one entry is sequential, two entries are simultaneous, none
 means the game is over. The arena asks every listed seat against the same state, validates each answer with
 `Check`, collects, and calls `Apply` once. Simultaneous moves therefore stay hidden by construction.
-`TurnRequest` has a `TurnId` and a `Kind` (`talk`, `decide`, `offer`, `respond`, ...). `Check` returns a
+`TurnRequest` has a `TurnId` and a `Kind` (`talk`, `decide`, `set`, `guess`, ...). `Check` returns a
 normalized move or a stable error code plus a template for the correction hint. After exhausted attempts the arena
 reports `SubmissionStatus.Exhausted` and the game decides what follows (default move, loss, skipped turn).
 `Apply` returns `GameFact`s with an audience (everyone, one seat, analysis only). Analysis facts reach the protocol but never a prompt.

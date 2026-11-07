@@ -27,5 +27,5 @@ generic counters per seat say little when the seats are not equivalent (who star
 
 ## Consequences
 - What a series reports is decided in one place per game, in a few lines that a reader can print.
-- `series.json` changes shape: `pointsTotal` is gone, `players` is new, the message setting of an entry became `entries[].firstSeat`.
+- `series.json` changes shape: `pointsTotal` is gone, `players` is new, the entry of a match no longer has a field for the message setting, and `entries[].firstSeat` is a field of its own.
 - The report of a series is computed from the match protocols alone and can be rebuilt with `shootout report`.

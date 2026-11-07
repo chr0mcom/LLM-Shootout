@@ -144,7 +144,7 @@ Every row works without changing the arena. "Turn kinds" are `TurnRequest.Kind` 
 | Three seats (later) | list of pending turns has up to three entries | per seat | unchanged | unchanged | A documented later change, not free: add `Seat.C` and a real opponent concept (`Seat.Opponent`, `IdentityGuard`, the debriefing outcome and the report columns are two-seat today), and replace "opponent" in the templates with names. The runner and the turn protocol already loop over `Seat.All` |
 
 Test-only games in the test project prove the claim: a number guessing game (alternating, hidden number,
-"higher/lower" feedback), a role swap game over several rounds, matching pennies (simultaneous), a sealed-bid game, a game
+"higher/lower" feedback), a setter and guesser game over several rounds with roles that swap, matching pennies (simultaneous), a sealed-bid game, a game
 with a hidden starting state, a take-away game with an oracle, and one that throws. All run through the unchanged arena.
 
 ## Where things are decided
@@ -161,7 +161,7 @@ with a hidden starting state, a take-away game with an oracle, and one that thro
 | Cost metering and the spending limit | [0008](decisions/0008-cost-gateway.md) |
 | Named endpoints for other OpenAI-compatible APIs | [0009](decisions/0009-named-endpoints.md) |
 | The web interface | [0010](decisions/0010-web-interface.md) |
-| Identity and description of the opponent | [0011](decisions/0011-identity-and-description-of-the-opponent.md) |
+| Description of the opponent | [0011](decisions/0011-description-of-the-opponent.md) |
 | The judge infrastructure is removed | [0012](decisions/0012-judge-infrastructure-removed.md) |
 | Standard debriefing and consistent sample answers | [0013](decisions/0013-standard-debriefing-and-consistent-sample-answers.md) |
 | The series report summarizes only the metrics a game declares | [0014](decisions/0014-series-report-summarizes-declared-metrics.md) |
