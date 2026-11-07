@@ -40,8 +40,16 @@ page while a match runs reconnects to it and shows everything so far.
 ## Run it
 
 `docker-compose.yml` is an example for an operation behind a [Traefik](https://traefik.io) reverse proxy. Host name, network,
-entry point, certificate resolver and middlewares are variables with neutral defaults (see `.env.example`); without Traefik, delete the
-labels and publish port 8080 instead.
+entry point and certificate resolver are variables with neutral defaults (see `.env.example`); without Traefik, delete the
+labels and publish port 8080 instead. Middlewares (security headers, for example) are not part of the example, because Traefik does not accept an
+empty list. Add them in a compose override file:
+
+```yaml
+services:
+  web:
+    labels:
+      - "traefik.http.routers.llm-shootout.middlewares=secure-headers@file"
+```
 
 Secrets live in one file outside the repository, `~/.config/llm-shootout/env` (mode 600):
 

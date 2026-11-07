@@ -699,7 +699,7 @@ public sealed class WebRunTests : IDisposable
         while (progress is null && await reader.ReadLineAsync(limit.Token) is { } line)
         {
             seen.AppendLine(line);
-            if (line.StartsWith("data: {", StringComparison.Ordinal) && line.Contains("\"now\"", StringComparison.Ordinal))
+            if (line.StartsWith("data: {", StringComparison.Ordinal) && IsProgressNamingASeat(line))
             {
                 progress = line;
             }
@@ -710,6 +710,10 @@ public sealed class WebRunTests : IDisposable
         Assert.Contains("event: progress", seen.ToString(), StringComparison.Ordinal);
         Assert.True(progress.Contains("\"A\"", StringComparison.Ordinal) || progress.Contains("\"B\"", StringComparison.Ordinal), progress);
     }
+
+    private static bool IsProgressNamingASeat(string line) =>
+        line.Contains("\"now\"", StringComparison.Ordinal)
+        && (line.Contains("\"A\":", StringComparison.Ordinal) || line.Contains("\"B\":", StringComparison.Ordinal));
 
     [Fact]
     public async Task Cancelling_an_unknown_run_is_404()
