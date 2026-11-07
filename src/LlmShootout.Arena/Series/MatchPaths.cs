@@ -19,7 +19,7 @@ public static class MatchPaths
     public static string SeriesMatch(string seriesDirectory, int number, bool communication, Seat firstSeat) =>
         Path.Combine(seriesDirectory, string.Create(CultureInfo.InvariantCulture, $"{number:00}-{(communication ? "talk" : "silent")}-{firstSeat}-first"));
 
-    /// <summary>Makes a player name usable in a file name: <c>openrouter:openai/gpt-4o</c> and <c>claude:gpt-4o</c> become <c>gpt-4o</c>.</summary>
+    /// <summary>Makes a player name usable in a file name: <c>openrouter:openai/gpt-4o</c> and <c>ollama:gpt-4o</c> become <c>gpt-4o</c>.</summary>
     public static string Slug(string player)
     {
         var (endpoint, model) = EndpointRegistry.Split(player);

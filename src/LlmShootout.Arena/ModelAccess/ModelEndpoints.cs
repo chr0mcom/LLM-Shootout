@@ -19,7 +19,7 @@ public enum EndpointKind
 /// </summary>
 public sealed record EndpointDefinition
 {
-    /// <summary>Base address of the API, including the version segment, for example <c>http://127.0.0.1:8090/v1/claude</c>.</summary>
+    /// <summary>Base address of the API, including the version segment, for example <c>http://localhost:11434/v1</c>.</summary>
     public Uri? BaseAddress { get; init; }
 
     /// <summary>The dialect. Anything that is not OpenRouter is <see cref="EndpointKind.OpenAiCompatible"/>.</summary>
@@ -83,7 +83,7 @@ public sealed class EndpointRegistry
 
         if (definition.BaseAddress is not { IsAbsoluteUri: true, Scheme: "http" or "https" } address)
         {
-            throw new PlayerSpecException($"Endpoint '{name}' needs an absolute http(s) BaseAddress, for example http://127.0.0.1:8090/v1/claude.");
+            throw new PlayerSpecException($"Endpoint '{name}' needs an absolute http(s) BaseAddress, for example http://localhost:11434/v1.");
         }
 
         var variable = definition.ApiKeyVariable ?? DefaultKeyVariable(name);
@@ -97,7 +97,7 @@ public sealed class EndpointRegistry
         };
     }
 
-    /// <summary>The variable that holds the key of an endpoint when the definition names none: <c>LLMSHOOTOUT_CLAUDE_API_KEY</c> for <c>claude</c>.</summary>
+    /// <summary>The variable that holds the key of an endpoint when the definition names none: <c>LLMSHOOTOUT_OLLAMA_API_KEY</c> for <c>ollama</c>.</summary>
     public static string DefaultKeyVariable(string name)
     {
         var builder = new StringBuilder("LLMSHOOTOUT_");
@@ -110,7 +110,7 @@ public sealed class EndpointRegistry
     }
 
     /// <summary>
-    /// Splits <c>claude:claude-sonnet-latest</c> into endpoint and model. A model slug of OpenRouter has a slash
+    /// Splits <c>ollama:llama3.2</c> into endpoint and model. A model slug of OpenRouter has a slash
     /// before any colon (<c>deepseek/deepseek-r1:free</c>), so such a text is a model without endpoint.
     /// </summary>
     public static (string? Endpoint, string Model) Split(string spec)

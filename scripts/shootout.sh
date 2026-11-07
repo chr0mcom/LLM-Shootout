@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the built application after loading the keys from an environment file (default: ~/.config/llm-shootout/env,
 # override with LLMSHOOTOUT_ENV). The file holds lines like: export OPENROUTER_API_KEY=sk-or-...
-# Usage: scripts/shootout.sh play split-or-steal --a claude:claude-haiku-latest --b codex:gpt-6.1-terra
+# Usage: scripts/shootout.sh play split-or-steal --a ollama:llama3.2 --b openai/gpt-4o
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ENV_FILE="${LLMSHOOTOUT_ENV:-$HOME/.config/llm-shootout/env}"

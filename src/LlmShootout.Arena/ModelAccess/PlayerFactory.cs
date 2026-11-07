@@ -27,7 +27,7 @@ public sealed class PlayerSpecException : Exception
 
 /// <summary>
 /// Turns a player specification into a player: <c>random</c>, <c>scripted:&lt;file&gt;</c>,
-/// <c>&lt;endpoint&gt;:&lt;model&gt;</c> for an endpoint of the configuration (<c>claude:claude-sonnet-latest</c>),
+/// <c>&lt;endpoint&gt;:&lt;model&gt;</c> for an endpoint of the configuration (<c>ollama:llama3.2</c>),
 /// <c>openrouter:&lt;slug&gt;</c>, or a bare OpenRouter slug such as <c>openai/gpt-4o</c>.
 /// </summary>
 /// <param name="options">Base options; the OpenRouter endpoint uses them as they are, other endpoints replace address, dialect and key.</param>

@@ -70,7 +70,7 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
         await Catalog(new FakeEndpointHandler().Ok(Models), options).GetModelsAsync(TestContext.Current.CancellationToken);
         _time.Advance(TimeSpan.FromDays(1));
 
-        var offline = new FakeEndpointHandler().Respond(HttpStatusCode.BadGateway, "{}");
+        var offline = new FakeEndpointHandler().Respond(HttpStatusCode.ServiceUnavailable, "{}");
         var models = await Catalog(offline, options).GetModelsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(3, models.Count);
@@ -141,7 +141,7 @@ public sealed class ModelCatalogAndFactoryTests : IDisposable
     [Fact]
     public async Task An_unreachable_model_list_gets_a_clear_message()
     {
-        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Options(), new FakeEndpointHandler().Respond(HttpStatusCode.BadGateway, "{}")).CreateAsync("vendor/alpha", 1, TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Options(), new FakeEndpointHandler().Respond(HttpStatusCode.ServiceUnavailable, "{}")).CreateAsync("vendor/alpha", 1, TestContext.Current.CancellationToken));
 
         Assert.Contains("not reachable", ex.Message, StringComparison.Ordinal);
     }

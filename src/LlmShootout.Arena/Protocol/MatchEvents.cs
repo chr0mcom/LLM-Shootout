@@ -72,7 +72,7 @@ public sealed record ModelCallEvent(
         new(at, turnId, purpose, seat, attempt, messages, null, null, null, CallClass.TechnicalError, [], failure.Call, failure.Call?.CostIsUnknown() ?? true, failure.Message, failure.RawExchange);
 
     /// <summary>
-    /// The event of a call that returned an answer. A message of the endpoint about the answer (for example a gateway that
+    /// The event of a call that returned an answer. A message of the endpoint about the answer (for example an endpoint that
     /// could not produce structured output) is added to the problems as <c>endpoint: …</c>.
     /// </summary>
     public static ModelCallEvent Answered(DateTimeOffset at, string turnId, CallPurpose purpose, Seat seat, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedFields? parsed, string callClass, IReadOnlyList<string> problems) =>

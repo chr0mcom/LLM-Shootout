@@ -62,7 +62,7 @@ dotnet run --project src/LlmShootout.Cli -- series shootouts/split-or-steal.json
 Real model calls cost money. The default limit is **1 USD per run** (`--max-cost`); the run stops cleanly when it is reached.
 
 No OpenRouter account? Any OpenAI-compatible API works as a named endpoint, and each player can use a different one:
-`--a claude:claude-sonnet-latest --b codex:gpt-6.1-sol`. `scripts/shootout.sh` loads your keys from one file. See [docs/endpoints.md](docs/endpoints.md).
+`--a ollama:llama3.2 --b openai/gpt-4o`. `scripts/shootout.sh` loads your keys from one file. See [docs/endpoints.md](docs/endpoints.md).
 
 ### Example output
 
@@ -188,7 +188,7 @@ See [docs/dev/dotnet-baseline.md](docs/dev/dotnet-baseline.md) for the .NET and 
 | The rules, prompts and analysis of Split or Steal | [docs/games/split-or-steal.md](docs/games/split-or-steal.md) |
 | What a model is asked, and how its answer is read | [docs/prompt-contract.md](docs/prompt-contract.md) |
 | The files of a match and the event format | [docs/protocol-format.md](docs/protocol-format.md) |
-| OpenRouter, local servers and gateways as named endpoints | [docs/endpoints.md](docs/endpoints.md) |
+| OpenRouter and other OpenAI-compatible servers as named endpoints | [docs/endpoints.md](docs/endpoints.md) |
 | The web interface and its deployment | [docs/web.md](docs/web.md) |
 | Writing a new game | [docs/adding-a-game.md](docs/adding-a-game.md) |
 | .NET and C# versions, packages, language features | [docs/dev/dotnet-baseline.md](docs/dev/dotnet-baseline.md) |

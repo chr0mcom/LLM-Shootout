@@ -54,7 +54,7 @@ public sealed record PlayerCall(
 /// <param name="Reasoning">The reasoning channel of the model, if delivered.</param>
 /// <param name="Call">Technical details of the model call, or null for players that are not models.</param>
 /// <param name="RawExchange">The raw HTTP request and response without credentials, or null.</param>
-/// <param name="Notice">A message of the endpoint about this answer, for example a gateway that could not produce structured output. It is written to the protocol, never shown to the other player or to the model.</param>
+/// <param name="Notice">A message of the endpoint about this answer, for example an endpoint that could not produce structured output. It is written to the protocol, never shown to the other player or to the model.</param>
 public sealed record PlayerReply(string? Content, string? Reasoning = null, ModelCallInfo? Call = null, string? RawExchange = null, string? Notice = null);
 
 /// <summary>Technical details of one model call, copied into the protocol.</summary>

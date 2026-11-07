@@ -6,14 +6,14 @@ protocol files and the same [endpoints](endpoints.md). There is no database and 
 ```text
 Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (ASP.NET Core, port 8080)
                                               ├─ matches in a volume (same files as the command line writes)
-                                              └─ model calls: OpenRouter and an optional gateway
+                                              └─ model calls: OpenRouter and optional other endpoints
 ```
 
 ## What you see
 
 - **New match** (left): game, the two players, prompt language, whether they may talk, whether they are asked
   afterwards, who starts, a seed, and the spending limit. A player is `random`, `<endpoint>:<model>` such as
-  `claude:claude-haiku-latest`, or an OpenRouter slug. The fields suggest every model that the configured endpoints
+  `ollama:llama3.2`, or an OpenRouter slug. The fields suggest every model that the configured endpoints
   offer; you can type anything else.
 - **The match** (right): both players side by side. Spoken messages are in the lane of their seat, the private thoughts
   hang under them (dashed), the moves appear when a turn ends, then the game's own reveal and payout. Above: per seat the
@@ -31,12 +31,15 @@ page while a match runs reconnects to it and shows everything so far.
 
 ## Run it
 
+`docker-compose.yml` is an example for an operation behind a [Traefik](https://traefik.io) reverse proxy. Host name, network,
+entry point, certificate resolver and middlewares are variables with neutral defaults (see `.env.example`); without Traefik, delete the
+labels and publish port 8080 instead.
+
 Secrets live in one file outside the repository, `~/.config/llm-shootout/env` (mode 600):
 
 ```bash
 export SHOOTOUT_WEB_PASSWORD=...          # at least 12 characters, the one password
 export OPENROUTER_API_KEY=sk-or-...       # optional, enables OpenRouter models
-export LLMSHOOTOUT_GATEWAY_API_KEY=...      # key of the optional gateway, see endpoints.md
 ```
 
 ```bash
@@ -58,7 +61,7 @@ After changing the env file, run `docker compose up -d web` again; the container
 | `Web__LoginAttemptsPerMinute` | login attempts per client address and minute (default 5) |
 | `Web__MaxMatchesPerDay`, `Web__MaxCostPerDayUsd` | matches and money per day (UTC), kept in `/data/state/usage.json` so a restart does not reset them (defaults 30 and 10) |
 | `Web__MaxOutputUsdPerMillion` | OpenRouter models that charge more per million output tokens are refused (default 40) |
-| `LLMSHOOTOUT_Endpoints__<name>__…` | endpoints, see [endpoints.md](endpoints.md); `docker-compose.gateway.yml` defines `claude` and `codex` for an optional gateway |
+| `LLMSHOOTOUT_Endpoints__<name>__…` | endpoints, see [endpoints.md](endpoints.md) |
 
 ## Security notes
 

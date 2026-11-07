@@ -1,12 +1,11 @@
 # 0009 - Named endpoints for OpenAI-compatible APIs
 
-Status: accepted (2026-11-06)
+Status: accepted (2026-11-06), amended 2026-11-07
 
 ## Context
-The first version talked to OpenRouter only. On the development server there is no OpenRouter key, but a gateway
-(a small proxy of the author) that exposes the subscriptions of Claude Code and Codex as an OpenAI-compatible API with two base
-addresses, one per backend. A duel such as Claude against Codex needs both addresses in one match. Other readers
-will have a local server or a company proxy. The key must still never reach a file, a log or a protocol.
+The first version talked to OpenRouter only. Other readers will have a local server (Ollama, LM Studio, vLLM), a company proxy or
+the provider's own API, all of them OpenAI-compatible. A duel between two models on different servers needs both addresses in one
+match. The key must still never reach a file, a log or a protocol.
 
 ## Decision
 - A player specification can carry an **endpoint name**: `<endpoint>:<model>`. Names come from the configuration
@@ -26,13 +25,14 @@ will have a local server or a company proxy. The key must still never reach a fi
 - The code that talks to a model is not called after OpenRouter any more: the namespace is `LlmShootout.Arena.ModelAccess`, the
   options are `EndpointOptions`, the HTTP builder `ChatClientFactory`, the request handler `EndpointRequestHandler`, the response
   fields `CompletionFields`. The first version of this change kept the old names to avoid touching every test and snippet; the
-  article-readiness review pointed out that `OpenRouterOptions` configuring a local gateway reads wrongly in print, and no article
+  article-readiness review pointed out that `OpenRouterOptions` configuring a local server reads wrongly in print, and no article
   had appeared yet, so the rename was made. `EndpointKind.OpenRouter`, the configuration section `OpenRouter` and the variable
   `OPENROUTER_API_KEY` keep their names, so no setting of a user changes.
 
 ## Consequences
 - A match can mix endpoints; the protocol names each player `<endpoint>:<model>`.
 - `shootout debrief` and `annotate` need the endpoint configuration that the match used.
-- A gateway that ignores settings (the CLI proxy ignores `temperature`) is documented in `docs/endpoints.md`; the
-  settings are still recorded as sent.
+- A server that ignores some settings is documented in `docs/endpoints.md`; the settings are still recorded as sent.
 - Found on the way: `MaxHttpRetries = 0` was allowed by validation but made the resilience pipeline throw. Zero now means "no retry layer".
+
+Amended 2026-11-07: the context names any OpenAI-compatible endpoint; the examples use Ollama and LM Studio. How a particular installation wires its endpoints is configuration, not part of this decision.

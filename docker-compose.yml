@@ -7,7 +7,8 @@
 #   GIT_COMMIT=$(git rev-parse --short=12 HEAD) docker compose build --no-cache web && docker compose up -d web
 #
 # Without Traefik: delete the `labels`, the `networks` blocks, and add `ports: ["8080:8080"]` to the service.
-# Local models or a gateway: add `-f docker-compose.gateway.yml` (see that file).
+# Other OpenAI-compatible endpoints (Ollama, LM Studio, vLLM): add `LLMSHOOTOUT_Endpoints__<name>__BaseAddress` and
+# related settings under `environment`, or put them in a compose override file; see docs/endpoints.md.
 name: llm-shootout
 
 services:
