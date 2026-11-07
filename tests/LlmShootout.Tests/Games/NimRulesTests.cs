@@ -41,8 +41,7 @@ public sealed class NimRulesTests
         Assert.Equal("Players alternately take stones from one of several heaps; whoever takes the last stone wins, or loses in the misère variant.", Definition.Summary);
         Assert.False(Definition.ResolveCommunication(null));
         Assert.True(Definition.ResolveCommunication(true));
-        Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, false, "en")));
-        Assert.Null(((IGameDefinition)Definition).Analyzer);
+        Assert.IsType<NimAnalyzer>(((IGameDefinition)Definition).Analyzer);
     }
 
     [Fact]

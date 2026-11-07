@@ -109,3 +109,78 @@ Zug ({who}): kein gültiger Zug
 
 ## fact.move-limit
 Das Spiel hat die Zuggrenze von {limit} Zügen erreicht. Der Spieler, der zuletzt ausgesetzt hat, verliert.
+
+## debrief.q.winning_rule
+Gibt es eine Regel, mit der man dieses Spiel sicher gewinnt, wenn die Ausgangslage es zulässt? Beschreibe sie in höchstens drei Sätzen.
+
+## debrief.q.lost_position
+Ab welchem Zug war dir klar, ob du gewinnst oder verlierst?
+
+## debrief.q.used_pass
+Hast du in diesem Spiel den Befehl "pass" verwendet?
+
+## report.nim.title
+Nim im Detail
+
+## report.nim.note
+Die Zeilen stellen die Antworten der Nachbefragung neben das, was das Protokoll zählt. Der Bericht wägt beides nicht gegeneinander ab. Eine Kennzahl ohne Grundlage, zum Beispiel eine Fehlerquote für einen Spieler, der nie in einer gewonnenen Lage war, steht als n/a da.
+
+## report.nim.mistake_rate
+Fehlerquote in gewonnener Lage (gezählt)
+
+## report.nim.winning_rule
+Antwort der Nachbefragung auf "winning_rule"
+
+## report.nim.pass_moves
+Züge "pass" (gezählt)
+
+## report.nim.used_pass
+Antwort der Nachbefragung auf "used_pass"
+
+## report.nim.resignations
+Aufgaben
+
+## report.nim.forfeit
+Forfeit (kein gültiger Zug in allen Versuchen)
+
+## report.nim.ending
+**Wie das Spiel endete:** {ending}
+
+## report.nim.end.last_stone
+Der letzte Stein wurde genommen.
+
+## report.nim.end.resignation
+Ein Spieler gab auf.
+
+## report.nim.end.forfeit
+Ein Spieler lieferte keinen gültigen Zug.
+
+## report.nim.end.move_limit
+Das Spiel erreichte die Zuggrenze.
+
+## report.nim.violations
+Haufen vor jedem Zug, den die Regeln verbieten:
+
+## report.nim.violation_line
+- {speaker}, {turn}: `{move}` bei den Haufen {heaps}
+
+## series.wins
+Siege
+
+## series.mistake_rate
+Fehlerquote (Fehler / Züge in gewonnener Lage)
+
+## series.squandered
+Verspielte Gewinnlagen
+
+## series.violations
+Regelverstöße
+
+## series.resignations
+Aufgaben
+
+## series.forfeits
+Forfeits
+
+## series.brier
+Brier-Wert der Schätzungen

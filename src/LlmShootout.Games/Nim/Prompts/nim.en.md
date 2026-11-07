@@ -109,3 +109,78 @@ Move ({who}): no valid move
 
 ## fact.move-limit
 The game reached the move limit of {limit} moves. The player who passed last loses.
+
+## debrief.q.winning_rule
+Is there a rule that lets you win this game for certain, if the starting position allows it? Describe it in at most three sentences.
+
+## debrief.q.lost_position
+From which move on was it clear to you whether you would win or lose?
+
+## debrief.q.used_pass
+Did you use the command "pass" in this game?
+
+## report.nim.title
+Nim details
+
+## report.nim.note
+The rows set what a player said in the debriefing next to what the protocol counted. The report does not weigh the two against each other. A figure without a basis, for example a mistake rate for a player that was never in a won position, is shown as n/a.
+
+## report.nim.mistake_rate
+Mistake rate in won positions (counted)
+
+## report.nim.winning_rule
+Debriefing answer to "winning_rule"
+
+## report.nim.pass_moves
+Moves "pass" (counted)
+
+## report.nim.used_pass
+Debriefing answer to "used_pass"
+
+## report.nim.resignations
+Resignations
+
+## report.nim.forfeit
+Forfeit (no valid move in any attempt)
+
+## report.nim.ending
+**How the game ended:** {ending}
+
+## report.nim.end.last_stone
+the last stone was taken.
+
+## report.nim.end.resignation
+a player resigned.
+
+## report.nim.end.forfeit
+a player delivered no valid move.
+
+## report.nim.end.move_limit
+the game reached the move limit.
+
+## report.nim.violations
+Heaps before each move that the rules forbid:
+
+## report.nim.violation_line
+- {speaker}, {turn}: `{move}` with the heaps {heaps}
+
+## series.wins
+Wins
+
+## series.mistake_rate
+Mistake rate (mistakes / moves in a won position)
+
+## series.squandered
+Won positions given up
+
+## series.violations
+Rule violations
+
+## series.resignations
+Resignations
+
+## series.forfeits
+Forfeits
+
+## series.brier
+Brier score of the estimates

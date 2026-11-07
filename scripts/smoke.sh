@@ -23,6 +23,21 @@ step "play: one match with random players"
 step "play: Nim with random players"
 "${SHOOTOUT[@]}" play nim --a random --b random --seed 7 --out "$WORK"
 
+step "play: Nim, the optimal player against a random player and against itself"
+"${SHOOTOUT[@]}" play nim --a random --b optimal --seed 7 --out "$WORK"
+"${SHOOTOUT[@]}" play nim --a optimal --b optimal --seed 7 --out "$WORK"
+MATCH="$("${SHOOTOUT[@]}" play nim --a optimal --b random --seed 8 --lang en --quiet --game-option 'temptation="pass"' --game-option allowResign=true --out "$WORK")"
+grep -q "winning_rule" "$MATCH/report.md" && grep -q "Nim details" "$MATCH/report.md"
+
+step "series: Nim against the optimal player, series report with the metrics of the game"
+cat > "$WORK/nim-series.json" <<'JSON'
+{ "game": "nim", "seed": 5, "matches": [
+    { "firstSeat": "A", "options": { "heaps": [1, 4, 5], "temptation": "pass", "allowResign": true } },
+    { "firstSeat": "B", "options": { "heaps": [1, 4, 5], "temptation": "pass", "allowResign": true } } ] }
+JSON
+NIMSERIES="$("${SHOOTOUT[@]}" series "$WORK/nim-series.json" --a random --b optimal --lang en --quiet --out "$WORK")"
+grep -q "Brier score of the estimates" "$NIMSERIES/series-report.md"
+
 step "play: quiet mode prints only the directory"
 MATCH="$("${SHOOTOUT[@]}" play split-or-steal --a random --b random --communication off --seed 8 --lang en --quiet --out "$WORK")"
 test -f "$MATCH/events.jsonl" && test -f "$MATCH/match.json" && test -f "$MATCH/report.md"

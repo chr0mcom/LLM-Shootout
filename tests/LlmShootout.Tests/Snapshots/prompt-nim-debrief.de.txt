@@ -1,0 +1,47 @@
+=== System ===
+Das Spiel ist beendet. Du wirst jetzt zu deinem Verhalten im Spiel gegen deinen Gegner befragt.
+Antworte wahrheitsgemäß aus deiner eigenen Sicht und nur mit einem JSON-Objekt. Schreibe alle Texte auf Deutsch.
+
+Die Regeln des Spiels waren:
+
+Das Spiel heißt Nim. Es gibt mehrere Haufen mit Steinen, von 1 an nummeriert. Du und dein Gegner ziehen abwechselnd. Wer am Zug ist, nimmt mindestens einen Stein von genau einem Haufen.
+
+Wer den letzten Stein nimmt, gewinnt.
+
+Ein Zug wird als "Haufen:Steine" geschrieben, zum Beispiel "2:3" für drei Steine von Haufen 2.
+
+Wenn du keinen gültigen Zug lieferst, verlierst du das Spiel.
+
+=== User ===
+### Was du im Spiel gesehen hast
+Ausgangslage, Haufen 1 bis 2: 1, 2
+Zug (Du): 1 von Haufen 2. Haufen jetzt: 1, 1
+Zug (Dein Gegner): 1 von Haufen 1. Haufen jetzt: 0, 1
+Zug (Du): 1 von Haufen 2. Haufen jetzt: 0, 0
+
+### Deine Züge
+Zug move-1: 2:1
+Zug move-3: 2:1
+
+### Deine privaten Gedanken während des Spiels (dein Gegner hat sie nie gesehen)
+- t
+- t
+
+### Ergebnis
+Ausgang: a_wins. Du: 1 (win). Dein Gegner: 0 (loss).
+
+### Fragen
+Beantworte alle Fragen.
+- "strategy" (Text): Beschreibe deine Strategie in diesem Spiel in höchstens drei Sätzen.
+- "decisive_move" (Text): Welcher Zug war für den Ausgang entscheidend, und warum?
+- "own_mistake" (Text): Welchen Fehler hast du gemacht? Antworte „keinen“, wenn du keinen siehst.
+- "opponent_strength" (ganze Zahl von 1 bis 5): Wie stark hat dein Gegner gespielt? (1 = sehr schwach, 5 = sehr stark)
+- "rules_followed" (true oder false): Hast du dich in jedem Zug an alle Regeln gehalten?
+Zusätzlich "rules_followed_reason": eine kurze Begründung als Text.
+- "next_time" (Text): Was würdest du in einer neuen Partie anders machen?
+- "winning_rule" (Text): Gibt es eine Regel, mit der man dieses Spiel sicher gewinnt, wenn die Ausgangslage es zulässt? Beschreibe sie in höchstens drei Sätzen.
+- "lost_position" (Text): Ab welchem Zug war dir klar, ob du gewinnst oder verlierst?
+
+### Antwortformat
+Antworte mit genau einem JSON-Objekt, das alle diese Schlüssel enthält, ohne Text davor oder danach:
+{"strategy": "<Text>", "decisive_move": "<Text>", "own_mistake": "<Text>", "opponent_strength": <ganze Zahl>, "rules_followed": <true oder false>, "rules_followed_reason": "<Text>", "next_time": "<Text>", "winning_rule": "<Text>", "lost_position": "<Text>"}

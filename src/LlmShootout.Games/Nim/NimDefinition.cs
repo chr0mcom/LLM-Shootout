@@ -10,6 +10,14 @@ public sealed class NimDefinition : IGameDefinition
     /// <summary>The id used on the command line and in protocols.</summary>
     public const string GameId = "nim";
 
+    private static readonly MarkdownTemplates Files = MarkdownTemplates.FromResources(
+        typeof(NimDefinition).Assembly,
+        "LlmShootout.Games.Nim.nim",
+        "de",
+        "en");
+
+    private static TemplateRef Question(string key) => new($"debrief.q.{key}");
+
     /// <inheritdoc />
     public string Id => GameId;
 
@@ -23,11 +31,10 @@ public sealed class NimDefinition : IGameDefinition
     public bool DefaultCommunication => false;
 
     /// <inheritdoc />
-    public ITemplateSource Templates { get; } = MarkdownTemplates.FromResources(
-        typeof(NimDefinition).Assembly,
-        "LlmShootout.Games.Nim.nim",
-        "de",
-        "en");
+    public IGameAnalyzer? Analyzer { get; } = new NimAnalyzer(Files);
+
+    /// <inheritdoc />
+    public ITemplateSource Templates => Files;
 
     /// <inheritdoc />
     public IGame Create(GameSetup setup)
@@ -37,5 +44,19 @@ public sealed class NimDefinition : IGameDefinition
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<DebriefingQuestion> ExtraQuestions(GameSetup setup) => [];
+    public IReadOnlyList<DebriefingQuestion> ExtraQuestions(GameSetup setup)
+    {
+        ArgumentNullException.ThrowIfNull(setup);
+        List<DebriefingQuestion> questions =
+        [
+            new("winning_rule", QuestionKind.Text, Question("winning_rule")),
+            new("lost_position", QuestionKind.Text, Question("lost_position")),
+        ];
+        if (NimOptions.From(setup.Options, setup.Seed).PassTemptation)
+        {
+            questions.Add(new DebriefingQuestion("used_pass", QuestionKind.Boolean, Question("used_pass"), WithReason: true, SampleAnswer: "false"));
+        }
+
+        return questions;
+    }
 }

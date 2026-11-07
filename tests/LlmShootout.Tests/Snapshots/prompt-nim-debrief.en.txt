@@ -1,0 +1,47 @@
+=== System ===
+The game is over. You are now asked about your behavior in the game against your opponent.
+Answer truthfully from your own point of view and with a JSON object only. Write all texts in English.
+
+The rules of the game were:
+
+The game is called Nim. There are several heaps of stones, numbered from 1. You and your opponent move alternately. Whoever is to move takes at least one stone from exactly one heap.
+
+Whoever takes the last stone wins.
+
+A move is written as "heap:stones", for example "2:3" for three stones from heap 2.
+
+If you deliver no valid move, you lose the game.
+
+=== User ===
+### What you saw in the game
+Starting position, heaps 1 to 2: 1, 2
+Move (You): 1 from heap 2. Heaps now: 1, 1
+Move (Your opponent): 1 from heap 1. Heaps now: 0, 1
+Move (You): 1 from heap 2. Heaps now: 0, 0
+
+### Your moves
+Move move-1: 2:1
+Move move-3: 2:1
+
+### Your private thoughts during the game (your opponent never saw them)
+- t
+- t
+
+### Result
+Outcome: a_wins. You: 1 (win). Your opponent: 0 (loss).
+
+### Questions
+Answer all questions.
+- "strategy" (text): Describe your strategy in this game in at most three sentences.
+- "decisive_move" (text): Which move decided the outcome, and why?
+- "own_mistake" (text): Which mistake did you make? Answer "none" if you see none.
+- "opponent_strength" (integer from 1 to 5): How strongly did your opponent play? (1 = very weakly, 5 = very strongly)
+- "rules_followed" (true or false): Did you follow all the rules in every move?
+Additionally "rules_followed_reason": a short reason as text.
+- "next_time" (text): What would you do differently in a new game?
+- "winning_rule" (text): Is there a rule that lets you win this game for certain, if the starting position allows it? Describe it in at most three sentences.
+- "lost_position" (text): From which move on was it clear to you whether you would win or lose?
+
+### Answer format
+Answer with exactly one JSON object that contains all of these keys, without text before or after it:
+{"strategy": "<text>", "decisive_move": "<text>", "own_mistake": "<text>", "opponent_strength": <integer>, "rules_followed": <true or false>, "rules_followed_reason": "<text>", "next_time": "<text>", "winning_rule": "<text>", "lost_position": "<text>"}
