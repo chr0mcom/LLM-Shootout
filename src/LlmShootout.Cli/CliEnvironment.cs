@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using LlmShootout.Arena;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;

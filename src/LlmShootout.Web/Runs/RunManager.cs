@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace LlmShootout.Web.Runs;
 
 /// <summary>Starts matches in the background, one at a time, and keeps the latest one for the browser to follow.</summary>
-internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOptions<WebOptions> web, TimeProvider time, ILoggerFactory loggers, IHostApplicationLifetime lifetime) : IHostedService
+internal sealed class RunManager(IPlayerSource players, UsageLedger usage, IOptions<WebOptions> web, TimeProvider time, ILoggerFactory loggers, IHostApplicationLifetime lifetime) : IHostedService
 {
     private static readonly TimeSpan ShutdownGrace = TimeSpan.FromSeconds(8);
 
@@ -37,7 +37,7 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
 
     public ActiveRun? Find(string id) => Current is { } run && run.Id == id ? run : null;
 
-    public async Task<ActiveRun> StartAsync(StartRequest request, CancellationToken cancellationToken)
+    public async Task<ActiveRun> StartMatchAsync(StartRequest request, CancellationToken cancellationToken)
     {
         var (definition, setup, maxCost) = Validate(request);
         Reserve();
@@ -63,7 +63,7 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
         {
             throw new StartRejectedException(ex.Message);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (ex is (HttpRequestException or TaskCanceledException) && !cancellationToken.IsCancellationRequested)
         {
             throw new StartRejectedException("A model list did not answer in time. Try again in a moment.", StatusCodes.Status503ServiceUnavailable);
         }
@@ -142,20 +142,14 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
 
     private async Task ExecuteAsync(ActiveRun run, MatchPlan plan, CancellationTokenSource cancellation)
     {
-        var (status, detail) = (RunStatus.Failed, (string?)"The match failed unexpectedly. The server log has the details.");
-        try
-        {
-            (status, detail) = await PlayAsync(run, plan, cancellation.Token);
-            await WriteReportAsync(run, plan);
-            RecordCost(run, plan);
-        }
-        finally
-        {
-            run.Complete(status, detail);
-            cancellation.Dispose();
-        }
+        var (status, detail) = await PlayAsync(run, plan, cancellation.Token);
+        await WriteReportAsync(run, plan);
+        RecordCost(run, plan);
+        run.Complete(status, detail);
+        cancellation.Dispose();
     }
 
+    /// <summary>Plays the match and says how it ended. Never throws: an unexpected exception becomes the status <c>failed</c>.</summary>
     private async Task<(string Status, string? Detail)> PlayAsync(ActiveRun run, MatchPlan plan, CancellationToken cancellationToken)
     {
         try
@@ -175,6 +169,7 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
         }
     }
 
+    /// <summary>Books the cost of the match against the daily limit. Never throws.</summary>
     private void RecordCost(ActiveRun run, MatchPlan plan)
     {
         try
@@ -183,7 +178,7 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
         }
         catch (Exception ex)
         {
-            WebLog.RunFailed(_logger, ex, run.Id);
+            WebLog.CostBookingFailed(_logger, ex, run.Id);
         }
     }
 
@@ -201,6 +196,7 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
         await Task.WhenAny(running, Task.Delay(ShutdownGrace, cancellationToken));
     }
 
+    /// <summary>Writes <c>report.md</c> and <c>match.json</c>. Never throws: a match that stopped before it began has no protocol to report on.</summary>
     private async Task WriteReportAsync(ActiveRun run, MatchPlan plan)
     {
         try
@@ -209,7 +205,7 @@ internal sealed class RunManager(PlayerSetup players, UsageLedger usage, IOption
         }
         catch (Exception ex)
         {
-            WebLog.RunFailed(_logger, ex, run.Id);
+            WebLog.ReportFailed(_logger, ex, run.Id);
         }
     }
 

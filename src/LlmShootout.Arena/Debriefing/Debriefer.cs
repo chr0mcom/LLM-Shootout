@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
+using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Prompting;
 using LlmShootout.Arena.Protocol;

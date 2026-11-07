@@ -20,6 +20,10 @@ internal static class XlsxWriter
     public const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private const int MaxCellLength = 32000;
+    private const string StyleDefault = "0";
+    private const string StyleHeader = "1";
+    private const string StyleWrappedText = "2";
+    private const string StyleMoney = "3";
     private const string Main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
     private const string Relationships = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     private const string PackageRelationships = "http://schemas.openxmlformats.org/package/2006/relationships";
@@ -239,20 +243,20 @@ internal static class XlsxWriter
         switch (value)
         {
             case int or long or double or float:
-                xml.WriteAttributeString("s", "0");
+                xml.WriteAttributeString("s", StyleDefault);
                 xml.WriteElementString("v", Convert.ToString(value, CultureInfo.InvariantCulture));
                 break;
             case decimal number:
-                xml.WriteAttributeString("s", "0");
+                xml.WriteAttributeString("s", StyleDefault);
                 xml.WriteElementString("v", number.ToString(CultureInfo.InvariantCulture));
                 break;
             case Money money:
-                xml.WriteAttributeString("s", "3");
+                xml.WriteAttributeString("s", StyleMoney);
                 xml.WriteElementString("v", money.Value.ToString(CultureInfo.InvariantCulture));
                 break;
             default:
                 xml.WriteAttributeString("t", "inlineStr");
-                xml.WriteAttributeString("s", header ? "1" : "2");
+                xml.WriteAttributeString("s", header ? StyleHeader : StyleWrappedText);
                 xml.WriteStartElement("is");
                 xml.WriteStartElement("t");
                 xml.WriteAttributeString("xml", "space", null, "preserve");

@@ -14,6 +14,7 @@ namespace LlmShootout.Web;
 internal static class Api
 {
     private static readonly TimeSpan Heartbeat = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan FailedLoginDelay = TimeSpan.FromMilliseconds(600);
 
     public static void MapShootout(this IEndpointRouteBuilder app)
     {
@@ -43,7 +44,7 @@ internal static class Api
                 return Results.Redirect("/", preserveMethod: false);
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(600), context.RequestAborted);
+            await Task.Delay(FailedLoginDelay, context.RequestAborted);
             return Results.Redirect("/login?error=1", preserveMethod: false);
         }).RequireRateLimiting(PasswordGate.LoginRateLimit).DisableAntiforgery();
         app.MapPost("/logout", async (HttpContext context) =>
@@ -53,11 +54,10 @@ internal static class Api
         });
     }
 
-    private static async Task<IResult> ConfigAsync(PlayerSetup players, IOptions<WebOptions> web, RunManager runs, CancellationToken cancellationToken) =>
+    private static async Task<IResult> ConfigAsync(IPlayerSource players, IOptions<WebOptions> web, RunManager runs, CancellationToken cancellationToken) =>
         Results.Ok(new
         {
             games = GameCatalog.All.Select(g => new { id = g.Id, name = g.DisplayName }),
-            endpoints = players.EndpointNames,
             players = await players.SuggestionsAsync(cancellationToken),
             maxCostCapUsd = web.Value.MaxCostCapUsd,
             defaultMaxCostUsd = web.Value.DefaultMaxCostUsd,
@@ -70,7 +70,7 @@ internal static class Api
     {
         try
         {
-            return Results.Accepted($"/api/runs/{(await runs.StartAsync(request, cancellationToken)).Id}/stream", Describe(runs.Current));
+            return Results.Accepted($"/api/runs/{(await runs.StartMatchAsync(request, cancellationToken)).Id}/stream", Describe(runs.Current));
         }
         catch (StartRejectedException ex)
         {
@@ -81,6 +81,11 @@ internal static class Api
     private static IResult Cancel(string id, RunManager runs) =>
         runs.Cancel(id) ? Results.Accepted() : Results.Json(new { error = "No such running match." }, statusCode: StatusCodes.Status404NotFound);
 
+    /// <summary>
+    /// The live stream of one run as Server-Sent Events: first every protocol line so far, then new ones as they
+    /// come, a <c>progress</c> event when the player being waited for changes, and finally <c>end</c>. A reconnecting
+    /// browser sends <c>Last-Event-ID</c> and continues after the last line it has seen.
+    /// </summary>
     private static async Task StreamAsync(string id, HttpContext context, RunManager runs)
     {
         if (runs.Find(id) is not { } run)
@@ -92,52 +97,65 @@ internal static class Api
         context.Response.Headers.ContentType = "text/event-stream";
         context.Response.Headers.CacheControl = "no-cache";
         context.Response.Headers["X-Accel-Buffering"] = "no";
-        var sent = int.TryParse(context.Request.Headers["Last-Event-ID"], out var last) ? last + 1 : 0;
+        var nextLine = int.TryParse(context.Request.Headers["Last-Event-ID"], out var last) ? last + 1 : 0;
+        var progressSent = -1;
         var token = context.RequestAborted;
-        var busySent = -1;
         while (!token.IsCancellationRequested)
         {
-            var (lines, finished, changed, busyVersion, busyJson) = run.Read(sent);
-            var batch = new StringBuilder();
-            foreach (var line in lines)
+            var snapshot = run.Read(nextLine);
+            var events = FormatEvents(snapshot, run.Status, ref nextLine, ref progressSent);
+            if (events.Length > 0)
             {
-                batch.Append("id: ").Append(sent++).Append("\nevent: protocol\ndata: ").Append(line).Append("\n\n");
+                await WriteAsync(context.Response, events, token);
             }
 
-            if (busyVersion != busySent)
-            {
-                busySent = busyVersion;
-                batch.Append("event: progress\ndata: ").Append(busyJson).Append("\n\n");
-            }
-
-            if (finished)
-            {
-                batch.Append("event: end\ndata: ").Append(run.Status).Append("\n\n");
-            }
-
-            if (batch.Length > 0)
-            {
-                await context.Response.WriteAsync(batch.ToString(), token);
-                await context.Response.Body.FlushAsync(token);
-            }
-
-            if (finished)
+            if (snapshot.Finished)
             {
                 return;
             }
 
-            using (var wait = CancellationTokenSource.CreateLinkedTokenSource(token))
+            if (!await WaitForChangeAsync(snapshot.Changed, token))
             {
-                await Task.WhenAny(changed, Task.Delay(Heartbeat, wait.Token));
-                await wait.CancelAsync();
-            }
-
-            if (!changed.IsCompleted && !token.IsCancellationRequested)
-            {
-                await context.Response.WriteAsync(": keep-alive\n\n", token);
-                await context.Response.Body.FlushAsync(token);
+                await WriteAsync(context.Response, ": keep-alive\n\n", token);
             }
         }
+    }
+
+    private static string FormatEvents(RunSnapshot snapshot, string status, ref int nextLine, ref int progressSent)
+    {
+        var events = new StringBuilder();
+        foreach (var line in snapshot.Lines)
+        {
+            events.Append("id: ").Append(nextLine++).Append("\nevent: protocol\ndata: ").Append(line).Append("\n\n");
+        }
+
+        if (snapshot.BusyVersion != progressSent)
+        {
+            progressSent = snapshot.BusyVersion;
+            events.Append("event: progress\ndata: ").Append(snapshot.BusyJson).Append("\n\n");
+        }
+
+        if (snapshot.Finished)
+        {
+            events.Append("event: end\ndata: ").Append(status).Append("\n\n");
+        }
+
+        return events.ToString();
+    }
+
+    /// <summary>Waits for news; returns false if the heartbeat interval passed without any.</summary>
+    private static async Task<bool> WaitForChangeAsync(Task changed, CancellationToken token)
+    {
+        using var heartbeat = CancellationTokenSource.CreateLinkedTokenSource(token);
+        await Task.WhenAny(changed, Task.Delay(Heartbeat, heartbeat.Token));
+        await heartbeat.CancelAsync();
+        return changed.IsCompleted || token.IsCancellationRequested;
+    }
+
+    private static async Task WriteAsync(HttpResponse response, string text, CancellationToken token)
+    {
+        await response.WriteAsync(text, token);
+        await response.Body.FlushAsync(token);
     }
 
     private static IResult Export(string name, MatchArchive archive)

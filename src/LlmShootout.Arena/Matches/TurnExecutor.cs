@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json.Nodes;
 using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Debriefing;

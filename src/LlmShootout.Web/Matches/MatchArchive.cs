@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using LlmShootout.Arena.Protocol;
@@ -63,19 +64,30 @@ internal sealed partial class MatchArchive(IOptions<WebOptions> web)
         return path is not null && File.Exists(path) ? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite) : null;
     }
 
+    /// <summary>One history line from <c>match.json</c>; a match without a readable summary is listed as incomplete.</summary>
     private static MatchListItem ToItem(string directory, DateTime written)
     {
         var name = Path.GetFileName(directory);
-        var summary = ReadSummary(Path.Combine(directory, ProtocolFiles.Summary));
-        if (summary is null)
+        var at = new DateTimeOffset(written, TimeSpan.Zero);
+        try
         {
-            return new MatchListItem(name, new DateTimeOffset(written, TimeSpan.Zero), null, null, null, null, null, null, null, false, false);
+            return ReadSummary(Path.Combine(directory, ProtocolFiles.Summary)) is { } summary ? FromSummary(name, at, summary) : Incomplete(name, at);
         }
+        catch (Exception ex) when (ex is InvalidOperationException or FormatException)
+        {
+            return Incomplete(name, at);
+        }
+    }
 
+    private static MatchListItem Incomplete(string name, DateTimeOffset at) =>
+        new(name, at, null, null, null, null, null, null, null, false, false);
+
+    private static MatchListItem FromSummary(string name, DateTimeOffset fallbackTime, JsonObject summary)
+    {
         var seats = summary["seats"];
         return new MatchListItem(
             name,
-            summary["startedAt"]?.GetValue<DateTimeOffset>() ?? new DateTimeOffset(written, TimeSpan.Zero),
+            summary["startedAt"]?.GetValue<DateTimeOffset>() ?? fallbackTime,
             summary["gameId"]?.ToString(),
             seats?["A"]?["player"]?.ToString(),
             seats?["B"]?["player"]?.ToString(),
@@ -93,7 +105,7 @@ internal sealed partial class MatchArchive(IOptions<WebOptions> web)
         {
             return File.Exists(path) ? JsonNode.Parse(File.ReadAllText(path)) as JsonObject : null;
         }
-        catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException or InvalidOperationException or FormatException)
+        catch (Exception ex) when (ex is IOException or JsonException)
         {
             return null;
         }

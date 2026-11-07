@@ -5,13 +5,11 @@ using Microsoft.Extensions.Options;
 namespace LlmShootout.Web.Runs;
 
 /// <summary>Creates players from their specification and lists the models that can be typed into the form.</summary>
-internal class PlayerSetup(IOptions<EndpointOptions> openRouter, EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger, IOptions<WebOptions>? web = null)
+internal sealed class PlayerSetup(IOptions<EndpointOptions> openRouter, EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger, IOptions<WebOptions> web) : IPlayerSource
 {
     private static readonly TimeSpan ListTimeout = TimeSpan.FromSeconds(8);
 
-    public IReadOnlyCollection<string> EndpointNames => [EndpointRegistry.OpenRouterName, .. endpoints.Names];
-
-    public virtual Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken) =>
+    public Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken) =>
         new PlayerFactory(
             openRouter.Value,
             ModelCatalog.ForEndpoint(openRouter.Value, time),
@@ -19,9 +17,9 @@ internal class PlayerSetup(IOptions<EndpointOptions> openRouter, EndpointRegistr
             loggers,
             endpoints,
             options => ModelCatalog.ForEndpoint(options, time),
-            web?.Value.MaxOutputUsdPerMillion).CreateAsync(spec, seed, cancellationToken);
+            web.Value.MaxOutputUsdPerMillion).CreateAsync(spec, seed, cancellationToken);
 
-    /// <summary>Player specifications for the form: <c>random</c>, every model of every configured endpoint, and OpenRouter slugs if a key is set.</summary>
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> SuggestionsAsync(CancellationToken cancellationToken)
     {
         var suggestions = new List<string> { "random" };

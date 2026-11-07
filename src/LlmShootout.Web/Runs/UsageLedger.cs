@@ -48,31 +48,29 @@ internal sealed class UsageLedger(IOptions<WebOptions> web, TimeProvider time)
         }
     }
 
-    private string Path => System.IO.Path.Combine(web.Value.DataDirectory, "usage.json");
+    private string FilePath => Path.Combine(web.Value.DataDirectory, "usage.json");
 
     private string Today => time.GetUtcNow().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-    private Day Read()
+    private Day Read() => TryReadStored() ?? new Day(Today, 0, 0m);
+
+    /// <summary>Today's counters from the file, or null if there is none for today or it cannot be read.</summary>
+    private Day? TryReadStored()
     {
         try
         {
-            if (File.Exists(Path) && JsonSerializer.Deserialize<Day>(File.ReadAllText(Path)) is { } stored && stored.Date == Today)
-            {
-                return stored;
-            }
+            return File.Exists(FilePath) && JsonSerializer.Deserialize<Day>(File.ReadAllText(FilePath)) is { } stored && stored.Date == Today ? stored : null;
         }
         catch (Exception ex) when (ex is IOException or JsonException)
         {
-            return new Day(Today, 0, 0m);
+            return null;
         }
-
-        return new Day(Today, 0, 0m);
     }
 
     private void Write(Day day)
     {
         Directory.CreateDirectory(web.Value.DataDirectory);
-        File.WriteAllText(Path, JsonSerializer.Serialize(day));
+        File.WriteAllText(FilePath, JsonSerializer.Serialize(day));
     }
 
     private sealed record Day(string Date, int Matches, decimal CostUsd);

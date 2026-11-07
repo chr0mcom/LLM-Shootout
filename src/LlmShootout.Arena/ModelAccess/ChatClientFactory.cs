@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenAI;
 using Polly;
-using Polly.Retry;
 
 namespace LlmShootout.Arena.ModelAccess;
 

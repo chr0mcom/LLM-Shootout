@@ -337,6 +337,20 @@ public sealed class WebTests : IDisposable
     }
 
     [Fact]
+    public void A_malformed_summary_does_not_break_the_history()
+    {
+        var directory = Directory.CreateDirectory(Path.Combine(_factory.Matches, "odd")).FullName;
+        File.WriteAllText(Path.Combine(directory, "events.jsonl"), "{}\n");
+        File.WriteAllText(Path.Combine(directory, "match.json"), "{\"startedAt\":\"yesterday\",\"costUsd\":\"abc\"}");
+        var archive = new MatchArchive(Options.Create(new WebOptions { MatchesDirectory = _factory.Matches }));
+
+        var item = Assert.Single(archive.List());
+
+        Assert.Equal("odd", item.Name);
+        Assert.False(item.Complete);
+    }
+
+    [Fact]
     public void The_archive_lists_only_directories_with_a_protocol()
     {
         Directory.CreateDirectory(Path.Combine(_factory.Matches, "empty"));

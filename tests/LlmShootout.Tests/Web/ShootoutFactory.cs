@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace LlmShootout.Tests.Web;
 
@@ -29,8 +28,8 @@ internal sealed class ShootoutFactory(bool blockingPlayers = false, int loginAtt
         {
             if (blockingPlayers)
             {
-                services.RemoveAll<PlayerSetup>();
-                services.AddSingleton<PlayerSetup, BlockingSetup>();
+                services.RemoveAll<IPlayerSource>();
+                services.AddSingleton<IPlayerSource, HangingPlayerSource>();
             }
         });
     }
@@ -57,11 +56,13 @@ internal sealed class ShootoutFactory(bool blockingPlayers = false, int loginAtt
         }
     }
 
-    private sealed class BlockingSetup(Microsoft.Extensions.Options.IOptions<LlmShootout.Arena.ModelAccess.EndpointOptions> options, LlmShootout.Arena.ModelAccess.EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger)
-        : PlayerSetup(options, endpoints, time, loggers, logger)
+    private sealed class HangingPlayerSource : IPlayerSource
     {
-        public override Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken) =>
+        public Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken) =>
             Task.FromResult<IPlayer>(new HangingPlayer(spec));
+
+        public Task<IReadOnlyList<string>> SuggestionsAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<string>>(["slow"]);
     }
 
     private sealed class HangingPlayer(string name) : IPlayer

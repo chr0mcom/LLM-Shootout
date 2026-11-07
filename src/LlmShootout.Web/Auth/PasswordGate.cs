@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace LlmShootout.Web.Auth;
@@ -12,14 +12,15 @@ namespace LlmShootout.Web.Auth;
 internal static class PasswordGate
 {
     public const string LoginRateLimit = "login";
+    private const string LoginPath = "/login";
     private const string PasswordClaim = "pv";
 
     private static readonly HashSet<string> PublicPaths = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/login", "/login.html", "/login.js", "/site.css", "/favicon.svg", "/health",
+        LoginPath, "/login.html", "/login.js", "/site.css", "/favicon.svg", "/health",
     };
 
-    public static void AddPasswordGate(this IServiceCollection services, IConfiguration configuration)
+    public static void AddPasswordGate(this IServiceCollection services)
     {
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
         {
@@ -38,8 +39,8 @@ internal static class PasswordGate
                     await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 }
             };
-            options.Events.OnRedirectToLogin = context => Reject(context.Response, StatusCodes.Status401Unauthorized, "/login");
-            options.Events.OnRedirectToAccessDenied = context => Reject(context.Response, StatusCodes.Status403Forbidden, "/login");
+            options.Events.OnRedirectToLogin = context => Reject(context.Response, StatusCodes.Status401Unauthorized);
+            options.Events.OnRedirectToAccessDenied = context => Reject(context.Response, StatusCodes.Status403Forbidden);
         });
         services.AddAuthorization();
         services.AddRateLimiter(limiter =>
@@ -48,15 +49,14 @@ internal static class PasswordGate
             limiter.AddPolicy(LoginRateLimit, context =>
             {
                 var attempts = context.RequestServices.GetRequiredService<IOptions<WebOptions>>().Value.LoginAttemptsPerMinute;
-                return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                return RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions { PermitLimit = attempts, Window = TimeSpan.FromMinutes(1) });
+                    _ => new FixedWindowRateLimiterOptions { PermitLimit = attempts, Window = TimeSpan.FromMinutes(1) });
             });
         });
-        _ = configuration;
     }
 
-    /// <summary>Lets only the login page, its stylesheet and the health check through without a session.</summary>
+    /// <summary>Lets only the login page with its script, stylesheet and icon, and the health check through without a session.</summary>
     public static IApplicationBuilder UseGate(this IApplicationBuilder app) => app.Use(async (context, next) =>
     {
         if (PublicPaths.Contains(context.Request.Path.Value ?? "/") || context.User.Identity?.IsAuthenticated == true)
@@ -65,7 +65,7 @@ internal static class PasswordGate
             return;
         }
 
-        await Reject(context.Response, StatusCodes.Status401Unauthorized, "/login", context.Request.Path.StartsWithSegments("/api"));
+        await Reject(context.Response, StatusCodes.Status401Unauthorized, answerWithStatus: context.Request.Path.StartsWithSegments("/api"));
     });
 
     /// <summary>Refuses state-changing requests that do not come from this site.</summary>
@@ -108,15 +108,18 @@ internal static class PasswordGate
         return request.Headers["Sec-Fetch-Site"].ToString() is "same-origin" or "none";
     }
 
-    private static Task Reject(HttpResponse response, int status, string loginPath, bool api = true)
+    /// <summary>API calls get the status code, pages are sent to the login page.</summary>
+    private static Task Reject(HttpResponse response, int status, bool answerWithStatus = true)
     {
-        if (api)
+        if (answerWithStatus)
         {
             response.StatusCode = status;
-            return Task.CompletedTask;
+        }
+        else
+        {
+            response.Redirect(LoginPath);
         }
 
-        response.Redirect(loginPath);
         return Task.CompletedTask;
     }
 }

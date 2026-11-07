@@ -41,11 +41,4 @@ internal sealed class WebOptions
     /// <summary>Failed logins allowed per client address and minute.</summary>
     [Range(1, 100)]
     public int LoginAttemptsPerMinute { get; set; } = 5;
-
-    /// <summary>The text of the record without the password.</summary>
-    private bool PrintMembers(System.Text.StringBuilder builder)
-    {
-        builder.Append(System.Globalization.CultureInfo.InvariantCulture, $"MatchesDirectory = {MatchesDirectory}, DataDirectory = {DataDirectory}");
-        return true;
-    }
 }

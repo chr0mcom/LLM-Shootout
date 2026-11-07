@@ -1,4 +1,3 @@
-using System.Text.Json;
 using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Games;
 

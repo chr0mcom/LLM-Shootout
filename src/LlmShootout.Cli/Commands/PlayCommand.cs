@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.Globalization;
-using LlmShootout.Arena;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
 using LlmShootout.Arena.Players;

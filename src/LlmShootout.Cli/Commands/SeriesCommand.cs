@@ -1,8 +1,6 @@
 using System.CommandLine;
-using LlmShootout.Arena;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Reports;
 using LlmShootout.Arena.Series;
 using LlmShootout.Cli.Output;

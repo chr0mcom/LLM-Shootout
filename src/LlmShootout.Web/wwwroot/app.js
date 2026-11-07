@@ -51,7 +51,6 @@ class Arena {
     this.endedAt = null;
     this.live = false;
     this.lastTurn = null;
-    this.callNumber = 0;
     this.calls = [];
     $('#rows').replaceChildren();
     $('#calls').replaceChildren();
@@ -129,7 +128,6 @@ class Arena {
     stats.promptTokens += info.promptTokens ?? 0;
     stats.completionTokens += info.completionTokens ?? 0;
     stats.cost += info.costUsd ?? info.estimatedCostUsd ?? 0;
-    this.callNumber += 1;
     this.calls.push(event);
     this.addCallRow(event, this.calls.length - 1);
     if (event.purpose === 'Turn') this.turnMark(event.turnId);
