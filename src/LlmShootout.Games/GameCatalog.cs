@@ -1,4 +1,5 @@
 using LlmShootout.Arena.Games;
+using LlmShootout.Games.Nim;
 using LlmShootout.Games.SplitOrSteal;
 
 namespace LlmShootout.Games;
@@ -9,7 +10,7 @@ namespace LlmShootout.Games;
 public static class GameCatalog
 {
     /// <summary>All games, in the order of the article series.</summary>
-    public static IReadOnlyList<IGameDefinition> All { get; } = [new SplitOrStealDefinition()];
+    public static IReadOnlyList<IGameDefinition> All { get; } = [new NimDefinition(), new SplitOrStealDefinition()];
 
     /// <summary>Finds a game by id, or null.</summary>
     public static IGameDefinition? Find(string id) =>

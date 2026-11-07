@@ -80,7 +80,7 @@ public sealed class WebTests : IDisposable
         using var after = await client.GetAsync("/api/config", Token);
 
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
-        Assert.Contains("split-or-steal", (await JsonOf(config))["games"]![0]!["id"]!.ToString(), StringComparison.Ordinal);
+        Assert.Equal(["nim", "split-or-steal"], [.. (await JsonOf(config))["games"]!.AsArray().Select(g => g!["id"]!.ToString())]);
         Assert.Equal(HttpStatusCode.Redirect, logout.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, after.StatusCode);
     }
@@ -283,7 +283,8 @@ public sealed class WebTests : IDisposable
     {
         var config = await JsonOf(await _factory.NewClient(signedIn: true).GetAsync("/api/config", Token));
 
-        Assert.True(config["games"]![0]!["defaultCommunication"]!.GetValue<bool>());
+        var defaults = config["games"]!.AsArray().ToDictionary(g => g!["id"]!.ToString(), g => g!["defaultCommunication"]!.GetValue<bool>());
+        Assert.Equal(new Dictionary<string, bool> { ["nim"] = false, ["split-or-steal"] = true }, defaults);
     }
 
     [Theory]

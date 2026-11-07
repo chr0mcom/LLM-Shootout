@@ -183,7 +183,9 @@ public sealed class SplitOrStealTests
     [Fact]
     public void The_catalog_registers_the_game_explicitly()
     {
-        Assert.Same(GameCatalog.All[0], GameCatalog.Find("SPLIT-OR-STEAL"));
+        Assert.Equal(["nim", "split-or-steal"], GameCatalog.All.Select(g => g.Id));
+        Assert.Same(GameCatalog.All[1], GameCatalog.Find("SPLIT-OR-STEAL"));
+        Assert.Same(GameCatalog.All[0], GameCatalog.Find("Nim"));
         Assert.Null(GameCatalog.Find("chess"));
         Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, true, "de")));
         Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, false, "de")));
