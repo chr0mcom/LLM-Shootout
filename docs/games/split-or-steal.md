@@ -34,7 +34,8 @@ can be applied to the protocol afterwards without a new run.
 
 ## Options
 
-In a series file, per match (`"options": { ... }`), or on the command line with `--game-option key=value`:
+In a series file, per match (`"options": { ... }`), on the command line with `--game-option key=value`, or in the field *Game options* of the web interface
+(a JSON object such as `{"pot": 1000, "messagesPerPlayer": 5}`):
 
 | Option | Default | Meaning |
 |---|---|---|

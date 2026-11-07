@@ -126,7 +126,7 @@ A *player* is `random`, `scripted:<file.json>` (fixed answers), `openrouter:<slu
 | `--communication on\|off` | messages between players (`play`); without it the default of the game applies, `shootout games` shows it |
 | `--seed <n>`, `--first-seat A\|B` | reproducibility (`play`); a series takes its seed from the file |
 | `--lang de\|en` | prompt language (default `de`) |
-| `--game-option key=value` | game specific option, repeatable (for example `pot=1000`; `play` only, a series takes them from the file) |
+| `--game-option key=value` | game specific option, repeatable; the value is JSON if it reads as JSON, otherwise text (`pot=1000`, `misere=true`, `heaps=[1,4,5]`, `temptation=pass`, `x="1"` for the text 1; `play` only, a series takes them from the file) |
 | `--thought-memory <n>` | how many of its own earlier thoughts a player sees again (default 10, 0 for none) |
 | `--max-cost <usd>` | spending limit for the run (default 1) |
 | `--no-debrief` | skip the questions after the game |

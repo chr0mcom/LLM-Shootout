@@ -125,7 +125,22 @@ internal sealed class RunManager(IPlayerSource players, UsageLedger usage, IOpti
             : Enum.TryParse<Seat>(request.FirstSeat, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed) ? parsed : throw new StartRejectedException("First seat must be A or B.");
         RequireSpec(request.A, "Player A");
         RequireSpec(request.B, "Player B");
-        return (definition, new GameSetup(seed, definition.ResolveCommunication(request.Communication), language, firstSeat, null), maxCost);
+        var setup = new GameSetup(seed, definition.ResolveCommunication(request.Communication), language, firstSeat, GameOptionsLimits.Check(request.Options));
+        RequireValidOptions(definition, setup);
+        return (definition, setup, maxCost);
+    }
+
+    /// <summary>Creates the game once, so that wrong options are answered with a 400 before anything is reserved or paid.</summary>
+    private static void RequireValidOptions(IGameDefinition definition, GameSetup setup)
+    {
+        try
+        {
+            definition.Create(setup);
+        }
+        catch (GameOptionsException ex)
+        {
+            throw new StartRejectedException(ex.Message);
+        }
     }
 
     private static void RequireSpec(string? spec, string label)

@@ -189,7 +189,7 @@ sequenceDiagram
 | A referee or oracle (Nim) | rate the move inside `Apply` and return a `FactAudience.Analysis` fact; it reaches the protocol but never a prompt |
 | Messages together with moves | `Message = Optional` or `Required` and `Move = Required` in the same turn |
 | Roles (code maker, code breaker) | read them from `GameSetup.Options` in `Create`, so a rematch with swapped roles is configuration |
-| Options (pot, rounds) | parse `GameSetup.Options` in `Create`; throw `GameOptionsException` with a helpful message |
+| Options (pot, rounds) | parse `GameSetup.Options` in `Create`; throw `GameOptionsException` with a helpful message. The options arrive as JSON from a series file, from `--game-option key=value` (the value is JSON if it can be read as JSON: `1000` is a number, `true` a boolean, `[1,4,5]` an array, `pass` text, `"1"` the text 1; so `1.5` is a number, `007`, `+5` and `True` are text) and from the field *Game options* of the web interface; check the type of every value |
 | Randomness (hidden number, dice) | `new SeededRng(setup.Seed)`; never `Random`. A match must be reproducible from its seed |
 | Numbers per player over a series | return `SeriesMetric`s from `IGameAnalyzer.SeriesMetrics`: a `Sum`, or a `Ratio` of two counts (sum of the numerators over the sum of the denominators; a denominator of 0 shows as "n/a"). The series report summarizes exactly these, per player over both seats. Without metrics it has no table per player |
 | A random player | implement `SampleLegalMove` so that it always returns a legal move; the random player and the `random` debriefing rely on it |

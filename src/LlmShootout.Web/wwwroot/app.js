@@ -410,10 +410,31 @@ async function loadConfig() {
   return config;
 }
 
+function readGameOptions(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return { options: null };
+  let value;
+  try {
+    value = JSON.parse(trimmed);
+  } catch (e) {
+    return { error: `The game options are not valid JSON: ${e.message}` };
+  }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return { error: 'The game options must be a JSON object, for example {"pot": 1000}.' };
+  }
+  return { options: value };
+}
+
 async function startMatch(form) {
   const error = $('#formError');
   error.hidden = true;
   const data = new FormData(form);
+  const { options, error: optionsError } = readGameOptions(String(data.get('options') ?? ''));
+  if (optionsError) {
+    error.textContent = optionsError;
+    error.hidden = false;
+    return;
+  }
   const request = {
     game: data.get('game'),
     a: data.get('a')?.trim(),
@@ -424,6 +445,7 @@ async function startMatch(form) {
     firstSeat: data.get('firstSeat') || null,
     seed: data.get('seed') ? Number(data.get('seed')) : null,
     maxCostUsd: data.get('maxCostUsd') ? Number(String(data.get('maxCostUsd')).replace(',', '.')) : null,
+    options,
   };
   const button = $('#startButton');
   button.disabled = true;

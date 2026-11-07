@@ -55,7 +55,7 @@ h2 { font-size: 1.05rem; font-weight: 650; letter-spacing: 0.005em; }
 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 
 button {
   cursor: pointer;
@@ -72,13 +72,14 @@ button.danger { border-color: var(--bad); color: var(--bad); font-weight: 600; }
 button.quiet { border-color: transparent; color: var(--muted); padding: 0.3rem 0.6rem; }
 button.quiet:hover { color: var(--ink); }
 
-input[type="text"], input:not([type]), input[type="password"], input[type="number"], select {
+input[type="text"], input:not([type]), input[type="password"], input[type="number"], select, textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--sheet);
   padding: 0.45rem 0.6rem;
 }
+textarea { resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88rem; }
 
 .error { color: var(--bad); font-size: 0.9rem; }
 

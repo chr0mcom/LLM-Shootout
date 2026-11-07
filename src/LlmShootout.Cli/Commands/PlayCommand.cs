@@ -25,7 +25,7 @@ public static class PlayCommand
         communication.AcceptOnlyFromAmong("on", "off");
         var seed = new Option<long?>("--seed") { Description = "Seed for all random decisions. Default: derived from the clock; it is printed and stored." };
         var first = new Option<string?>("--first-seat") { Description = "Seat that starts, A or B. Default: the seed decides." };
-        var gameOption = new Option<string[]>("--game-option") { Description = "Game specific option as key=value, repeatable (for example pot=1000).", AllowMultipleArgumentsPerToken = false };
+        var gameOption = new Option<string[]>("--game-option") { Description = "Game specific option as key=value, repeatable. The value is JSON if it can be read as JSON, otherwise text (for example pot=1000, misere=true, heaps=[1,4,5], temptation=pass).", AllowMultipleArgumentsPerToken = false };
 
         var command = new Command("play", "Plays one match between two players.") { game, communication, seed, first, gameOption };
         foreach (var option in run.All)

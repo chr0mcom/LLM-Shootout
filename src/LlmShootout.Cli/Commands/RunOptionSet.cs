@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using LlmShootout.Arena;
 using LlmShootout.Arena.ModelAccess;
@@ -83,7 +83,11 @@ public sealed class RunOptionSet
             parse.GetValue(Quiet));
     }
 
-    /// <summary>Turns <c>key=value</c> pairs into a JSON object: integers, booleans and text are recognized.</summary>
+    /// <summary>
+    /// Turns <c>key=value</c> pairs into a JSON object. The value is read as JSON first, so <c>pot=1000</c> is a number,
+    /// <c>misere=true</c> a boolean, <c>heaps=[1,4,5]</c> an array and <c>x="1"</c> the text 1. A value that is not JSON,
+    /// such as <c>temptation=pass</c>, is text. A key that is given twice is an error.
+    /// </summary>
     public static JsonObject? ParseGameOptions(IEnumerable<string>? pairs)
     {
         var list = pairs?.ToArray() ?? [];
@@ -102,12 +106,27 @@ public sealed class RunOptionSet
             }
 
             var (key, value) = (pair[..split].Trim(), pair[(split + 1)..].Trim());
-            json[key] = int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number
-                : bool.TryParse(value, out var flag) ? flag
-                : value;
+            if (json.ContainsKey(key))
+            {
+                throw new UsageException($"Game option '{key}' is given more than once.");
+            }
+
+            json[key] = ParseValue(value);
         }
 
         return json;
+    }
+
+    private static JsonNode? ParseValue(string value)
+    {
+        try
+        {
+            return JsonNode.Parse(value);
+        }
+        catch (JsonException)
+        {
+            return JsonValue.Create(value);
+        }
     }
 }
 

@@ -258,6 +258,19 @@ public sealed class SeriesAndReportTests : IDisposable
     }
 
     [Fact]
+    public async Task Options_of_a_series_file_are_passed_to_the_game_unchanged()
+    {
+        var file = WriteSeries("options.json", """{ "game": "split-or-steal", "seed": 3, "matches": [ { "options": { "pot": 200, "messagesPerPlayer": 1 } } ] }""");
+        var directory = Path.Combine(_harness.Directory, "options");
+        var plan = new SeriesPlan(_definition, file, new RandomPlayer(1), new RandomPlayer(2), "en", new MatchOptions(), directory);
+
+        var summary = await new SeriesRunner(new MatchRunner(_harness.Cost, _harness.Time), _harness.Cost).RunAsync(plan, TestContext.Current.CancellationToken);
+
+        var started = MatchRecord.Load(Path.Combine(directory, summary.Entries[0].Directory)).Started;
+        Assert.Equal("""{"pot":200,"messagesPerPlayer":1}""", started.GameOptions!.ToJsonString());
+    }
+
+    [Fact]
     public async Task No_further_match_starts_once_the_budget_is_used_up()
     {
         using var harness = new MatchHarness(maxCostUsd: 0.05m);

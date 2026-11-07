@@ -44,6 +44,9 @@
           <div><label for="maxCost">Limit (USD)</label><input id="maxCost" name="maxCostUsd" inputmode="decimal" value="1"></div>
         </div>
 
+        <label for="gameOptions">Game options (JSON object)</label>
+        <textarea id="gameOptions" name="options" rows="2" placeholder='empty = defaults, for example {"pot": 1000}' spellcheck="false"></textarea>
+
         <p id="formError" class="error" role="alert" hidden></p>
         <div class="buttons">
           <button id="startButton" class="primary" type="submit">Start match</button>

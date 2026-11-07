@@ -24,6 +24,10 @@ step "play: quiet mode prints only the directory"
 MATCH="$("${SHOOTOUT[@]}" play split-or-steal --a random --b random --communication off --seed 8 --lang en --quiet --out "$WORK")"
 test -f "$MATCH/events.jsonl" && test -f "$MATCH/match.json" && test -f "$MATCH/report.md"
 
+step "play: game options as JSON values"
+MATCH="$("${SHOOTOUT[@]}" play split-or-steal --a random --b random --seed 9 --lang en --quiet --game-option pot=200 --game-option messagesPerPlayer=1 --out "$WORK")"
+grep -q '"gameOptions":{"pot":200,"messagesPerPlayer":1}' "$MATCH/events.jsonl"
+
 step "series: a temporary series file"
 cat > "$WORK/series.json" <<'JSON'
 { "game": "split-or-steal", "seed": 2027, "matches": [
@@ -50,6 +54,8 @@ test $? -eq 2
 "${SHOOTOUT[@]}" play chess --a random --b random 2>/dev/null
 test $? -eq 2
 "${SHOOTOUT[@]}" play split-or-steal --a openai/gpt-4o --b random 2>/dev/null
+test $? -eq 2
+"${SHOOTOUT[@]}" play split-or-steal --a random --b random --game-option pot=10 --game-option pot=20 2>/dev/null
 test $? -eq 2
 set -e
 

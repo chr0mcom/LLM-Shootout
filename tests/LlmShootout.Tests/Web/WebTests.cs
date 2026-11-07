@@ -165,6 +165,73 @@ public sealed class WebTests : IDisposable
         Assert.Contains(expected, (await JsonOf(response))["error"]!.ToString(), StringComparison.Ordinal);
     }
 
+    private static JsonObject StartWith(JsonNode? options) =>
+        new() { ["game"] = "split-or-steal", ["a"] = "random", ["b"] = "random", ["seed"] = 7, ["options"] = options };
+
+    [Fact]
+    public async Task Game_options_of_a_request_reach_the_game()
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", StartWith(JsonNode.Parse("""{"pot":200,"messagesPerPlayer":1}""")), Token));
+        var stream = await (await client.GetAsync($"/api/runs/{run["id"]}/stream", Token)).Content.ReadAsStringAsync(Token);
+
+        Assert.Contains("\"gameOptions\":{\"pot\":200,\"messagesPerPlayer\":1}", ProtocolLines(stream)[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_empty_options_object_means_the_defaults()
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", StartWith(new JsonObject()), Token));
+        var stream = await (await client.GetAsync($"/api/runs/{run["id"]}/stream", Token)).Content.ReadAsStringAsync(Token);
+
+        Assert.DoesNotContain("gameOptions", ProtocolLines(stream)[0], StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("""{"pot":7}""", "must be an even number")]
+    [InlineData("""{"pot":"many"}""", "'pot' must be an integer")]
+    [InlineData("""{"turns":3}""", "Unknown option(s) for split-or-steal: turns")]
+    [InlineData("""{"a":{"b":{"c":{"d":{"e":1}}}}}""", "nested too deeply")]
+    public async Task Invalid_game_options_are_a_400_with_the_message_of_the_game(string options, string expected)
+    {
+        var client = _factory.NewClient(signedIn: true);
+
+        using var response = await client.PostAsJsonAsync("/api/runs", StartWith(JsonNode.Parse(options)), Token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(expected, (await JsonOf(response))["error"]!.ToString(), StringComparison.Ordinal);
+        Assert.Null((await JsonOf(await client.GetAsync("/api/runs/current", Token)))["run"]);
+    }
+
+    [Fact]
+    public async Task Game_options_larger_than_two_kilobytes_are_refused()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var large = new JsonObject { ["pot"] = 100, ["note"] = new string('x', 2100) };
+
+        using var response = await client.PostAsJsonAsync("/api/runs", StartWith(large), Token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("too large", (await JsonOf(response))["error"]!.ToString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("[1,2]")]
+    [InlineData("5")]
+    [InlineData("\"pot=1\"")]
+    public async Task Game_options_must_be_an_object(string options)
+    {
+        var client = _factory.NewClient(signedIn: true);
+        using var content = new StringContent($$"""{"game":"split-or-steal","a":"random","b":"random","options":{{options}}}""", System.Text.Encoding.UTF8, "application/json");
+
+        using var response = await client.PostAsync("/api/runs", content, Token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(5.5)]
