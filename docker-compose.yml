@@ -1,8 +1,13 @@
-# Web interface of LLM Shootout. This is the deployment of the author (host name, Traefik middleware and the gateway
-# `cli-proxy` are specific to that server); adapt the labels and endpoints to yours.
-# Secrets (web password, OpenRouter token, proxy key) live in a file outside the repository, by default
+# Web interface of LLM Shootout behind a Traefik reverse proxy.
+#
+# Everything that depends on your server is a variable. Copy `.env.example` to `.env` (not versioned) and fill in
+# at least SHOOTOUT_HOST. Secrets (web password, OpenRouter token) live in a file outside the repository, by default
 # ~/.config/llm-shootout/env (set LLMSHOOTOUT_ENV_FILE for another path), never in this file.
+#
 #   GIT_COMMIT=$(git rev-parse --short=12 HEAD) docker compose build --no-cache web && docker compose up -d web
+#
+# Without Traefik: delete the `labels`, the `networks` blocks, and add `ports: ["8080:8080"]` to the service.
+# Local models or a gateway: add `-f docker-compose.gateway.yml` (see that file).
 name: llm-shootout
 
 services:
@@ -17,30 +22,24 @@ services:
     stop_grace_period: 20s
     env_file:
       - ${LLMSHOOTOUT_ENV_FILE:-${HOME}/.config/llm-shootout/env}
-    environment:
-      LLMSHOOTOUT_Endpoints__claude__BaseAddress: http://cli-proxy:8090/v1/claude
-      LLMSHOOTOUT_Endpoints__claude__FlatRate: "true"
-      LLMSHOOTOUT_Endpoints__claude__ApiKeyVariable: LLMSHOOTOUT_PROXY_API_KEY
-      LLMSHOOTOUT_Endpoints__codex__BaseAddress: http://cli-proxy:8090/v1/codex
-      LLMSHOOTOUT_Endpoints__codex__FlatRate: "true"
-      LLMSHOOTOUT_Endpoints__codex__ApiKeyVariable: LLMSHOOTOUT_PROXY_API_KEY
     volumes:
       - shootout-data:/data
     networks:
-      - proxy
+      - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.llm-shootout.rule=Host(`shootout.stefan-bechtel.de`)"
-      - "traefik.http.routers.llm-shootout.entrypoints=websecure"
+      - "traefik.docker.network=${SHOOTOUT_TRAEFIK_NETWORK:-proxy}"
+      - "traefik.http.routers.llm-shootout.rule=Host(`${SHOOTOUT_HOST:?set SHOOTOUT_HOST in .env, see .env.example}`)"
+      - "traefik.http.routers.llm-shootout.entrypoints=${SHOOTOUT_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.llm-shootout.tls=true"
-      - "traefik.http.routers.llm-shootout.tls.certresolver=le"
-      - "traefik.http.routers.llm-shootout.middlewares=chain@file"
+      - "traefik.http.routers.llm-shootout.tls.certresolver=${SHOOTOUT_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.routers.llm-shootout.middlewares=${SHOOTOUT_MIDDLEWARES:-}"
       - "traefik.http.services.llm-shootout.loadbalancer.server.port=8080"
 
 volumes:
   shootout-data:
 
 networks:
-  proxy:
+  traefik:
     external: true
+    name: ${SHOOTOUT_TRAEFIK_NETWORK:-proxy}

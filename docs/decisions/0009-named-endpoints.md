@@ -4,7 +4,7 @@ Status: accepted (2026-11-06)
 
 ## Context
 The first version talked to OpenRouter only. On the development server there is no OpenRouter key, but a gateway
-(`cli-proxy`) that exposes the subscriptions of Claude Code and Codex as an OpenAI-compatible API with two base
+(a small proxy of the author) that exposes the subscriptions of Claude Code and Codex as an OpenAI-compatible API with two base
 addresses, one per backend. A duel such as Claude against Codex needs both addresses in one match. Other readers
 will have a local server or a company proxy. The key must still never reach a file, a log or a protocol.
 

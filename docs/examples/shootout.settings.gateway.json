@@ -2,12 +2,12 @@
   "Endpoints": {
     "claude": {
       "BaseAddress": "http://127.0.0.1:8090/v1/claude",
-      "ApiKeyVariable": "LLMSHOOTOUT_PROXY_API_KEY",
+      "ApiKeyVariable": "LLMSHOOTOUT_GATEWAY_API_KEY",
       "FlatRate": true
     },
     "codex": {
       "BaseAddress": "http://127.0.0.1:8090/v1/codex",
-      "ApiKeyVariable": "LLMSHOOTOUT_PROXY_API_KEY",
+      "ApiKeyVariable": "LLMSHOOTOUT_GATEWAY_API_KEY",
       "FlatRate": true
     }
   }

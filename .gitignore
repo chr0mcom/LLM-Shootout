@@ -9,3 +9,4 @@ coverage/
 matches/*
 shootout.settings.json
 !matches/examples/
+.env

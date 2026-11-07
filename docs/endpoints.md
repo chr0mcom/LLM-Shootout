@@ -14,14 +14,14 @@ slug as before. `random` and `scripted:<file>` stay as they are.
 ## Configure an endpoint
 
 Create `shootout.settings.json` in the directory you run `shootout` from (the file is ignored by git), or use
-environment variables. An example is in [`docs/examples/shootout.settings.cli-proxy.json`](examples/shootout.settings.cli-proxy.json).
+environment variables. An example is in [`docs/examples/shootout.settings.gateway.json`](examples/shootout.settings.gateway.json).
 
 ```json
 {
   "Endpoints": {
     "claude": {
       "BaseAddress": "http://127.0.0.1:8090/v1/claude",
-      "ApiKeyVariable": "LLMSHOOTOUT_PROXY_API_KEY",
+      "ApiKeyVariable": "LLMSHOOTOUT_GATEWAY_API_KEY",
       "FlatRate": true
     }
   }
@@ -51,7 +51,7 @@ The name is case-insensitive. `openrouter`, `random` and `scripted` are reserved
 ```bash
 # ~/.config/llm-shootout/env  (chmod 600; or set LLMSHOOTOUT_ENV to another path)
 export OPENROUTER_API_KEY=sk-or-...
-export LLMSHOOTOUT_PROXY_API_KEY=...
+export LLMSHOOTOUT_GATEWAY_API_KEY=...
 
 scripts/shootout.sh play split-or-steal --a claude:claude-haiku-latest --b openai/gpt-4o
 ```
@@ -71,20 +71,23 @@ Use `shootout models --endpoint claude` to list the models of an endpoint.
 The protocol records the player as `<endpoint>:<model>` and the settings that were sent, not the address or the key.
 A repeated debriefing (`shootout debrief`) needs the same endpoint configuration.
 
-## The CLI proxy of this server
+## A subscription gateway (the author's setup)
 
-The gateway of the hosting server offers two backends below one address, so there are two endpoints:
+The author runs a small gateway that exposes a Claude Code and a Codex subscription as OpenAI-compatible chat
+completion APIs. It is not part of this repository; it only serves as an example of an endpoint that is neither
+OpenRouter nor a local model. It offers two backends below one address, so there are two endpoints:
 
 | Endpoint | Base address | Models |
 |---|---|---|
-| `claude` | `http://127.0.0.1:8090/v1/claude` | `claude-sonnet-latest`, `claude-opus-latest`, `claude-haiku-latest`, … |
-| `codex` | `http://127.0.0.1:8090/v1/codex` | `gpt-6.1-sol`, `gpt-6.1-terra`, … |
+| `claude` | `http://gateway:8090/v1/claude` | `claude-sonnet-latest`, `claude-opus-latest`, `claude-haiku-latest`, … |
+| `codex` | `http://gateway:8090/v1/codex` | `gpt-6.1-sol`, `gpt-6.1-terra`, … |
 
-On the host the proxy listens on the loopback address; inside the Docker network `proxy` it is `http://cli-proxy:8090`.
-The proxy requires a bearer key for `chat/completions`. Each consumer has its own key in the allowlist of the
-gateway (set up where the gateway is deployed); the example file reads it from `LLMSHOOTOUT_PROXY_API_KEY`.
+The gateway requires a bearer key for `chat/completions`; the example file reads it from
+`LLMSHOOTOUT_GATEWAY_API_KEY`. A ready-made settings file is
+[`docs/examples/shootout.settings.gateway.json`](examples/shootout.settings.gateway.json), and
+[`docker-compose.gateway.yml`](../docker-compose.gateway.yml) wires the same two endpoints into the web container.
 
-Things to know about this gateway:
+Things to know about a gateway of this kind:
 
 - Calls are covered by the subscriptions of the command line tools: set `FlatRate` to `true`.
 - `temperature` and other sampling settings are accepted and **ignored**. Do not draw conclusions from `--temperature`.
@@ -92,16 +95,20 @@ Things to know about this gateway:
 - The gateway can switch to the other backend when one is at its limit (failover). The `model` field of the answer
   then still shows the requested model. Check the `x-cli-proxy-failover` header if a result looks odd; for an
   experiment that compares models, prefer a quiet moment or a second look at `/health`.
-- Latency is higher than with a plain API (a command line tool is started per call). The default call timeout of
-  180 s is usually enough. Measured on 2026-11-07 with Claude Haiku: 12 to 28 seconds per turn, up to 70 seconds when the
-  gateway is busy, against 4 to 9 seconds for Codex. `reasoning_effort` low helped only a little. The token numbers are
-  large (about 22 000 in, 1 000 to 8 000 out per call) because the command line tool brings its own system prompt and
-  does its own thinking; the prompt of the game is about 1 500 tokens. The "thinking" column stays 0 because the
-  gateway does not report reasoning tokens separately.
-- With a JSON schema, the Claude backend sometimes answers `content: null` and a message "Could not produce valid
-  structured output: no JSON object found in the response" (in a test, 4 of 6 long debriefing requests). The arena
-  treats that as an invalid answer and asks again (three attempts per turn). The message is written to the protocol as
-  `endpoint: …` in the problems of that call. Without a schema the model sometimes declines to answer in JSON, so a
-  schema stays on.
+- A command line tool is started per call, so latency is higher than with a plain API, and a `*-latest` name moves
+  with the tool: on 2026-11-07 `claude-haiku-latest` changed from Haiku 4.5 to Haiku 5.5. Pin a concrete model name
+  for a series that has to stay comparable.
+- The first measurements (2026-11-07, Claude Haiku) were poor: 12 to 28 seconds per turn, up to 70 seconds when the
+  gateway was busy, about 22 000 prompt tokens per call, and debriefings that failed because the model answered the
+  role-play prompt in prose. The cause was that every call ran as a full coding-agent session, with the agent's own
+  system prompt, tools and memory. The gateway now runs plain chat calls with the caller's system prompt and nothing
+  else (no tools, no web search unless the request asks for it, no memory, no session files): a turn takes about
+  5 seconds, a debriefing about 11 seconds, and the prompt is about 1 500 tokens, the size of the game prompt. The
+  "thinking" column stays 0 because the gateway does not report reasoning tokens separately.
+- With a JSON schema, a gateway may answer `content: null` and a message such as "Could not produce valid
+  structured output: no JSON object found in the response" (before the fix described above, 4 of 6 long debriefing
+  requests). The arena treats that as an invalid answer and asks again (three attempts per turn). The message is
+  written to the protocol as `endpoint: …` in the problems of that call. Without a schema a model sometimes declines
+  to answer in JSON, so a schema stays on.
 - For quick demonstrations, the same model through OpenRouter is much faster and cheap: `anthropic/claude-haiku-5.5` costs
   0.10 USD per million input tokens, a whole match well under one cent.

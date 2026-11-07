@@ -1,0 +1,19 @@
+# Optional addition: two extra endpoints, `claude` and `codex`, served by an OpenAI-compatible gateway that
+# exposes a Claude Code and a Codex subscription as chat completion APIs (the author uses a small proxy of his own).
+# Any other OpenAI-compatible server works the same way; see docs/endpoints.md for the settings.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gateway.yml up -d web
+#   (or set COMPOSE_FILE=docker-compose.yml:docker-compose.gateway.yml in .env)
+#
+# SHOOTOUT_GATEWAY_URL is the base address up to and including `/v1`, for example http://gateway:8090/v1. The gateway
+# must be reachable from the container: add its Docker network under `networks` if it is not the Traefik network.
+# The key goes into the secrets file as LLMSHOOTOUT_GATEWAY_API_KEY.
+services:
+  web:
+    environment:
+      LLMSHOOTOUT_Endpoints__claude__BaseAddress: ${SHOOTOUT_GATEWAY_URL:?set SHOOTOUT_GATEWAY_URL in .env}/claude
+      LLMSHOOTOUT_Endpoints__claude__FlatRate: "true"
+      LLMSHOOTOUT_Endpoints__claude__ApiKeyVariable: LLMSHOOTOUT_GATEWAY_API_KEY
+      LLMSHOOTOUT_Endpoints__codex__BaseAddress: ${SHOOTOUT_GATEWAY_URL}/codex
+      LLMSHOOTOUT_Endpoints__codex__FlatRate: "true"
+      LLMSHOOTOUT_Endpoints__codex__ApiKeyVariable: LLMSHOOTOUT_GATEWAY_API_KEY

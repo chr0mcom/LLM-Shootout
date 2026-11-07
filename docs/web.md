@@ -6,7 +6,7 @@ protocol files and the same [endpoints](endpoints.md). There is no database and 
 ```text
 Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (ASP.NET Core, port 8080)
                                               ├─ matches in a volume (same files as the command line writes)
-                                              └─ model calls: OpenRouter and the cli-proxy gateway
+                                              └─ model calls: OpenRouter and an optional gateway
 ```
 
 ## What you see
@@ -36,11 +36,12 @@ Secrets live in one file outside the repository, `~/.config/llm-shootout/env` (m
 ```bash
 export SHOOTOUT_WEB_PASSWORD=...          # at least 12 characters, the one password
 export OPENROUTER_API_KEY=sk-or-...       # optional, enables OpenRouter models
-export LLMSHOOTOUT_PROXY_API_KEY=...      # key of the cli-proxy gateway, see endpoints.md
+export LLMSHOOTOUT_GATEWAY_API_KEY=...      # key of the optional gateway, see endpoints.md
 ```
 
 ```bash
-GIT_COMMIT=$(git rev-parse --short=12 HEAD) docker compose build --no-cache web && docker compose up -d web   # https://shootout.stefan-bechtel.de
+cp .env.example .env                      # set SHOOTOUT_HOST at least; everything server specific is a variable
+GIT_COMMIT=$(git rev-parse --short=12 HEAD) docker compose build --no-cache web && docker compose up -d web
 # without Docker, for development:
 source ~/.config/llm-shootout/env
 dotnet run --project src/LlmShootout.Web --urls http://127.0.0.1:5088
@@ -57,7 +58,7 @@ After changing the env file, run `docker compose up -d web` again; the container
 | `Web__LoginAttemptsPerMinute` | login attempts per client address and minute (default 5) |
 | `Web__MaxMatchesPerDay`, `Web__MaxCostPerDayUsd` | matches and money per day (UTC), kept in `/data/state/usage.json` so a restart does not reset them (defaults 30 and 10) |
 | `Web__MaxOutputUsdPerMillion` | OpenRouter models that charge more per million output tokens are refused (default 40) |
-| `LLMSHOOTOUT_Endpoints__<name>__…` | endpoints, see [endpoints.md](endpoints.md); `docker-compose.yml` defines `claude` and `codex` for the gateway |
+| `LLMSHOOTOUT_Endpoints__<name>__…` | endpoints, see [endpoints.md](endpoints.md); `docker-compose.gateway.yml` defines `claude` and `codex` for an optional gateway |
 
 ## Security notes
 
@@ -76,4 +77,4 @@ After changing the env file, run `docker compose up -d web` again; the container
   `/data/state/keys` ends them as well.
 - Request bodies are limited to 64 KB. There is deliberately no global lockout for failed logins, because it would let a
   stranger lock the operator out; the long random password and the per-address limit are the protection.
-- The container publishes no port; only Traefik reaches it, over the `proxy` network.
+- The container publishes no port; only Traefik reaches it, over the Docker network named in `SHOOTOUT_TRAEFIK_NETWORK` (default `proxy`).
