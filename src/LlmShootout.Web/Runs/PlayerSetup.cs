@@ -1,11 +1,11 @@
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using Microsoft.Extensions.Options;
 
 namespace LlmShootout.Web.Runs;
 
 /// <summary>Creates players from their specification and lists the models that can be typed into the form.</summary>
-internal class PlayerSetup(IOptions<OpenRouterOptions> openRouter, EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger, IOptions<WebOptions>? web = null)
+internal class PlayerSetup(IOptions<EndpointOptions> openRouter, EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger, IOptions<WebOptions>? web = null)
 {
     private static readonly TimeSpan ListTimeout = TimeSpan.FromSeconds(8);
 
@@ -38,7 +38,7 @@ internal class PlayerSetup(IOptions<OpenRouterOptions> openRouter, EndpointRegis
         return suggestions;
     }
 
-    private async Task<IReadOnlyList<string>> ListAsync(OpenRouterOptions? options, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> ListAsync(EndpointOptions? options, CancellationToken cancellationToken)
     {
         if (options is null)
         {

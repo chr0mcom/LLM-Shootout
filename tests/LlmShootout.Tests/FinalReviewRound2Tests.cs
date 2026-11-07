@@ -1,7 +1,7 @@
 using LlmShootout.Arena;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Identity;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Tests.TestGames;
@@ -79,9 +79,9 @@ public sealed class FinalReviewRound2Tests : IDisposable
     [Fact]
     public void A_chat_player_describes_its_configured_settings()
     {
-        var options = new OpenRouterOptions { ApiKey = "k", Temperature = 0.2f, ReasoningEffort = "low", MaxOutputTokens = 500, CallTimeout = TimeSpan.FromSeconds(90) };
-        var http = OpenRouterClientFactory.CreateHttpClient(options, new Tests.OpenRouter.FakeOpenRouterHandler());
-        var player = new ChatPlayer(OpenRouterClientFactory.CreateChatClient(options, "x/y", http), "x/y", options, false, TimeProvider.System);
+        var options = new EndpointOptions { ApiKey = "k", Temperature = 0.2f, ReasoningEffort = "low", MaxOutputTokens = 500, CallTimeout = TimeSpan.FromSeconds(90) };
+        var http = ChatClientFactory.CreateHttpClient(options, new Tests.ModelAccess.FakeEndpointHandler());
+        var player = new ChatPlayer(ChatClientFactory.CreateChatClient(options, "x/y", http), "x/y", options, false, TimeProvider.System);
 
         Assert.Equal(("0.2", "low", "500", "90"), (player.Settings["temperature"], player.Settings["reasoningEffort"], player.Settings["maxOutputTokens"], player.Settings["callTimeoutSeconds"]));
     }
@@ -89,9 +89,9 @@ public sealed class FinalReviewRound2Tests : IDisposable
     [Fact]
     public void The_client_level_timeout_spans_every_http_attempt_plus_backoff()
     {
-        var options = new OpenRouterOptions { CallTimeout = TimeSpan.FromSeconds(180), MaxHttpRetries = 3, RetryDelay = TimeSpan.FromSeconds(2) };
+        var options = new EndpointOptions { CallTimeout = TimeSpan.FromSeconds(180), MaxHttpRetries = 3, RetryDelay = TimeSpan.FromSeconds(2) };
 
-        var budget = OpenRouterClientFactory.WholeCallBudget(options);
+        var budget = ChatClientFactory.WholeCallBudget(options);
 
         Assert.True(budget >= TimeSpan.FromSeconds(4 * 180));
         Assert.True(budget > options.CallTimeout + TimeSpan.FromSeconds(30));

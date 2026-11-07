@@ -1,7 +1,7 @@
 using LlmShootout.Arena;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Randomness;

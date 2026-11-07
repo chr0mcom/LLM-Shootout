@@ -2,11 +2,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
 /// <summary>
 /// What the HTTP layer saw during one model call: the request and response bodies without credentials,
-/// the number of HTTP attempts, and the OpenRouter fields that the chat abstraction does not carry.
+/// the number of HTTP attempts, and the fields of the response (cost, provider, reasoning) that the chat abstraction does not carry.
 /// </summary>
 public sealed class CallCapture
 {
@@ -41,8 +41,8 @@ public sealed class CallCapture
         ? null
         : $"POST (attempts: {HttpAttempts}, status: {StatusCode?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none"})\n--- request ---\n{RequestBody}\n--- response ---\n{ResponseBody}";
 
-    /// <summary>The OpenRouter fields of the response body.</summary>
-    public OpenRouterFields Fields() => OpenRouterFields.Parse(ResponseBody);
+    /// <summary>The fields of the response body that the chat abstraction does not carry.</summary>
+    public CompletionFields Fields() => CompletionFields.Parse(ResponseBody);
 
     /// <summary>Ends the capture when disposed.</summary>
     public readonly struct Scope(CallCapture capture, CallCapture? previous) : IDisposable
@@ -55,8 +55,8 @@ public sealed class CallCapture
     }
 }
 
-/// <summary>Fields of an OpenRouter chat completion that matter for the experiment.</summary>
-public sealed record OpenRouterFields(
+/// <summary>Fields of a chat completion that matter for the experiment. Cost and provider are OpenRouter specific; other endpoints leave them out.</summary>
+public sealed record CompletionFields(
     string? GenerationId,
     string? Model,
     string? Provider,
@@ -71,11 +71,11 @@ public sealed record OpenRouterFields(
     string? Refusal = null)
 {
     /// <summary>Reads the fields from a response body. Missing or malformed bodies give an empty result.</summary>
-    public static OpenRouterFields Parse(string? body)
+    public static CompletionFields Parse(string? body)
     {
         if (string.IsNullOrWhiteSpace(body))
         {
-            return new OpenRouterFields(null, null, null, null, null, null, null, null, null, null);
+            return new CompletionFields(null, null, null, null, null, null, null, null, null, null);
         }
 
         try
@@ -84,16 +84,16 @@ public sealed record OpenRouterFields(
         }
         catch (System.Text.Json.JsonException)
         {
-            return new OpenRouterFields(null, null, null, null, null, null, null, null, null, null);
+            return new CompletionFields(null, null, null, null, null, null, null, null, null, null);
         }
     }
 
-    private static OpenRouterFields FromNode(JsonObject? root)
+    private static CompletionFields FromNode(JsonObject? root)
     {
         var choice = root?["choices"]?[0];
         var message = choice?["message"];
         var usage = root?["usage"];
-        return new OpenRouterFields(
+        return new CompletionFields(
             root?["id"]?.ToString(),
             root?["model"]?.ToString(),
             root?["provider"]?.ToString(),

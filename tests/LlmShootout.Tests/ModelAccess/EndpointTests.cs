@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json.Nodes;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Series;
 
-namespace LlmShootout.Tests.OpenRouter;
+namespace LlmShootout.Tests.ModelAccess;
 
 public sealed class EndpointTests : IDisposable
 {
@@ -30,7 +30,7 @@ public sealed class EndpointTests : IDisposable
             },
             name => environment?.GetValueOrDefault(name));
 
-    private OpenRouterOptions Base() => new() { ApiKey = "sk-or-OPENROUTER", CacheDirectory = _cache };
+    private EndpointOptions Base() => new() { ApiKey = "sk-or-OPENROUTER", CacheDirectory = _cache };
 
     [Theory]
     [InlineData("claude:claude-sonnet-latest", "claude", "claude-sonnet-latest")]
@@ -49,7 +49,6 @@ public sealed class EndpointTests : IDisposable
         Assert.Equal(("claude", EndpointKind.OpenAiCompatible, true), (options.EndpointName, options.Kind, options.FlatRate));
         Assert.Equal("http://127.0.0.1:8090/v1/claude/", options.BaseAddress.AbsoluteUri);
         Assert.Equal("secret-proxy", options.ApiKey);
-        Assert.Equal("PROXY_KEY", options.ApiKeyVariableName);
         Assert.DoesNotContain("secret-proxy", options.ToString(), StringComparison.Ordinal);
     }
 
@@ -91,7 +90,7 @@ public sealed class EndpointTests : IDisposable
     public async Task Other_endpoints_get_no_openrouter_fields_and_a_top_level_reasoning_effort()
     {
         var options = Registry(new() { ["PROXY_KEY"] = "pk" }).Resolve("claude", Base())! with { ReasoningEffort = "low", RetryDelay = TimeSpan.FromMilliseconds(1) };
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}", cost: null));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}", cost: null));
         var player = CreatePlayer(handler, options, schema: true);
 
         await player.RespondAsync(new PlayerCall(CallPurpose.Turn, [new PromptMessage(PromptRole.User, "go")], JsonNode.Parse("""{"type":"object"}"""), 1, _ => "{}"), TestContext.Current.CancellationToken);
@@ -112,7 +111,7 @@ public sealed class EndpointTests : IDisposable
     public async Task Without_a_reported_cost_a_flat_rate_call_counts_as_zero_and_any_other_stays_unknown(bool flatRate, string? expected)
     {
         var options = Registry(flatRate: flatRate).Resolve("claude", Base())!;
-        var player = CreatePlayer(new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}", cost: null)), options);
+        var player = CreatePlayer(new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}", cost: null)), options);
 
         var reply = await player.RespondAsync(new PlayerCall(CallPurpose.Turn, [new PromptMessage(PromptRole.User, "go")], null, 1, _ => "{}"), TestContext.Current.CancellationToken);
 
@@ -126,7 +125,7 @@ public sealed class EndpointTests : IDisposable
     {
         const string Body = """{"id":"x","object":"chat.completion","model":"claude-haiku-latest","choices":[{"index":0,"message":{"role":"assistant","content":null,"refusal":"Could not produce valid structured output: no JSON object found in the response"},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5}}""";
         var options = Registry().Resolve("claude", Base())!;
-        var player = CreatePlayer(new FakeOpenRouterHandler().Ok(Body), options);
+        var player = CreatePlayer(new FakeEndpointHandler().Ok(Body), options);
 
         var reply = await player.RespondAsync(new PlayerCall(CallPurpose.Turn, [new PromptMessage(PromptRole.User, "go")], null, 1, _ => "{}"), TestContext.Current.CancellationToken);
 
@@ -135,10 +134,21 @@ public sealed class EndpointTests : IDisposable
     }
 
     [Fact]
+    public async Task An_endpoint_without_a_key_is_called_without_an_authorization_header()
+    {
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}", cost: null));
+        var player = CreatePlayer(handler, Registry().Resolve("codex", Base())!);
+
+        await player.RespondAsync(new PlayerCall(CallPurpose.Turn, [new PromptMessage(PromptRole.User, "go")], null, 1, _ => "{}"), TestContext.Current.CancellationToken);
+
+        Assert.Null(handler.Messages[0].Headers.Authorization);
+    }
+
+    [Fact]
     public async Task A_failure_names_the_endpoint_not_openrouter()
     {
         var options = Registry().Resolve("claude", Base())! with { MaxHttpRetries = 0 };
-        var player = CreatePlayer(new FakeOpenRouterHandler().Respond(HttpStatusCode.Unauthorized, """{"error":{"message":"bad key"}}"""), options);
+        var player = CreatePlayer(new FakeEndpointHandler().Respond(HttpStatusCode.Unauthorized, """{"error":{"message":"bad key"}}"""), options);
 
         var ex = await Assert.ThrowsAsync<PlayerFailureException>(() => player.RespondAsync(new PlayerCall(CallPurpose.Turn, [new PromptMessage(PromptRole.User, "go")], null, 1, _ => "{}"), TestContext.Current.CancellationToken));
 
@@ -162,18 +172,18 @@ public sealed class EndpointTests : IDisposable
         var codex = Registry().Resolve("codex", Base())!;
         var token = TestContext.Current.CancellationToken;
 
-        await Catalog(new FakeOpenRouterHandler().Ok(ProxyModels), claude).GetModelsAsync(token);
-        await Catalog(new FakeOpenRouterHandler().Ok("""{"data":[{"id":"gpt-6.1-sol"}]}"""), codex).GetModelsAsync(token);
+        await Catalog(new FakeEndpointHandler().Ok(ProxyModels), claude).GetModelsAsync(token);
+        await Catalog(new FakeEndpointHandler().Ok("""{"data":[{"id":"gpt-6.1-sol"}]}"""), codex).GetModelsAsync(token);
 
-        Assert.Equal(["claude-sonnet-latest", "claude-opus-5-5"], (await Catalog(new FakeOpenRouterHandler(), claude).GetModelsAsync(token)).Select(m => m.Id));
-        Assert.Equal(["gpt-6.1-sol"], (await Catalog(new FakeOpenRouterHandler(), codex).GetModelsAsync(token)).Select(m => m.Id));
+        Assert.Equal(["claude-sonnet-latest", "claude-opus-5-5"], (await Catalog(new FakeEndpointHandler(), claude).GetModelsAsync(token)).Select(m => m.Id));
+        Assert.Equal(["gpt-6.1-sol"], (await Catalog(new FakeEndpointHandler(), codex).GetModelsAsync(token)).Select(m => m.Id));
         Assert.True(File.Exists(Path.Combine(_cache, "models.claude.json")));
     }
 
     [Fact]
     public async Task The_factory_creates_a_player_for_an_endpoint_without_an_openrouter_key()
     {
-        var factory = Factory(Base() with { ApiKey = null }, new FakeOpenRouterHandler().Ok(ProxyModels));
+        var factory = Factory(Base() with { ApiKey = null }, new FakeEndpointHandler().Ok(ProxyModels));
 
         var player = await factory.CreateAsync("claude:claude-sonnet-latest", 1, TestContext.Current.CancellationToken);
 
@@ -184,7 +194,7 @@ public sealed class EndpointTests : IDisposable
     [Fact]
     public async Task Settings_that_openrouter_would_check_are_not_checked_against_a_list_without_parameters()
     {
-        var factory = Factory(Base() with { Temperature = 0.4f }, new FakeOpenRouterHandler().Ok(ProxyModels));
+        var factory = Factory(Base() with { Temperature = 0.4f }, new FakeEndpointHandler().Ok(ProxyModels));
 
         var player = await factory.CreateAsync("claude:claude-sonnet-latest", 1, TestContext.Current.CancellationToken);
 
@@ -194,7 +204,7 @@ public sealed class EndpointTests : IDisposable
     [Fact]
     public async Task An_unknown_endpoint_lists_the_configured_ones()
     {
-        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Base(), new FakeOpenRouterHandler()).CreateAsync("gemini:x", 1, TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Base(), new FakeEndpointHandler()).CreateAsync("gemini:x", 1, TestContext.Current.CancellationToken));
 
         Assert.Contains("Unknown endpoint 'gemini'", ex.Message, StringComparison.Ordinal);
         Assert.Contains("openrouter, claude, codex, broken", ex.Message, StringComparison.Ordinal);
@@ -203,7 +213,7 @@ public sealed class EndpointTests : IDisposable
     [Fact]
     public async Task An_unknown_model_points_to_the_model_list_of_the_endpoint()
     {
-        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Base(), new FakeOpenRouterHandler().Ok(ProxyModels)).CreateAsync("claude:gpt-9", 1, TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => Factory(Base(), new FakeEndpointHandler().Ok(ProxyModels)).CreateAsync("claude:gpt-9", 1, TestContext.Current.CancellationToken));
 
         Assert.Contains("shootout models --endpoint claude", ex.Message, StringComparison.Ordinal);
     }
@@ -211,7 +221,7 @@ public sealed class EndpointTests : IDisposable
     [Fact]
     public async Task An_endpoint_whose_list_is_unreachable_is_trusted()
     {
-        var factory = Factory(Base(), new FakeOpenRouterHandler().Respond(HttpStatusCode.BadGateway, "{}"));
+        var factory = Factory(Base(), new FakeEndpointHandler().Respond(HttpStatusCode.BadGateway, "{}"));
 
         var player = await factory.CreateAsync("claude:anything", 1, TestContext.Current.CancellationToken);
 
@@ -223,7 +233,7 @@ public sealed class EndpointTests : IDisposable
     {
         const string Models = """{"data":[{"id":"vendor/cheap","pricing":{"prompt":"0.000001","completion":"0.000002"},"supported_parameters":["structured_outputs"]},{"id":"vendor/dear","pricing":{"prompt":"0.00001","completion":"0.00008"},"supported_parameters":["structured_outputs"]}]}""";
         var options = Base();
-        var factory = new PlayerFactory(options, Catalog(new FakeOpenRouterHandler().Ok(Models).Ok(Models), options), TimeProvider.System, null, Registry(), null, 40m);
+        var factory = new PlayerFactory(options, Catalog(new FakeEndpointHandler().Ok(Models).Ok(Models), options), TimeProvider.System, null, Registry(), null, 40m);
 
         var cheap = await factory.CreateAsync("vendor/cheap", 1, TestContext.Current.CancellationToken);
         var ex = await Assert.ThrowsAsync<PlayerSpecException>(() => factory.CreateAsync("vendor/dear", 1, TestContext.Current.CancellationToken));
@@ -240,15 +250,15 @@ public sealed class EndpointTests : IDisposable
     public void File_names_do_not_contain_the_endpoint(string player, string slug) =>
         Assert.Equal(slug, MatchPaths.Slug(player));
 
-    private static ModelCatalog Catalog(FakeOpenRouterHandler handler, OpenRouterOptions options) =>
+    private static ModelCatalog Catalog(FakeEndpointHandler handler, EndpointOptions options) =>
         new(new HttpClient(handler) { BaseAddress = options.BaseAddress }, options, TimeProvider.System);
 
-    private static PlayerFactory Factory(OpenRouterOptions options, FakeOpenRouterHandler listHandler) =>
-        new(options, Catalog(new FakeOpenRouterHandler(), options), TimeProvider.System, null, Registry(), endpoint => Catalog(listHandler, endpoint));
+    private static PlayerFactory Factory(EndpointOptions options, FakeEndpointHandler listHandler) =>
+        new(options, Catalog(new FakeEndpointHandler(), options), TimeProvider.System, null, Registry(), endpoint => Catalog(listHandler, endpoint));
 
-    private static ChatPlayer CreatePlayer(FakeOpenRouterHandler handler, OpenRouterOptions options, bool schema = false)
+    private static ChatPlayer CreatePlayer(FakeEndpointHandler handler, EndpointOptions options, bool schema = false)
     {
-        var http = OpenRouterClientFactory.CreateHttpClient(options, handler);
-        return new ChatPlayer(OpenRouterClientFactory.CreateChatClient(options, "vendor/model", http), "vendor/model", options, schema, TimeProvider.System);
+        var http = ChatClientFactory.CreateHttpClient(options, handler);
+        return new ChatPlayer(ChatClientFactory.CreateChatClient(options, "vendor/model", http), "vendor/model", options, schema, TimeProvider.System);
     }
 }

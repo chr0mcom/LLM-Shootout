@@ -9,28 +9,28 @@ using OpenAI;
 using Polly;
 using Polly.Retry;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
 /// <summary>
-/// Builds the HTTP and chat pipeline for OpenRouter. From the outside in:
+/// Builds the HTTP and chat pipeline for one endpoint (OpenRouter or any OpenAI-compatible API). From the outside in:
 /// <c>ChatClientBuilder</c> (logging) around the OpenAI chat client, whose transport is an
 /// <see cref="HttpClient"/> with these handlers: resilience (one timeout, one retry layer), request rewriting
-/// (OpenRouter fields), raw capture (exchange without credentials), and the socket handler.
+/// (endpoint specific fields), raw capture (exchange without credentials), and the socket handler.
 /// </summary>
-public static class OpenRouterClientFactory
+public static class ChatClientFactory
 {
     /// <summary>Creates the <see cref="HttpClient"/>. <paramref name="inner"/> replaces the network in tests.</summary>
-    public static HttpClient CreateHttpClient(OpenRouterOptions options, HttpMessageHandler? inner = null)
+    public static HttpClient CreateHttpClient(EndpointOptions options, HttpMessageHandler? inner = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         var capture = new RawCaptureHandler { InnerHandler = inner ?? new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(5) } };
-        var rewrite = new OpenRouterRequestHandler(options) { InnerHandler = capture };
+        var rewrite = new EndpointRequestHandler(options) { InnerHandler = capture };
         var resilience = new ResilienceHandler(BuildPipeline(options)) { InnerHandler = rewrite };
         return new HttpClient(resilience) { BaseAddress = options.BaseAddress, Timeout = Timeout.InfiniteTimeSpan };
     }
 
     /// <summary>Creates the chat client for one model.</summary>
-    public static IChatClient CreateChatClient(OpenRouterOptions options, string modelSlug, HttpClient httpClient, ILoggerFactory? loggerFactory = null)
+    public static IChatClient CreateChatClient(EndpointOptions options, string modelSlug, HttpClient httpClient, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(modelSlug);
@@ -53,7 +53,7 @@ public static class OpenRouterClientFactory
     /// already be paid for; it ends the call. A connection that breaks while the answer is being read is not
     /// retried either, for the same reason.
     /// </summary>
-    private static ResiliencePipeline<HttpResponseMessage> BuildPipeline(OpenRouterOptions options)
+    private static ResiliencePipeline<HttpResponseMessage> BuildPipeline(EndpointOptions options)
     {
         var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
         if (options.MaxHttpRetries > 0)
@@ -76,7 +76,7 @@ public static class OpenRouterClientFactory
     /// The client-level timeout spans all HTTP attempts of a call, so it must be larger than every attempt plus the backoff
     /// between them; the timeout of one attempt is the job of the resilience pipeline.
     /// </summary>
-    internal static TimeSpan WholeCallBudget(OpenRouterOptions options) =>
+    internal static TimeSpan WholeCallBudget(EndpointOptions options) =>
         (options.CallTimeout * (options.MaxHttpRetries + 1)) + (options.RetryDelay * Math.Pow(2, options.MaxHttpRetries + 1)) + TimeSpan.FromSeconds(30);
 
     private static bool IsRetryable(Outcome<HttpResponseMessage> outcome) => outcome switch

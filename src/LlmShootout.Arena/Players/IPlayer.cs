@@ -70,7 +70,11 @@ public sealed record ModelCallInfo(
     TimeSpan Latency,
     string? FinishReason,
     int HttpAttempts,
-    decimal? EstimatedCostUsd = null);
+    decimal? EstimatedCostUsd = null)
+{
+    /// <summary>True if the endpoint reported no cost and none could be estimated: the call is held back with a reserve against the spending limit.</summary>
+    public bool CostIsUnknown() => CostUsd is null && EstimatedCostUsd is null;
+}
 
 /// <summary>Anything that can answer for a seat: a language model, a random player, a script, a human.</summary>
 public interface IPlayer

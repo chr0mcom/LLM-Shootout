@@ -29,12 +29,12 @@ Request side: `ChatOptions` carries model, temperature, max tokens and the respo
 ## Decision
 - The player talks to an `IChatClient` built with `ChatClientBuilder` (logging) around the OpenAI chat client.
   The OpenAI client uses an `HttpClient` as its transport, so the HTTP pipeline is ours.
-- Handlers, outside in: resilience (ADR 0007), `OpenRouterRequestHandler` (adds `provider.require_parameters`
+- Handlers, outside in: resilience (ADR 0007), `EndpointRequestHandler` (adds `provider.require_parameters`
   and `strict` whenever a JSON schema is sent, `reasoning.effort` and extra headers only when configured),
   `RawCaptureHandler` (stores request and response bodies per call in an `AsyncLocal` `CallCapture`; never
   headers, so the API key cannot leak), network.
 - Cost, provider, reasoning text and reasoning tokens are read from the captured response body
-  (`OpenRouterFields`), everything else from `ChatResponse`. The raw body wins where both exist.
+  (`CompletionFields`), everything else from `ChatResponse`. The raw body wins where both exist.
 - Sampling parameters (`temperature`, `reasoning`, max tokens) are sent only when configured; the request body
   in the protocol shows what was sent.
 - JSON schema is sent only if the model's `supported_parameters` contains `structured_outputs`. Otherwise the

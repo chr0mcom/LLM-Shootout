@@ -1,7 +1,7 @@
 using System.Text.Json;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Series;
 using Microsoft.Extensions.Options;
 using Spectre.Console;

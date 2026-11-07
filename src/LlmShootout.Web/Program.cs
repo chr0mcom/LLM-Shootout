@@ -1,4 +1,4 @@
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Web;
 using LlmShootout.Web.Auth;
 using LlmShootout.Web.Matches;
@@ -14,10 +14,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("shootout.settings.json", optional: true);
 builder.Configuration.AddEnvironmentVariables("LLMSHOOTOUT_");
 MapPlainVariable("SHOOTOUT_WEB_PASSWORD", "Web:Password");
-MapPlainVariable(OpenRouterOptions.ApiKeyVariable, "OpenRouter:ApiKey");
+MapPlainVariable(EndpointOptions.OpenRouterKeyVariable, "OpenRouter:ApiKey");
 
 builder.Services.AddOptions<WebOptions>().Bind(builder.Configuration.GetSection("Web")).ValidateDataAnnotations().ValidateOnStart();
-builder.Services.AddOptions<OpenRouterOptions>().Bind(builder.Configuration.GetSection("OpenRouter")).ValidateDataAnnotations();
+builder.Services.AddOptions<EndpointOptions>().Bind(builder.Configuration.GetSection("OpenRouter")).ValidateDataAnnotations();
 builder.Services.AddSingleton(_ => new EndpointRegistry(builder.Configuration.GetSection("Endpoints").Get<Dictionary<string, EndpointDefinition>>()));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<PlayerSetup>();

@@ -1,28 +1,40 @@
-// Adapted from AiBehavior.PublicGoods (MIT, same author).
+// Adapted from AiBehavior.PublicGoods (MIT, same author), originally ReasoningJsonRecovery.
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
-namespace LlmShootout.Arena.Models;
+namespace LlmShootout.Arena.Answers;
 
 /// <summary>
-/// Recovers a JSON answer that a reasoning model put into the OpenRouter <c>reasoning</c> channel instead of
-/// <c>message.content</c>. Some model and provider combinations return empty content and place the complete
-/// answer object at the end of the reasoning trace.
+/// Finds the JSON object of an answer in free text: plain, in a code fence, or surrounded by prose. Some models also
+/// return empty content and put the complete answer object at the end of their reasoning trace, so the reasoning
+/// channel is searched as well when the content holds none.
 /// </summary>
-public static class ReasoningJsonRecovery
+public static class JsonObjectExtractor
 {
+    /// <summary>The first answer object found: in the content, otherwise in the reasoning channel. Null if neither holds one.</summary>
+    public static (JsonObject Answer, bool FromReasoning)? FindAnswer(string? content, string? reasoning)
+    {
+        if (TryExtract(content, out var inContent))
+        {
+            return (JsonNode.Parse(inContent)!.AsObject(), false);
+        }
+
+        return TryExtract(reasoning, out var inReasoning) ? (JsonNode.Parse(inReasoning)!.AsObject(), true) : null;
+    }
+
     /// <summary>
-    /// Extracts the last balanced, parseable top-level JSON object from a reasoning string.
+    /// Extracts the last balanced, parseable top-level JSON object from a text.
     /// Braces inside string literals are ignored, so prose cannot produce false matches.
     /// </summary>
-    public static bool TryExtractJsonObject(string? reasoning, out string json)
+    public static bool TryExtract(string? text, out string json)
     {
         json = string.Empty;
-        if (string.IsNullOrWhiteSpace(reasoning))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return false;
         }
 
-        var candidates = FindTopLevelObjects(reasoning);
+        var candidates = FindTopLevelObjects(text);
         for (var i = candidates.Count - 1; i >= 0; i--)
         {
             if (IsJsonObject(candidates[i]))
@@ -66,7 +78,7 @@ public static class ReasoningJsonRecovery
 
             switch (c)
             {
-                case '"':
+                case '"' when depth > 0:
                     inString = true;
                     break;
                 case '{':

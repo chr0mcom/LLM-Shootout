@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.Globalization;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Templates;
 using LlmShootout.Games;
 using Spectre.Console;
@@ -71,7 +71,7 @@ public static class InfoCommands
         return command;
     }
 
-    private static OpenRouterOptions ResolveEndpoint(CliEnvironment env, string? name) =>
+    private static EndpointOptions ResolveEndpoint(CliEnvironment env, string? name) =>
         name is null
             ? env.BaseOptions
             : env.Endpoints.Resolve(name, env.BaseOptions)

@@ -1,15 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
 /// <summary>
-/// Settings of the connection to one endpoint and of the calls to it. The defaults describe OpenRouter; for another
-/// OpenAI-compatible endpoint (see <see cref="EndpointRegistry"/>) address, dialect and key are replaced.
+/// Settings of the connection to one endpoint and of the calls to it. The defaults describe OpenRouter, the built-in
+/// endpoint; for another OpenAI-compatible endpoint (see <see cref="EndpointRegistry"/>) address, dialect and key are
+/// replaced. The configuration section is still called <c>OpenRouter</c> and the key variable <c>OPENROUTER_API_KEY</c>,
+/// so that existing setups keep working.
 /// </summary>
-public sealed record OpenRouterOptions
+public sealed record EndpointOptions
 {
-    /// <summary>Name of the environment variable that holds the API key.</summary>
-    public const string ApiKeyVariable = "OPENROUTER_API_KEY";
+    /// <summary>Name of the environment variable that holds the OpenRouter API key.</summary>
+    public const string OpenRouterKeyVariable = "OPENROUTER_API_KEY";
 
     /// <summary>Name of the endpoint these options belong to. It is the prefix of the player name.</summary>
     public string EndpointName { get; init; } = EndpointRegistry.OpenRouterName;
@@ -29,9 +31,6 @@ public sealed record OpenRouterOptions
 
     /// <summary>The API key. Never written to files, logs or protocols.</summary>
     public string? ApiKey { get; init; }
-
-    /// <summary>Name of the environment variable the key was read from, for error messages. The value is never stored here.</summary>
-    public string ApiKeyVariableName { get; init; } = ApiKeyVariable;
 
     /// <summary>Time allowed for one model call. Reasoning models can be slow, so the default is generous.</summary>
     [Range(typeof(TimeSpan), "00:00:05", "01:00:00")]
@@ -62,8 +61,4 @@ public sealed record OpenRouterOptions
         builder.Append(System.Globalization.CultureInfo.InvariantCulture, $"Endpoint = {EndpointName}, BaseAddress = {BaseAddress}, ApiKey = {(string.IsNullOrEmpty(ApiKey) ? "<unset>" : "<set>")}, CallTimeout = {CallTimeout}, MaxHttpRetries = {MaxHttpRetries}");
         return true;
     }
-
-    /// <summary>Reads the API key from the environment and returns a copy with it set.</summary>
-    public OpenRouterOptions WithApiKeyFromEnvironment() =>
-        this with { ApiKey = Environment.GetEnvironmentVariable(ApiKeyVariable) };
 }

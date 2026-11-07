@@ -50,7 +50,7 @@ public static class IdentityScanner
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(settings);
 
-        var provider = PromptIdentityFormatter.GetProvider(model.Slug);
+        var provider = model.Slug.Contains('/', StringComparison.Ordinal) ? PromptIdentityFormatter.GetProvider(model.Slug) : InferProvider(model.Slug, settings);
         var withoutProvider = PromptIdentityFormatter.WithoutProviderPrefix(PromptIdentityFormatter.WithoutVariant(model.Slug));
         var seen = new Dictionary<string, IdentityToken>(StringComparer.Ordinal);
 
@@ -76,6 +76,19 @@ public static class IdentityScanner
         var fingerprintSource = string.Join('|', tokens.Select(x => $"{x.MarkerType}:{x.NormalizedToken}"));
         var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintSource)));
         return new IdentityTokenSet(PromptIdentityFormatter.Format(model), tokens, fingerprint);
+    }
+
+    /// <summary>
+    /// Models on endpoints other than OpenRouter have no <c>provider/</c> prefix (<c>claude-haiku-latest</c>). The
+    /// provider is then the one whose alias the model name starts with ("Claude" for <c>claude-…</c>), so that the family
+    /// names of the provider are found in messages as well.
+    /// </summary>
+    private static string InferProvider(string slug, IdentityScannerSettings settings)
+    {
+        var name = Normalize(slug);
+        return settings.ProviderAliases?
+            .FirstOrDefault(provider => provider.Value.Any(alias => Normalize(alias) is { Length: > 0 } normalized && name.StartsWith(normalized, StringComparison.Ordinal)))
+            .Key ?? string.Empty;
     }
 
     private static void AddAliases(

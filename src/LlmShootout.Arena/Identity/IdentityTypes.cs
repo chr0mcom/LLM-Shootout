@@ -2,7 +2,7 @@
 namespace LlmShootout.Arena.Identity;
 
 /// <summary>Identifies a model: the requested slug and, if known, the version the provider reported.</summary>
-/// <param name="Slug">The OpenRouter slug, for example <c>openai/gpt-4o</c>.</param>
+/// <param name="Slug">The model name as given in the player specification, for example <c>openai/gpt-4o</c> (OpenRouter) or <c>claude-haiku-latest</c> (another endpoint).</param>
 /// <param name="Version">The model version reported in the response, or null if unknown.</param>
 public sealed record ModelIdentity(string Slug, string? Version = null)
 {

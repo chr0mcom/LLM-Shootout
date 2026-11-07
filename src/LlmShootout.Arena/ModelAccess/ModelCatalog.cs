@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
-/// <summary>A model from the OpenRouter model list.</summary>
+/// <summary>A model from the model list of an endpoint.</summary>
 /// <param name="Id">The slug, for example <c>openai/gpt-4o</c>.</param>
 /// <param name="Name">Display name.</param>
 /// <param name="PromptUsdPerMillion">Input price in USD per million tokens.</param>
@@ -27,12 +27,12 @@ public sealed record ModelInfo(
 /// commands do not hit the API and offline runs can still use the last list. Other OpenAI-compatible endpoints list
 /// only ids: prices are 0 and every model counts as capable of JSON schema output.
 /// </summary>
-public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, TimeProvider time)
+public sealed class ModelCatalog(HttpClient http, EndpointOptions options, TimeProvider time)
 {
     private string CacheFile => options.Kind == EndpointKind.OpenRouter ? "models.json" : $"models.{CacheName(options.EndpointName)}.json";
 
     /// <summary>Creates the model list of an endpoint. A key is sent to endpoints other than OpenRouter, whose lists need no key.</summary>
-    public static ModelCatalog ForEndpoint(OpenRouterOptions options, TimeProvider time)
+    public static ModelCatalog ForEndpoint(EndpointOptions options, TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(options);
         var http = new HttpClient { BaseAddress = options.BaseAddress, Timeout = TimeSpan.FromSeconds(30) };
@@ -44,10 +44,10 @@ public sealed class ModelCatalog(HttpClient http, OpenRouterOptions options, Tim
         return new ModelCatalog(http, options, time);
     }
 
-    /// <summary>How long a cached list is used without asking OpenRouter again.</summary>
+    /// <summary>How long a cached list is used without asking the endpoint again.</summary>
     public static TimeSpan CacheLifetime { get; } = TimeSpan.FromHours(1);
 
-    /// <summary>Loads the list from the cache or from OpenRouter. Falls back to an older cache if the network fails.</summary>
+    /// <summary>Loads the list from the cache or from the endpoint. Falls back to an older cache if the network fails.</summary>
     public async Task<IReadOnlyList<ModelInfo>> GetModelsAsync(CancellationToken cancellationToken)
     {
         var path = Path.Combine(options.CacheDirectory, CacheFile);

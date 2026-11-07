@@ -20,5 +20,5 @@ breaker. Reasoning models can need minutes. Two stacked retry layers would multi
   the protocol has `Attempt` for the first and `HttpAttempts` for the second.
 
 ## Consequences
-The call timeout is the one knob (`OpenRouterOptions.CallTimeout`) and it applies to each HTTP attempt. With three
+The call timeout is the one knob (`EndpointOptions.CallTimeout`) and it applies to each HTTP attempt. With three
 attempts per turn a stuck model can use up to three call timeouts per turn.

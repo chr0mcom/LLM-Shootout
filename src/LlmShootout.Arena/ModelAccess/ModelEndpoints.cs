@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
 /// <summary>The dialect an endpoint speaks.</summary>
 public enum EndpointKind
@@ -61,7 +61,7 @@ public sealed class EndpointRegistry
     /// The options for calls to <paramref name="name"/>: the base options with address, dialect, key and flat-rate flag of
     /// the endpoint. Null if there is no such endpoint.
     /// </summary>
-    public OpenRouterOptions? Resolve(string name, OpenRouterOptions baseOptions)
+    public EndpointOptions? Resolve(string name, EndpointOptions baseOptions)
     {
         ArgumentNullException.ThrowIfNull(baseOptions);
         if (string.Equals(name, OpenRouterName, StringComparison.OrdinalIgnoreCase))
@@ -87,7 +87,6 @@ public sealed class EndpointRegistry
             Kind = definition.Kind,
             FlatRate = definition.FlatRate,
             ApiKey = _environment(variable),
-            ApiKeyVariableName = variable,
         };
     }
 

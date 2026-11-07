@@ -64,7 +64,7 @@ One call to a player: a turn, a debriefing, or (in the annotation file) a judge.
 | `class` | `valid`, `invalid`, `refusal`, `token_limit`, `technical_error` |
 | `violations` | what was wrong, one line per field |
 | `call` | `requestedModel`, `deliveredModel`, `provider`, `generationId`, `promptTokens`, `completionTokens`, `reasoningTokens`, `costUsd`, `estimatedCostUsd`, `latency`, `finishReason`, `httpAttempts` |
-| `costUnknown` | true if OpenRouter reported no cost for the call |
+| `costUnknown` | true if the endpoint reported no cost and none could be estimated (the call is held back with a reserve) |
 | `error` | text of a technical error |
 | `rawExchange` | request and response body of the last HTTP attempt, without headers |
 

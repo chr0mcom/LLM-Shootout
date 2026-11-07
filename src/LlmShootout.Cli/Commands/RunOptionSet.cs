@@ -2,7 +2,7 @@ using System.CommandLine;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using LlmShootout.Arena;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 
 namespace LlmShootout.Cli.Commands;
 
@@ -59,7 +59,7 @@ public sealed class RunOptionSet
     ];
 
     /// <summary>Reads the options of a parsed command line.</summary>
-    public RunSettings Read(ParseResult parse, OpenRouterOptions baseOptions)
+    public RunSettings Read(ParseResult parse, EndpointOptions baseOptions)
     {
         var options = baseOptions with
         {
@@ -118,7 +118,7 @@ public sealed class RunOptionSet
 
 /// <summary>The settings of one run, read from the command line.</summary>
 public sealed record RunSettings(
-    OpenRouterOptions OpenRouter,
+    EndpointOptions Endpoint,
     MatchOptions Match,
     string? PlayerA,
     string? PlayerB,

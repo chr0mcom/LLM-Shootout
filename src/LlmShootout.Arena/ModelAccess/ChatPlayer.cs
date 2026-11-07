@@ -5,14 +5,14 @@ using LlmShootout.Arena.Players;
 using Microsoft.Extensions.AI;
 using Polly.Timeout;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
 /// <summary>
 /// A player backed by a language model reached through an <see cref="IChatClient"/>. Its name is
 /// <c>&lt;endpoint&gt;:&lt;model&gt;</c>. Without a reported cost, the call counts as 0 USD on a flat-rate endpoint and
 /// is estimated from the model price otherwise.
 /// </summary>
-public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterOptions options, bool useJsonSchema, TimeProvider time, ModelInfo? pricing = null) : IPlayer
+public sealed class ChatPlayer(IChatClient client, string modelSlug, EndpointOptions options, bool useJsonSchema, TimeProvider time, ModelInfo? pricing = null) : IPlayer
 {
     /// <inheritdoc />
     public string Name => $"{options.EndpointName}:{modelSlug}";
@@ -61,7 +61,7 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
         }
     }
 
-    private static Dictionary<string, string> DescribeSettings(OpenRouterOptions options)
+    private static Dictionary<string, string> DescribeSettings(EndpointOptions options)
     {
         var settings = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -168,7 +168,7 @@ public sealed class ChatPlayer(IChatClient client, string modelSlug, OpenRouterO
     }
 
     private ModelCallInfo FailedCall(CallCapture capture, TimeSpan latency) =>
-        new(modelSlug, null, null, null, null, null, null, null, latency, null, Math.Max(capture.HttpAttempts, 1));
+        new(modelSlug, null, null, null, null, null, null, null, latency, null, Math.Max(capture.HttpAttempts, 1), options.FlatRate ? 0m : null);
 
     private static string Shorten(string text) => text.Length <= 300 ? text : text[..300];
 }

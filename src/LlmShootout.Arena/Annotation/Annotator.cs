@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.Models;
+using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 
@@ -50,14 +50,10 @@ public sealed class Annotator(PlayerGateway gateway, TimeProvider time)
         try
         {
             var reply = await gateway.CallAsync(judge, call, cancellationToken);
-            foreach (var text in new[] { reply.Content, reply.Reasoning })
+            if (JsonObjectExtractor.FindAnswer(reply.Content, reply.Reasoning) is var (answer, _))
             {
-                if (ReasoningJsonRecovery.TryExtractJsonObject(text, out var json))
-                {
-                    var answer = JsonNode.Parse(json)!.AsObject();
-                    var problem = task.Validate(request, answer);
-                    return new AnnotationEntry(request.Key, request.Seat, problem is null ? answer : null, reply.Content, problem, request.Prompt, reply.Reasoning, reply.Call, reply.RawExchange);
-                }
+                var problem = task.Validate(request, answer);
+                return new AnnotationEntry(request.Key, request.Seat, problem is null ? answer : null, reply.Content, problem, request.Prompt, reply.Reasoning, reply.Call, reply.RawExchange);
             }
 
             return new AnnotationEntry(request.Key, request.Seat, null, reply.Content, "The judge returned no JSON object.", request.Prompt, reply.Reasoning, reply.Call, reply.RawExchange);

@@ -1,12 +1,12 @@
 using LlmShootout.Arena;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Tests.TestGames;
 using Microsoft.Extensions.Time.Testing;
 
-namespace LlmShootout.Tests.OpenRouter;
+namespace LlmShootout.Tests.ModelAccess;
 
 /// <summary>
 /// Talks to the real OpenRouter. Runs only with OPENROUTER_API_KEY and LLMSHOOTOUT_LIVE_TESTS=1; costs a few cents.
@@ -16,14 +16,14 @@ public class LiveOpenRouterTests
 {
     private static bool Enabled =>
         Environment.GetEnvironmentVariable("LLMSHOOTOUT_LIVE_TESTS") == "1"
-        && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(OpenRouterOptions.ApiKeyVariable));
+        && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(EndpointOptions.OpenRouterKeyVariable));
 
     [Fact]
     public async Task A_cheap_model_plays_a_short_game_and_the_protocol_has_cost_and_ids()
     {
         Assert.SkipUnless(Enabled, "Set OPENROUTER_API_KEY and LLMSHOOTOUT_LIVE_TESTS=1 to run live tests.");
         var slug = Environment.GetEnvironmentVariable("LLMSHOOTOUT_LIVE_MODEL") ?? "openai/gpt-oss-20b";
-        var options = new OpenRouterOptions().WithApiKeyFromEnvironment();
+        var options = new EndpointOptions { ApiKey = Environment.GetEnvironmentVariable(EndpointOptions.OpenRouterKeyVariable) };
         var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
         var catalog = new ModelCatalog(new HttpClient { BaseAddress = options.BaseAddress }, options, TimeProvider.System);
         var factory = new PlayerFactory(options, catalog, TimeProvider.System);

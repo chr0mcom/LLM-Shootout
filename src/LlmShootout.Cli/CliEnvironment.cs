@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using LlmShootout.Arena;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Cli.Output;
 using LlmShootout.Games;
@@ -12,7 +12,7 @@ using Spectre.Console;
 namespace LlmShootout.Cli;
 
 /// <summary>Everything the commands share: console, clock, the validated base options, and helpers that create players and catalogs.</summary>
-public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOptions<OpenRouterOptions> openRouter, ILoggerFactory loggerFactory, EndpointRegistry endpoints)
+public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOptions<EndpointOptions> openRouter, ILoggerFactory loggerFactory, EndpointRegistry endpoints)
 {
     private readonly Lazy<IAnsiConsole> _error = new(() => ConsoleFactory.Create(System.Console.Error));
 
@@ -29,14 +29,14 @@ public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOpt
     public ILoggerFactory LoggerFactory => loggerFactory;
 
     /// <summary>The OpenRouter options from configuration (already validated at startup).</summary>
-    public OpenRouterOptions BaseOptions => openRouter.Value;
+    public EndpointOptions BaseOptions => openRouter.Value;
 
     /// <summary>Finds a game or explains which games exist.</summary>
     public static Arena.Games.IGameDefinition RequireGame(string id) =>
         GameCatalog.Find(id) ?? throw new UsageException($"Unknown game '{id}'. Available games: {string.Join(", ", GameCatalog.All.Select(g => g.Id))}. See: shootout games");
 
     /// <summary>Validates options after command line overrides were applied.</summary>
-    public static OpenRouterOptions Validate(OpenRouterOptions options)
+    public static EndpointOptions Validate(EndpointOptions options)
     {
         var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
         if (!Validator.TryValidateObject(options, new ValidationContext(options), results, validateAllProperties: true))
@@ -51,10 +51,10 @@ public sealed class CliEnvironment(IAnsiConsole console, TimeProvider time, IOpt
     public EndpointRegistry Endpoints => endpoints;
 
     /// <summary>Creates the model list of an endpoint.</summary>
-    public ModelCatalog CreateCatalog(OpenRouterOptions options) => ModelCatalog.ForEndpoint(options, time);
+    public ModelCatalog CreateCatalog(EndpointOptions options) => ModelCatalog.ForEndpoint(options, time);
 
     /// <summary>Creates a player from its specification.</summary>
-    public Task<IPlayer> CreatePlayerAsync(string spec, long seed, OpenRouterOptions options, CancellationToken cancellationToken) =>
+    public Task<IPlayer> CreatePlayerAsync(string spec, long seed, EndpointOptions options, CancellationToken cancellationToken) =>
         new PlayerFactory(options, CreateCatalog(options), time, loggerFactory, endpoints, CreateCatalog).CreateAsync(spec, seed, cancellationToken);
 
     /// <summary>Creates a match runner that reports every protocol event to <paramref name="observer"/>.</summary>

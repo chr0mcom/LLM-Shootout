@@ -35,7 +35,7 @@ CS9282), so `Seat.All` reads a field of the enclosing class; and the analyzer ru
 Older features used on purpose: collection expressions (`[]`, `[.. items]`) throughout; primary constructors for
 services (`TurnExecutor`, `PromptBuilder`, `Debriefer`, `PlayerGateway`) and positional records for events and results;
 file-scoped namespaces; list, property and tuple patterns (`SplitOrStealGame.Resolve`, `LiveView.Handle`,
-`OpenRouterClientFactory.IsRetryable`); `[GeneratedRegex]` (`MarkdownTemplates`); `[LoggerMessage]` (`MatchLog`);
+`ChatClientFactory.IsRetryable`); `[GeneratedRegex]` (`MarkdownTemplates`); `[LoggerMessage]` (`MatchLog`);
 `TimeProvider` (`MatchRunner`, tests use `FakeTimeProvider`); `AsyncLocal` for the per-call capture (`CallCapture`).
 
 ## SDK, runtime and libraries
@@ -108,9 +108,9 @@ Analyzers: the built-in .NET analyzers at `AnalysisLevel` `latest-recommended` w
 |---|---|
 | `System.Text.Json` source generation with polymorphic events (`[JsonPolymorphic]`, `[JsonDerivedType]`) | `Protocol/MatchEvents.cs`, `Protocol/ProtocolJson.cs` |
 | `System.Text.Json` strict reading (`RespectRequiredConstructorParameters`, `UnmappedMemberHandling.Disallow`) | `Series/SeriesFile.cs` |
-| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `OpenRouter/OpenRouterClientFactory.cs`, `OpenRouter/ChatPlayer.cs` |
-| `Microsoft.Extensions.Http.Resilience` (`ResilienceHandler`, custom pipeline) | `OpenRouter/OpenRouterClientFactory.cs` |
+| `IChatClient`, `ChatClientBuilder`, structured output (`ChatResponseFormat.ForJsonSchema`) | `OpenRouter/ChatClientFactory.cs`, `OpenRouter/ChatPlayer.cs` |
+| `Microsoft.Extensions.Http.Resilience` (`ResilienceHandler`, custom pipeline) | `OpenRouter/ChatClientFactory.cs` |
 | Generic Host, options pattern with validation (`ValidateDataAnnotations`), logging to stderr | `src/LlmShootout.Cli/Program.cs` |
-| `DelegatingHandler` for request rewriting and raw capture | `OpenRouter/OpenRouterRequestHandler.cs`, `OpenRouter/RawCaptureHandler.cs` |
+| `DelegatingHandler` for request rewriting and raw capture | `OpenRouter/EndpointRequestHandler.cs`, `OpenRouter/RawCaptureHandler.cs` |
 | Central Package Management, `.slnx`, Microsoft.Testing.Platform runner | `Directory.Packages.props`, `LlmShootout.slnx`, `global.json` |
 | `dotnet test --coverlet` (coverlet.MTP) | `scripts/coverage.sh` |

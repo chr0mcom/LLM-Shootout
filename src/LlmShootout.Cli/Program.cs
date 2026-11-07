@@ -1,5 +1,5 @@
 using System.CommandLine;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Cli;
 using LlmShootout.Cli.Commands;
 using LlmShootout.Cli.Output;
@@ -13,7 +13,7 @@ using Spectre.Console;
 var builder = Host.CreateApplicationBuilder([]);
 builder.Configuration.AddJsonFile("shootout.settings.json", optional: true);
 builder.Configuration.AddEnvironmentVariables("LLMSHOOTOUT_");
-if (Environment.GetEnvironmentVariable(OpenRouterOptions.ApiKeyVariable) is { Length: > 0 } apiKey)
+if (Environment.GetEnvironmentVariable(EndpointOptions.OpenRouterKeyVariable) is { Length: > 0 } apiKey)
 {
     builder.Configuration["OpenRouter:ApiKey"] = apiKey;
 }
@@ -26,7 +26,7 @@ builder.Services.Configure<Microsoft.Extensions.Logging.Console.ConsoleLoggerOpt
 builder.Services.Configure<ConsoleLifetimeOptions>(o => o.SuppressStatusMessages = true);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(_ => ConsoleFactory.Create(Console.Out));
-builder.Services.AddOptions<OpenRouterOptions>().Bind(builder.Configuration.GetSection("OpenRouter")).ValidateDataAnnotations();
+builder.Services.AddOptions<EndpointOptions>().Bind(builder.Configuration.GetSection("OpenRouter")).ValidateDataAnnotations();
 builder.Services.AddSingleton(_ => new EndpointRegistry(builder.Configuration.GetSection("Endpoints").Get<Dictionary<string, EndpointDefinition>>()));
 builder.Services.AddSingleton<CliEnvironment>();
 

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using LlmShootout.Arena.Models;
 
 namespace LlmShootout.Arena.Answers;
 
@@ -34,26 +33,13 @@ public static class AnswerParser
     /// </summary>
     public static ParsedAnswer Parse(string? content, string? reasoning)
     {
-        if (TryReadObject(content, out var fromContent))
+        if (JsonObjectExtractor.FindAnswer(content, reasoning) is not var (node, fromReasoning))
         {
-            return fromContent with { FromReasoning = false };
+            return ParsedAnswer.None;
         }
 
-        return TryReadObject(reasoning, out var fromReasoning) ? fromReasoning with { FromReasoning = true } : ParsedAnswer.None;
-    }
-
-    private static bool TryReadObject(string? text, out ParsedAnswer answer)
-    {
-        answer = ParsedAnswer.None;
-        if (!ReasoningJsonRecovery.TryExtractJsonObject(text, out var json))
-        {
-            return false;
-        }
-
-        var node = JsonNode.Parse(json)!.AsObject();
         var extra = node.Select(p => p.Key).Where(k => !KnownKeys.Contains(k, StringComparer.Ordinal)).ToArray();
-        answer = new ParsedAnswer(true, ReadText(node, "thought"), ReadText(node, "message"), ReadText(node, "move"), extra, false);
-        return true;
+        return new ParsedAnswer(true, ReadText(node, "thought"), ReadText(node, "message"), ReadText(node, "move"), extra, fromReasoning);
     }
 
     private static string? ReadText(JsonObject node, string key)

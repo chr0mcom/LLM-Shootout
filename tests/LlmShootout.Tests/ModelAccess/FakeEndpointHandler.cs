@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text;
 
-namespace LlmShootout.Tests.OpenRouter;
+namespace LlmShootout.Tests.ModelAccess;
 
-public sealed class FakeOpenRouterHandler : HttpMessageHandler
+public sealed class FakeEndpointHandler : HttpMessageHandler
 {
     private readonly Queue<Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>> _script = new();
 
@@ -11,15 +11,15 @@ public sealed class FakeOpenRouterHandler : HttpMessageHandler
 
     public List<HttpRequestMessage> Messages { get; } = [];
 
-    public FakeOpenRouterHandler Respond(HttpStatusCode status, string body)
+    public FakeEndpointHandler Respond(HttpStatusCode status, string body)
     {
         _script.Enqueue((_, _) => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") }));
         return this;
     }
 
-    public FakeOpenRouterHandler Ok(string body) => Respond(HttpStatusCode.OK, body);
+    public FakeEndpointHandler Ok(string body) => Respond(HttpStatusCode.OK, body);
 
-    public FakeOpenRouterHandler Hang()
+    public FakeEndpointHandler Hang()
     {
         _script.Enqueue(async (_, token) =>
         {
@@ -30,7 +30,7 @@ public sealed class FakeOpenRouterHandler : HttpMessageHandler
 
     }
 
-    public FakeOpenRouterHandler Throw(Exception exception)
+    public FakeEndpointHandler Throw(Exception exception)
     {
         _script.Enqueue((_, _) => throw exception);
         return this;

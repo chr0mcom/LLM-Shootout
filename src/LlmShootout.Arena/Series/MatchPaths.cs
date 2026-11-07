@@ -1,6 +1,6 @@
 using System.Globalization;
 using LlmShootout.Arena.Games;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 
 namespace LlmShootout.Arena.Series;
 

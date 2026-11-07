@@ -61,7 +61,7 @@ public sealed class MatchRecord
     public int CostEstimatedCalls => Calls.Count(c => c.Call is { CostUsd: null, EstimatedCostUsd: not null });
 
     /// <summary>Number of calls whose cost is unknown (neither reported nor estimable).</summary>
-    public int CostUnknownCalls => Calls.Count(c => c.Call is null ? c.CostUnknown : c.Call is { CostUsd: null, EstimatedCostUsd: null });
+    public int CostUnknownCalls => Calls.Count(c => c.CostUnknown);
 
     /// <summary>Time between the first and the last event.</summary>
     public TimeSpan Duration => Events[^1].At - Events[0].At;

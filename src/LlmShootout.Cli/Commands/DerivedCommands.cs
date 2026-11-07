@@ -5,7 +5,7 @@ using LlmShootout.Arena.Annotation;
 using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Reports;
@@ -52,8 +52,8 @@ public static class DerivedCommands
             var definition = CliEnvironment.RequireGame(record.GameId);
             var players = new Dictionary<Seat, IPlayer>
             {
-                [Seat.A] = await env.CreatePlayerAsync(SpecFor(settings.PlayerA, record, Seat.A), record.Started.Seed + 1, WithRecorded(settings.OpenRouter, record, Seat.A, parse, run), ct),
-                [Seat.B] = await env.CreatePlayerAsync(SpecFor(settings.PlayerB, record, Seat.B), record.Started.Seed + 2, WithRecorded(settings.OpenRouter, record, Seat.B, parse, run), ct),
+                [Seat.A] = await env.CreatePlayerAsync(SpecFor(settings.PlayerA, record, Seat.A), record.Started.Seed + 1, WithRecorded(settings.Endpoint, record, Seat.A, parse, run), ct),
+                [Seat.B] = await env.CreatePlayerAsync(SpecFor(settings.PlayerB, record, Seat.B), record.Started.Seed + 2, WithRecorded(settings.Endpoint, record, Seat.B, parse, run), ct),
             };
 
             var file = $"debrief.{env.Time.GetUtcNow():yyyyMMdd-HHmmss}.jsonl";
@@ -88,7 +88,7 @@ public static class DerivedCommands
         {
             var settings = run.Read(parse, env.BaseOptions);
             var directory = parse.GetRequiredValue(path);
-            var player = await env.CreatePlayerAsync(parse.GetRequiredValue(judge), 1, settings.OpenRouter, ct);
+            var player = await env.CreatePlayerAsync(parse.GetRequiredValue(judge), 1, settings.Endpoint, ct);
             var annotator = new Annotator(new PlayerGateway(new CostMeter(settings.MaxCostUsd)), env.Time);
             foreach (var matchDirectory in MatchDirectories(directory))
             {
@@ -105,7 +105,7 @@ public static class DerivedCommands
     }
 
     /// <summary>Uses the settings of the original match for every setting that was not given on the command line.</summary>
-    private static OpenRouterOptions WithRecorded(OpenRouterOptions options, MatchRecord record, Seat seat, ParseResult parse, RunOptionSet run)
+    private static EndpointOptions WithRecorded(EndpointOptions options, MatchRecord record, Seat seat, ParseResult parse, RunOptionSet run)
     {
         var recorded = record.Started.Players[seat].Settings;
         if (recorded is null)

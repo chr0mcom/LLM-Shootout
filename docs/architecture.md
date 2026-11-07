@@ -24,7 +24,7 @@ flowchart LR
   Runner -->|PendingTurns, Check, Apply| Game[(IGame<br/>one per match)]
   Runner --> Exec[TurnExecutor<br/>attempts, hints]
   Exec --> Prompts[PromptBuilder<br/>templates + timeline]
-  Exec --> Parser[AnswerParser + AnswerEvaluator<br/>ReasoningJsonRecovery]
+  Exec --> Parser[AnswerParser + AnswerEvaluator<br/>JsonObjectExtractor]
   Exec --> Gate[PlayerGateway<br/>budget + cost]
   Gate -->|PlayerCall| Players{{IPlayer}}
   Players --> Chat[ChatPlayer<br/>IChatClient pipeline]
@@ -46,7 +46,7 @@ ChatClientBuilder (logging)
   -> OpenAI chat client (no retries of its own)
        -> HttpClient transport
             -> ResilienceHandler        one retry layer (429, 5xx, connect failures) around one timeout per attempt
-            -> OpenRouterRequestHandler adds strict schema, optional reasoning; for OpenRouter also provider.require_parameters (see endpoints.md)
+            -> EndpointRequestHandler adds strict schema, optional reasoning; for OpenRouter also provider.require_parameters (see endpoints.md)
             -> RawCaptureHandler        stores request and response bodies per call, never headers
             -> network
 ```

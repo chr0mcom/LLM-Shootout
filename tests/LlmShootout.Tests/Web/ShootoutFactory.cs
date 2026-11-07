@@ -57,7 +57,7 @@ internal sealed class ShootoutFactory(bool blockingPlayers = false, int loginAtt
         }
     }
 
-    private sealed class BlockingSetup(Microsoft.Extensions.Options.IOptions<LlmShootout.Arena.OpenRouter.OpenRouterOptions> options, LlmShootout.Arena.OpenRouter.EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger)
+    private sealed class BlockingSetup(Microsoft.Extensions.Options.IOptions<LlmShootout.Arena.ModelAccess.EndpointOptions> options, LlmShootout.Arena.ModelAccess.EndpointRegistry endpoints, TimeProvider time, ILoggerFactory loggers, ILogger<PlayerSetup> logger)
         : PlayerSetup(options, endpoints, time, loggers, logger)
     {
         public override Task<IPlayer> CreateAsync(string spec, long seed, CancellationToken cancellationToken) =>

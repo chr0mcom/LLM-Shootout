@@ -23,7 +23,7 @@ will have a local server or a company proxy. The key must still never reach a fi
   safe behavior is the default; "free" must be stated.
 - A model list that an endpoint cannot deliver does not stop a match; the first call reports an unknown model.
 - Every endpoint caches its model list in its own file.
-- `OpenRouterOptions`, `PlayerFactory` and the namespace keep their names. They now describe "the connection to one
+- `EndpointOptions`, `PlayerFactory` and the namespace keep their names. They now describe "the connection to one
   endpoint", defaulting to OpenRouter. Renaming them would touch every test and article snippet without changing behavior.
 
 ## Consequences

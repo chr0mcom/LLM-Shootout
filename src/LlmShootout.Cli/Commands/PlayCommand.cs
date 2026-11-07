@@ -51,8 +51,8 @@ public static class PlayCommand
             var cost = new CostMeter(settings.MaxCostUsd);
             var players = new Dictionary<Seat, IPlayer>
             {
-                [Seat.A] = await env.CreatePlayerAsync(specA, matchSeed + 1, settings.OpenRouter, ct),
-                [Seat.B] = await env.CreatePlayerAsync(specB, matchSeed + 2, settings.OpenRouter, ct),
+                [Seat.A] = await env.CreatePlayerAsync(specA, matchSeed + 1, settings.Endpoint, ct),
+                [Seat.B] = await env.CreatePlayerAsync(specB, matchSeed + 2, settings.Endpoint, ct),
             };
             var directory = MatchPaths.Match(settings.OutDirectory, env.Time.GetUtcNow(), definition.Id, players[Seat.A].Name, players[Seat.B].Name);
             var plan = new MatchPlan(definition, setup, players, settings.Match with { RevealIdentity = parse.GetValue(reveal) }, directory);

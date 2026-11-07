@@ -25,6 +25,18 @@ public class IdentityScannerTests
         Assert.Contains("[IDENTITY REDACTED]", result.RedactedMessage, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("claude-haiku-latest", "Hi, I am Claude.")]
+    [InlineData("gpt-6.1-terra", "As ChatGPT I would split.")]
+    [InlineData("gemini-3-flash", "Gemini here.")]
+    public void Finds_the_family_name_of_a_model_without_provider_prefix(string slug, string message)
+    {
+        var withAliases = new IdentityScannerSettings(ProviderAliases: IdentityAliases.Providers);
+
+        Assert.True(Scan(message, slug, withAliases).HasLeak);
+        Assert.False(Scan("Let us split, I promise.", slug, withAliases).HasLeak);
+    }
+
     [Fact]
     public void Respects_word_boundaries()
     {

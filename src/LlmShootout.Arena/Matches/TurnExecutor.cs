@@ -159,7 +159,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
 
     private Task WriteFailureAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerFailureException ex, CancellationToken cancellationToken) =>
         context.Writer.AppendAsync(
-            new ModelCallEvent(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, attempt, messages, null, null, null, "technical_error", [], ex.Call, true, ex.Message, ex.RawExchange),
+            new ModelCallEvent(context.Time.GetUtcNow(), turn.TurnId, CallPurpose.Turn, turn.Seat, attempt, messages, null, null, null, "technical_error", [], ex.Call, ex.Call?.CostIsUnknown() ?? true, ex.Message, ex.RawExchange),
             cancellationToken);
 
     private Task WriteCallAsync(TurnRequest turn, int attempt, IReadOnlyList<PromptMessage> messages, PlayerReply reply, ParsedAnswer parsed, Evaluation evaluation, bool tokenLimit, CancellationToken cancellationToken)
@@ -181,7 +181,7 @@ public sealed class TurnExecutor(MatchContext context, ILogger logger)
                 tokenLimit ? "token_limit" : evaluation.Class.ToString().ToLowerInvariant(),
                 violations,
                 info,
-                reply.Call is { CostUsd: null },
+                reply.Call?.CostIsUnknown() ?? false,
                 null,
                 reply.RawExchange),
             cancellationToken);

@@ -33,7 +33,7 @@ public static class SeriesCommand
             var specB = settings.PlayerB ?? series.PlayerB ?? throw new UsageException("The series file names no player for seat B. Pass --b <player>.");
 
             var cost = new CostMeter(settings.MaxCostUsd);
-            var players = (A: await env.CreatePlayerAsync(specA, series.Seed + 1000, settings.OpenRouter, ct), B: await env.CreatePlayerAsync(specB, series.Seed + 2000, settings.OpenRouter, ct));
+            var players = (A: await env.CreatePlayerAsync(specA, series.Seed + 1000, settings.Endpoint, ct), B: await env.CreatePlayerAsync(specB, series.Seed + 2000, settings.Endpoint, ct));
             var directory = MatchPaths.Series(settings.OutDirectory, env.Time.GetUtcNow(), definition.Id, players.A.Name, players.B.Name);
             var view = new LiveView(env.Console, settings.ShowThoughts, cost);
             var runner = new SeriesRunner(env.CreateRunner(cost, settings.Quiet ? null : view.Handle), cost)

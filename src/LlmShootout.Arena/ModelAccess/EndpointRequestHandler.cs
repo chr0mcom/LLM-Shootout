@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace LlmShootout.Arena.OpenRouter;
+namespace LlmShootout.Arena.ModelAccess;
 
 /// <summary>
 /// Adds the endpoint specific fields that <c>ChatOptions</c> cannot carry. When a JSON schema is requested it
@@ -10,7 +10,7 @@ namespace LlmShootout.Arena.OpenRouter;
 /// to providers that honor the schema. The reasoning effort is added only when configured: as <c>reasoning.effort</c>
 /// for OpenRouter and as <c>reasoning_effort</c> for other OpenAI-compatible endpoints.
 /// </summary>
-public sealed class OpenRouterRequestHandler(OpenRouterOptions options) : DelegatingHandler
+public sealed class EndpointRequestHandler(EndpointOptions options) : DelegatingHandler
 {
     /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -24,6 +24,11 @@ public sealed class OpenRouterRequestHandler(OpenRouterOptions options) : Delega
                 Rewrite(json);
                 request.Content = new StringContent(json.ToJsonString(), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
             }
+        }
+
+        if (string.IsNullOrEmpty(options.ApiKey))
+        {
+            request.Headers.Authorization = null;
         }
 
         if (options.Kind == EndpointKind.OpenRouter)

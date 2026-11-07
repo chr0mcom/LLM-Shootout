@@ -1,15 +1,15 @@
 using System.Net;
 using System.Text.Json.Nodes;
-using LlmShootout.Arena.OpenRouter;
+using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 
-namespace LlmShootout.Tests.OpenRouter;
+namespace LlmShootout.Tests.ModelAccess;
 
 public class ChatPlayerTests
 {
     private const string Key = "sk-or-v1-SUPERSECRETKEY";
 
-    private static OpenRouterOptions Options(Action<OpenRouterOptions>? _ = null, TimeSpan? timeout = null, float? temperature = null, string? effort = null) =>
+    private static EndpointOptions Options(Action<EndpointOptions>? _ = null, TimeSpan? timeout = null, float? temperature = null, string? effort = null) =>
         new()
         {
             ApiKey = Key,
@@ -19,10 +19,10 @@ public class ChatPlayerTests
             ReasoningEffort = effort,
         };
 
-    private static ChatPlayer Create(FakeOpenRouterHandler handler, OpenRouterOptions options, bool schema = false, string slug = "vendor/model")
+    private static ChatPlayer Create(FakeEndpointHandler handler, EndpointOptions options, bool schema = false, string slug = "vendor/model")
     {
-        var http = OpenRouterClientFactory.CreateHttpClient(options, handler);
-        return new ChatPlayer(OpenRouterClientFactory.CreateChatClient(options, slug, http), slug, options, schema, TimeProvider.System);
+        var http = ChatClientFactory.CreateHttpClient(options, handler);
+        return new ChatPlayer(ChatClientFactory.CreateChatClient(options, slug, http), slug, options, schema, TimeProvider.System);
     }
 
     private static PlayerCall Call(JsonNode? schema = null) =>
@@ -31,7 +31,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Maps_content_cost_provider_generation_id_tokens_and_delivered_model()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{\"move\":\"split\"}", reasoning: "hmm"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{\"move\":\"split\"}", reasoning: "hmm"));
         var player = Create(handler, Options());
 
         var reply = await player.RespondAsync(Call(), TestContext.Current.CancellationToken);
@@ -53,7 +53,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Sends_model_messages_and_openrouter_headers_but_no_optional_parameters_by_default()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}"));
         await Create(handler, Options()).RespondAsync(Call(), TestContext.Current.CancellationToken);
 
         var body = JsonNode.Parse(handler.Requests[0])!.AsObject();
@@ -69,7 +69,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Sends_sampling_and_reasoning_only_when_configured()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}"));
         await Create(handler, Options(temperature: 0.2f, effort: "low")).RespondAsync(Call(), TestContext.Current.CancellationToken);
 
         var body = JsonNode.Parse(handler.Requests[0])!.AsObject();
@@ -80,7 +80,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Json_schema_makes_the_request_strict_and_requires_matching_providers()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}"));
         var schema = JsonNode.Parse("{\"type\":\"object\",\"properties\":{\"move\":{\"type\":\"string\"}}}");
         await Create(handler, Options(), schema: true).RespondAsync(Call(schema), TestContext.Current.CancellationToken);
 
@@ -93,7 +93,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Without_schema_support_the_format_stays_in_the_prompt_only()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}"));
         var schema = JsonNode.Parse("{\"type\":\"object\"}");
         await Create(handler, Options(), schema: false).RespondAsync(Call(schema), TestContext.Current.CancellationToken);
 
@@ -105,7 +105,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task The_raw_exchange_contains_the_bodies_but_never_the_api_key()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion("{}"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion("{}"));
         var reply = await Create(handler, Options()).RespondAsync(Call(), TestContext.Current.CancellationToken);
 
         Assert.Contains("your move", reply.RawExchange, StringComparison.Ordinal);
@@ -118,7 +118,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Empty_content_keeps_the_reasoning_for_recovery()
     {
-        var handler = new FakeOpenRouterHandler().Ok(FakeOpenRouterHandler.Completion(null, reasoning: "so... {\"move\":\"steal\"}"));
+        var handler = new FakeEndpointHandler().Ok(FakeEndpointHandler.Completion(null, reasoning: "so... {\"move\":\"steal\"}"));
         var reply = await Create(handler, Options()).RespondAsync(Call(), TestContext.Current.CancellationToken);
 
         Assert.Null(reply.Content);
@@ -128,10 +128,10 @@ public class ChatPlayerTests
     [Fact]
     public async Task Http_429_and_5xx_are_retried_by_the_resilience_layer_and_counted()
     {
-        var handler = new FakeOpenRouterHandler()
+        var handler = new FakeEndpointHandler()
             .Respond(HttpStatusCode.TooManyRequests, "{\"error\":{\"message\":\"slow down\"}}")
             .Respond(HttpStatusCode.InternalServerError, "{\"error\":{\"message\":\"boom\"}}")
-            .Ok(FakeOpenRouterHandler.Completion("{}"));
+            .Ok(FakeEndpointHandler.Completion("{}"));
 
         var reply = await Create(handler, Options()).RespondAsync(Call(), TestContext.Current.CancellationToken);
 
@@ -142,7 +142,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Persistent_5xx_becomes_a_technical_failure_after_the_configured_retries()
     {
-        var handler = new FakeOpenRouterHandler();
+        var handler = new FakeEndpointHandler();
         for (var i = 0; i < 4; i++)
         {
             handler.Respond(HttpStatusCode.InternalServerError, "{\"error\":{\"message\":\"boom\"}}");
@@ -158,7 +158,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Client_errors_are_not_retried()
     {
-        var handler = new FakeOpenRouterHandler().Respond(HttpStatusCode.Unauthorized, "{\"error\":{\"message\":\"no key\"}}");
+        var handler = new FakeEndpointHandler().Respond(HttpStatusCode.Unauthorized, "{\"error\":{\"message\":\"no key\"}}");
 
         var ex = await Assert.ThrowsAsync<PlayerFailureException>(() => Create(handler, Options()).RespondAsync(Call(), TestContext.Current.CancellationToken));
 
@@ -169,7 +169,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task A_slow_call_times_out_and_is_not_retried()
     {
-        var handler = new FakeOpenRouterHandler().Hang();
+        var handler = new FakeEndpointHandler().Hang();
 
         var ex = await Assert.ThrowsAsync<PlayerFailureException>(
             () => Create(handler, Options(timeout: TimeSpan.FromMilliseconds(300))).RespondAsync(Call(), TestContext.Current.CancellationToken));
@@ -181,7 +181,7 @@ public class ChatPlayerTests
     [Fact]
     public async Task Caller_cancellation_is_not_reported_as_a_timeout()
     {
-        var handler = new FakeOpenRouterHandler().Hang();
+        var handler = new FakeEndpointHandler().Hang();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         cts.CancelAfter(TimeSpan.FromMilliseconds(200));
 

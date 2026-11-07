@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Identity;
 using LlmShootout.Arena.Matches;
-using LlmShootout.Arena.Models;
+using LlmShootout.Arena.Answers;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Prompting;
 using LlmShootout.Arena.Protocol;
@@ -77,13 +77,13 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
             }
             catch (PlayerFailureException ex)
             {
-                await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, null, "technical_error", [], ex.Call, true, ex.Message, ex.RawExchange), cancellationToken);
+                await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, null, "technical_error", [], ex.Call, ex.Call?.CostIsUnknown() ?? true, ex.Message, ex.RawExchange), cancellationToken);
                 problems = [ex.Message];
                 break;
             }
 
             (answers, problems) = Check(s, ReadObject(reply));
-            await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, reply, problems.Count == 0 ? "valid" : "invalid", reply.Notice is null ? problems : [.. problems, $"endpoint: {reply.Notice}"], reply.Call, reply.Call is { CostUsd: null }, null, reply.RawExchange), cancellationToken);
+            await writer.AppendAsync(CallEvent(seat, attempt, request.Messages, reply, problems.Count == 0 ? "valid" : "invalid", reply.Notice is null ? problems : [.. problems, $"endpoint: {reply.Notice}"], reply.Call, reply.Call?.CostIsUnknown() ?? false, null, reply.RawExchange), cancellationToken);
             if (problems.Count == 0)
             {
                 await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, true, answers, [], attempt), cancellationToken);
@@ -97,18 +97,8 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
         await writer.AppendAsync(new DebriefEvent(time.GetUtcNow(), seat, false, answers, problems, attempts), cancellationToken);
     }
 
-    private static JsonObject? ReadObject(PlayerReply reply)
-    {
-        foreach (var text in new[] { reply.Content, reply.Reasoning })
-        {
-            if (ReasoningJsonRecovery.TryExtractJsonObject(text, out var json) && JsonNode.Parse(json) is JsonObject node)
-            {
-                return node;
-            }
-        }
-
-        return null;
-    }
+    private static JsonObject? ReadObject(PlayerReply reply) =>
+        JsonObjectExtractor.FindAnswer(reply.Content, reply.Reasoning)?.Answer;
 
     private static (Dictionary<string, string> Answers, List<string> Problems) Check(Session s, JsonObject? json)
     {
