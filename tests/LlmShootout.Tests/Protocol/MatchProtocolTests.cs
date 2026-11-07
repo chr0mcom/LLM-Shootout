@@ -1,14 +1,13 @@
 using LlmShootout.Arena;
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Identity;
-using LlmShootout.Arena.ModelAccess;
 using LlmShootout.Arena.Players;
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Tests.TestGames;
 
-namespace LlmShootout.Tests;
+namespace LlmShootout.Tests.Protocol;
 
-public sealed class FinalReviewRound2Tests : IDisposable
+public sealed class MatchProtocolTests : IDisposable
 {
     private readonly MatchHarness _harness = new();
 
@@ -23,6 +22,53 @@ public sealed class FinalReviewRound2Tests : IDisposable
         public IReadOnlyDictionary<string, string> Settings { get; } = new Dictionary<string, string> { ["temperature"] = "0.3" };
 
         public Task<PlayerReply> RespondAsync(PlayerCall request, CancellationToken cancellationToken) => Task.FromResult(new PlayerReply(request.SampleValidAnswer(new LlmShootout.Arena.Randomness.SeededRng(1))));
+    }
+
+    [Fact]
+    public async Task A_refusal_that_only_appears_in_the_reasoning_channel_is_labelled_refusal()
+    {
+        var a = new ScriptedPlayer().Reply(_ => new PlayerReply(null, "I cannot take part in this game, sorry.")).Reply(MatchHarness.Answer(move: "5"));
+        var b = new ScriptedPlayer();
+
+        var (_, events) = await _harness.RunAsync(new NumberGuessDefinition(), a, b);
+
+        Assert.Equal("refusal", events.OfType<ModelCallEvent>().First().Class);
+    }
+
+    [Fact]
+    public async Task A_technical_failure_keeps_call_details_and_the_raw_exchange_in_the_protocol()
+    {
+        var info = MatchHarness.Info(null);
+        var a = new ScriptedPlayer().Fail("HTTP 500", info, "RAW BODY");
+
+        var (_, events) = await _harness.RunAsync(new NumberGuessDefinition(), a, new ScriptedPlayer());
+
+        var call = events.OfType<ModelCallEvent>().Single();
+        Assert.Equal("test/model", call.Call!.RequestedModel);
+        Assert.Equal("RAW BODY", call.RawExchange);
+    }
+
+    [Fact]
+    public async Task The_match_start_records_version_and_commit()
+    {
+        var (_, events) = await _harness.RunAsync(new NumberGuessDefinition(), new RandomPlayer(1), new RandomPlayer(2));
+
+        var started = Assert.IsType<MatchStartedEvent>(events[0]);
+        Assert.False(string.IsNullOrWhiteSpace(started.AppVersion));
+        Assert.Matches("^([0-9a-f]{12}|unknown)$", started.GitCommit);
+    }
+
+    [Fact]
+    public async Task Facts_of_a_simultaneous_round_are_filed_under_the_turn_of_their_seat()
+    {
+        var a = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "9"));
+        var b = new ScriptedPlayer().Reply(MatchHarness.Answer(move: "3"));
+
+        var (_, events) = await _harness.RunAsync(new SealedBidDefinition(), a, b);
+
+        var facts = events.OfType<FactEvent>().ToDictionary(f => f.Seat!.Value, f => f.TurnId);
+        Assert.Equal("bid-A", facts[Seat.A]);
+        Assert.Equal("bid-B", facts[Seat.B]);
     }
 
     [Fact]
@@ -74,49 +120,5 @@ public sealed class FinalReviewRound2Tests : IDisposable
         var started = Assert.IsType<MatchStartedEvent>(events[0]);
         Assert.Equal("0.3", started.Players[Seat.A].Settings!["temperature"]);
         Assert.Null(started.Players[Seat.B].Settings);
-    }
-
-    [Fact]
-    public void A_chat_player_describes_its_configured_settings()
-    {
-        var options = new EndpointOptions { ApiKey = "k", Temperature = 0.2f, ReasoningEffort = "low", MaxOutputTokens = 500, CallTimeout = TimeSpan.FromSeconds(90) };
-        var http = ChatClientFactory.CreateHttpClient(options, new Tests.ModelAccess.FakeEndpointHandler());
-        var player = new ChatPlayer(ChatClientFactory.CreateChatClient(options, "x/y", http), "x/y", options, false, TimeProvider.System);
-
-        Assert.Equal(("0.2", "low", "500", "90"), (player.Settings["temperature"], player.Settings["reasoningEffort"], player.Settings["maxOutputTokens"], player.Settings["callTimeoutSeconds"]));
-    }
-
-    [Fact]
-    public void The_client_level_timeout_spans_every_http_attempt_plus_backoff()
-    {
-        var options = new EndpointOptions { CallTimeout = TimeSpan.FromSeconds(180), MaxHttpRetries = 3, RetryDelay = TimeSpan.FromSeconds(2) };
-
-        var budget = ChatClientFactory.WholeCallBudget(options);
-
-        Assert.True(budget >= TimeSpan.FromSeconds(4 * 180));
-        Assert.True(budget > options.CallTimeout + TimeSpan.FromSeconds(30));
-    }
-
-    [Fact]
-    public async Task With_hidden_identity_no_prompt_of_the_whole_match_names_the_opponent_model_including_hints_and_debriefing()
-    {
-        var a = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a"))
-            .Reply("nonsense")
-            .Reply(MatchHarness.Answer(move: "split"))
-            .Reply(Debriefing.SplitOrStealMatchTests.DebriefJson(communication: false));
-        var b = new ScriptedPlayer("b", new ModelIdentity("vendor-b/model-b"))
-            .Reply("I cannot do that.")
-            .Reply(MatchHarness.Answer(move: "steal"))
-            .Reply(Debriefing.SplitOrStealMatchTests.DebriefJson(communication: false));
-
-        var (outcome, events) = await _harness.RunAsync(new LlmShootout.Games.SplitOrSteal.SplitOrStealDefinition(), a, b, false, new MatchOptions(), debrief: true);
-
-        Assert.True(outcome.Completed);
-        Assert.Null(outcome.AbortReason);
-        Assert.Equal(["invalid", "valid"], events.OfType<ModelCallEvent>().Where(c => c.Seat == Seat.A).Take(2).Select(c => c.Class));
-        Assert.Equal("refusal", events.OfType<ModelCallEvent>().First(c => c.Seat == Seat.B).Class);
-        Assert.Equal(3, a.Calls.Count);
-        Assert.DoesNotContain("vendor-b", string.Join('\n', a.Calls.SelectMany(c => c.Messages).Select(m => m.Text)), StringComparison.Ordinal);
-        Assert.DoesNotContain("vendor-a", string.Join('\n', b.Calls.SelectMany(c => c.Messages).Select(m => m.Text)), StringComparison.Ordinal);
     }
 }
