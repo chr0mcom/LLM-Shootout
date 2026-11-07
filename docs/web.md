@@ -21,8 +21,9 @@ Browser  ──https──▶  Traefik  ──http──▶  llm-shootout-web (A
 - **Debriefing**: the answers of both players after the game.
 - **Model calls**: one row per call with tokens, seconds, cost and result. *Open* shows the exact prompt, the unchanged
   answer, the reasoning and the problems of that call.
-- **Earlier matches** (left): every match in the volume. Opening one replays it from `events.jsonl`; the page links the
-  report and the raw protocol.
+- **Earlier matches** (left): every match in the volume. Opening one replays it from `events.jsonl`. Under the match are
+  three links: **Download as Excel** (workbook with the sheets *Match*, *Transcript*, *Debriefing*, *Calls* and
+  *Raw answers*, ready to show or to filter), the text report, and the raw protocol.
 
 Only one match runs at a time. *Cancel match* stops it cleanly (the protocol ends with `match_aborted`). Reloading the
 page while a match runs reconnects to it and shows everything so far.

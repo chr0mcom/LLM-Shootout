@@ -27,7 +27,8 @@ internal static class Api
         api.MapPost("/runs/{id}/cancel", Cancel);
         api.MapGet("/matches", (MatchArchive archive) => archive.List());
         api.MapGet("/matches/{name}/events", (string name, MatchArchive archive) => File(archive.OpenFile(name, ProtocolFiles.Events), "text/plain; charset=utf-8"));
-        api.MapGet("/matches/{name}/report", (string name, MatchArchive archive) => File(archive.OpenFile(name, ProtocolFiles.Report), "text/markdown; charset=utf-8"));
+        api.MapGet("/matches/{name}/report", (string name, MatchArchive archive) => File(archive.OpenFile(name, ProtocolFiles.Report), "text/plain; charset=utf-8"));
+        api.MapGet("/matches/{name}/export.xlsx", Export);
     }
 
     private static void MapLogin(IEndpointRouteBuilder app)
@@ -129,6 +130,24 @@ internal static class Api
                 await context.Response.WriteAsync(": keep-alive\n\n", token);
                 await context.Response.Body.FlushAsync(token);
             }
+        }
+    }
+
+    private static IResult Export(string name, MatchArchive archive)
+    {
+        var directory = archive.Resolve(name);
+        if (directory is null)
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            return Results.File(MatchExport.ToWorkbook(MatchRecord.Load(directory)), XlsxWriter.ContentType, $"{name}.xlsx");
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or System.Text.Json.JsonException)
+        {
+            return Results.Json(new { error = "This match is not complete enough to export yet." }, statusCode: StatusCodes.Status409Conflict);
         }
     }
 

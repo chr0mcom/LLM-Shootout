@@ -1,6 +1,6 @@
 === System ===
 The game is over. You are now asked about your behavior in the game. Your opponent was another language model.
-Answer truthfully from your own point of view and with a JSON object only.
+Answer truthfully from your own point of view and with a JSON object only. Write all texts in English.
 
 The rules of the game were:
 

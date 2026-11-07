@@ -9,6 +9,8 @@ namespace LlmShootout.Tests.Web;
 
 public sealed class WebTests : IDisposable
 {
+    private const string XlsxContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     private static readonly object RandomVersusRandom = new { game = "split-or-steal", a = "random", b = "random", language = "en", seed = 7, debrief = true };
 
     private readonly ShootoutFactory _factory = new();
@@ -200,7 +202,57 @@ public sealed class WebTests : IDisposable
         var events = await (await client.GetAsync($"/api/matches/{name}/events", Token)).Content.ReadAsStringAsync(Token);
         Assert.Equal(lines.Length, events.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
         var report = await client.GetAsync($"/api/matches/{name}/report", Token);
-        Assert.Equal("text/markdown", report.Content.Headers.ContentType!.MediaType);
+        Assert.Equal("text/plain", report.Content.Headers.ContentType!.MediaType);
+    }
+
+    [Fact]
+    public async Task A_match_can_be_downloaded_as_an_excel_workbook()
+    {
+        var client = _factory.NewClient(signedIn: true);
+        var run = await JsonOf(await client.PostAsJsonAsync("/api/runs", RandomVersusRandom, Token));
+        await (await client.GetAsync($"/api/runs/{run["id"]}/stream", Token)).Content.ReadAsStringAsync(Token);
+        var name = run["match"]!.ToString();
+
+        using var response = await client.GetAsync($"/api/matches/{name}/export.xlsx", Token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(XlsxContentType, response.Content.Headers.ContentType!.MediaType);
+        Assert.Equal($"{name}.xlsx", response.Content.Headers.ContentDisposition!.FileName!.Trim('"'));
+        using var zip = new System.IO.Compression.ZipArchive(await response.Content.ReadAsStreamAsync(Token));
+        var sheets = zip.Entries.Where(e => e.FullName.StartsWith("xl/worksheets/", StringComparison.Ordinal)).ToList();
+        Assert.Equal(5, sheets.Count);
+        foreach (var entry in zip.Entries)
+        {
+            using var reader = new StreamReader(entry.Open());
+            Assert.NotNull(System.Xml.Linq.XDocument.Parse(await reader.ReadToEndAsync(Token)));
+        }
+
+        var transcript = await new StreamReader(zip.GetEntry("xl/worksheets/sheet2.xml")!.Open()).ReadToEndAsync(Token);
+        Assert.Contains("Private thought", transcript, StringComparison.Ordinal);
+        Assert.Contains("Message", transcript, StringComparison.Ordinal);
+        Assert.Contains("Move", transcript, StringComparison.Ordinal);
+        var debrief = await new StreamReader(zip.GetEntry("xl/worksheets/sheet3.xml")!.Open()).ReadToEndAsync(Token);
+        Assert.Contains("trust in opponent", debrief, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_excel_export_needs_a_session_and_an_existing_match()
+    {
+        using var anonymous = await _factory.NewClient().GetAsync("/api/matches/x/export.xlsx", Token);
+        using var missing = await _factory.NewClient(signedIn: true).GetAsync("/api/matches/does-not-exist/export.xlsx", Token);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    [Fact]
+    public void Text_from_models_is_cleaned_for_xml_and_columns_are_named_like_in_excel()
+    {
+        var cleaned = XlsxWriter.Clean("a\u0000b\u0008c\u000bd\tÄ\n😀\ud800");
+
+        Assert.Equal("abcd\tÄ\n😀", cleaned);
+        Assert.Equal(32000, XlsxWriter.Clean(new string('x', 40000)).Length);
+        Assert.Equal(["A", "Z", "AA", "AZ", "BA"], new[] { 0, 25, 26, 51, 52 }.Select(XlsxWriter.Column));
     }
 
     [Fact]

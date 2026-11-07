@@ -16,7 +16,7 @@ The hash of each file is stored in the `match_started` event, so a protocol says
 
 ## Prompt languages
 
-`--lang de` (default) or `--lang en`. The language only changes the wording of prompts and reports. Field names
+`--lang de` (default) or `--lang en`. The language changes the wording of prompts and reports, and the system prompt tells the model explicitly to write every text it composes in that language (without that sentence, some models answer in English to a German prompt). Field names
 (`thought`, `message`, `move`), move values (`split`, `steal`) and protocol keys are always English.
 
 ## Layout of a turn prompt

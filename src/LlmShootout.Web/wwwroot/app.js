@@ -356,7 +356,8 @@ async function openMatch(name) {
 function setFiles(name) {
   const base = `/api/matches/${encodeURIComponent(name)}`;
   $('#files').replaceChildren(
-    h('a', { href: `${base}/report`, target: '_blank', rel: 'noopener' }, 'Report'),
+    h('a', { href: `${base}/export.xlsx`, download: `${name}.xlsx` }, 'Download as Excel'),
+    h('a', { href: `${base}/report`, target: '_blank', rel: 'noopener' }, 'Report (text)'),
     h('a', { href: `${base}/events`, target: '_blank', rel: 'noopener' }, 'Protocol (events.jsonl)'));
 }
 
