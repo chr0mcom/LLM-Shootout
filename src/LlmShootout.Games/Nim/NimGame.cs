@@ -8,8 +8,9 @@ namespace LlmShootout.Games.Nim;
 /// <summary>
 /// One match of Nim: the players alternately take at least one stone from exactly one heap. The seat that starts is the
 /// first seat of the setup. The system accepts <c>pass</c> if the option <c>temptation</c> says so, although the rules forbid it.
+/// The game rates every position exactly (<see cref="NimOracle"/>) and names the best moves for the player type <c>optimal</c>.
 /// </summary>
-public sealed class NimGame : IGame
+public sealed class NimGame : IGame, IGameOracle
 {
     /// <summary>The kind of every turn: a move that takes stones.</summary>
     public const string TakeKind = "take";
@@ -68,6 +69,7 @@ public sealed class NimGame : IGame
     private readonly GameSetup _setup;
     private readonly NimOptions _options;
     private readonly NimWording _wording;
+    private readonly NimOracle _oracle;
     private readonly int[] _heaps;
     private int _moves;
     private Seat _current;
@@ -79,6 +81,7 @@ public sealed class NimGame : IGame
         _setup = setup;
         _options = options;
         _wording = wording;
+        _oracle = NimOracle.For(options.Misere, options.MaxTake);
         _heaps = [.. options.Heaps];
         _current = setup.FirstSeat;
     }
@@ -154,6 +157,27 @@ public sealed class NimGame : IGame
 
         var moves = NimMove.Legal(_heaps, _options.MaxTake);
         return moves[rng.NextInt(moves.Count)].ToString();
+    }
+
+    /// <inheritdoc />
+    public PositionAssessment Assess(TurnRequest turn)
+    {
+        ArgumentNullException.ThrowIfNull(turn);
+        var moves = _oracle.WinningMoves(_heaps);
+        return moves.Count == 0
+            ? new PositionAssessment(PositionValue.Lost, [])
+            : new PositionAssessment(PositionValue.Won, [.. moves.Select(move => move.ToString())]);
+    }
+
+    /// <inheritdoc />
+    public string ChooseMove(TurnRequest turn, PositionAssessment assessment, SeededRng rng)
+    {
+        ArgumentNullException.ThrowIfNull(turn);
+        ArgumentNullException.ThrowIfNull(assessment);
+        ArgumentNullException.ThrowIfNull(rng);
+        return assessment.Value == PositionValue.Won && assessment.BestMoves.Count > 0
+            ? assessment.BestMoves[rng.NextInt(assessment.BestMoves.Count)]
+            : NimOracle.LosingMove(_heaps).ToString();
     }
 
     private TurnRequest Turn() => new(
