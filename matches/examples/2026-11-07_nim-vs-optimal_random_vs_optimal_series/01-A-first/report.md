@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Date | 2026-11-07 15:27 UTC |
+| Date | 2026-11-07 16:04 UTC |
 | Seed | 2029 |
 | Prompt language | en |
 | Messages between players | off |
@@ -12,7 +12,7 @@
 | Outcome | B wins |
 | Duration | 00:00:00 |
 | Cost | 0.0000 |
-| Version | 1.0.0 (8593f9c3a59a) |
+| Version | 1.0.0 (cf1f7e514547) |
 
 ## Result
 
@@ -172,7 +172,6 @@ The opponent never saw these thoughts. The exact wording is in the protocol.
 | Shortened thoughts | 0 | 0 |
 | Shortened messages | 0 | 0 |
 | Silence | 0 | 0 |
-| Identity hits in messages | 0 | 0 |
 | Tokens (input / output / of which reasoning) | 0 / 0 / 0 | 0 / 0 / 0 |
 | Cost (USD) | 0.0000 | 0.0000 |
 

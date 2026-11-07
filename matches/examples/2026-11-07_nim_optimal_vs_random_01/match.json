@@ -1,7 +1,7 @@
 {
   "gameId": "nim",
-  "startedAt": "2026-11-07T15:27:34.9630073+00:00",
-  "durationSeconds": 0.2061205,
+  "startedAt": "2026-11-07T16:04:23.4306936+00:00",
+  "durationSeconds": 0.211214,
   "aborted": false,
   "communication": false,
   "language": "de",
@@ -24,7 +24,6 @@
       "thoughtsTruncated": 0,
       "messagesTruncated": 0,
       "silentMessages": 0,
-      "identityHits": 0,
       "promptTokens": 0,
       "completionTokens": 0,
       "reasoningTokens": 0,
@@ -62,7 +61,6 @@
       "thoughtsTruncated": 0,
       "messagesTruncated": 0,
       "silentMessages": 0,
-      "identityHits": 0,
       "promptTokens": 0,
       "completionTokens": 0,
       "reasoningTokens": 0,
@@ -92,9 +90,9 @@
   "costUnknownCalls": 0,
   "modelCalls": 8,
   "appVersion": "1.0.0",
-  "gitCommit": "8593f9c3a59a",
+  "gitCommit": "cf1f7e514547",
   "templateHashes": {
-    "arena": "CF0C18C2673006EE",
+    "arena": "E67F7D77838BE83D",
     "nim": "1DBACD7697312A7B"
   }
 }

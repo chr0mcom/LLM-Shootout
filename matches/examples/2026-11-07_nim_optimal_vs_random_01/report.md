@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Datum | 2026-11-07 15:27 UTC |
+| Datum | 2026-11-07 16:04 UTC |
 | Seed | 2 |
 | Sprache der Prompts | de |
 | Nachrichten zwischen den Spielern | aus |
@@ -12,7 +12,7 @@
 | Ausgang | Sieg von A |
 | Dauer | 00:00:00 |
 | Kosten | 0.0000 |
-| Version | 1.0.0 (8593f9c3a59a) |
+| Version | 1.0.0 (cf1f7e514547) |
 
 ## Ergebnis
 
@@ -142,7 +142,6 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 | Gekürzte Gedanken | 0 | 0 |
 | Gekürzte Nachrichten | 0 | 0 |
 | Schweigen | 0 | 0 |
-| Identitätstreffer in Nachrichten | 0 | 0 |
 | Tokens (Eingabe / Ausgabe / davon Reasoning) | 0 / 0 / 0 | 0 / 0 / 0 |
 | Kosten (USD) | 0.0000 | 0.0000 |
 
