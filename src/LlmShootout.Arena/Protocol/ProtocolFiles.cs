@@ -49,7 +49,8 @@ public static class ProtocolReader
 {
     /// <summary>
     /// Reads all events of a log file of a match directory in order. Versions <see cref="ProtocolVersion.Oldest"/> to
-    /// <see cref="ProtocolVersion.Current"/> are read; a newer version throws an <see cref="InvalidDataException"/>.
+    /// <see cref="ProtocolVersion.Current"/> are read; a line without a version counts as <see cref="ProtocolVersion.Oldest"/>. A newer or
+    /// an invalid version throws an <see cref="InvalidDataException"/>.
     /// </summary>
     public static IReadOnlyList<MatchEvent> ReadAll(string directory, string fileName = ProtocolFiles.Events)
     {
@@ -61,19 +62,29 @@ public static class ProtocolReader
 
     private static MatchEvent ReadEvent(string line, string path)
     {
-        var version = SchemaVersionOf(line);
-        return version > ProtocolVersion.Current
-            ? throw new InvalidDataException($"'{path}' uses protocol version {version}, but this program reads versions up to {ProtocolVersion.Current}. Update the program to read it.")
-            : ProtocolJson.FromLine(line);
+        var version = SchemaVersionOf(line, path);
+        if (version is < ProtocolVersion.Oldest or > ProtocolVersion.Current)
+        {
+            throw new InvalidDataException(version < ProtocolVersion.Oldest
+                ? $"'{path}' has the invalid protocol version {version}; the versions are numbered from {ProtocolVersion.Oldest}."
+                : $"'{path}' uses protocol version {version}, but this program reads versions up to {ProtocolVersion.Current}. Update the program to read it.");
+        }
+
+        return ProtocolJson.FromLine(line) with { SchemaVersion = version };
     }
 
-    private static int SchemaVersionOf(string line)
+    private static int SchemaVersionOf(string line, string path)
     {
         using var document = JsonDocument.Parse(line);
         var root = document.RootElement;
-        return root.ValueKind == JsonValueKind.Object && root.TryGetProperty("schemaVersion", out var value) && value.TryGetInt32(out var version)
+        if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("schemaVersion", out var value))
+        {
+            return ProtocolVersion.Oldest;
+        }
+
+        return value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var version)
             ? version
-            : ProtocolVersion.Oldest;
+            : throw new InvalidDataException($"'{path}' has a protocol version that is not a whole number.");
     }
 
     private static IEnumerable<string> ReadLines(string path)

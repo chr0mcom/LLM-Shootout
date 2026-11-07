@@ -32,7 +32,7 @@ internal static class MatchExport
             Row("First seat", match.Started.FirstSeat.ToString()),
             Row("Seed", match.Started.Seed),
             Row("Outcome", match.Result?.Outcome ?? "not finished"),
-            Row("Result with rule violation", PlayMetrics.ResultWithRuleViolation(match) ? "yes" : "no"),
+            Row("Result with rule violation", ResultWithRuleViolation(match)),
         };
         if (match.Aborted is { } aborted)
         {
@@ -50,8 +50,8 @@ internal static class MatchExport
             rows.Add(Row($"Seat {seat}: invalid answers", match.InvalidAnswers(seat)));
             rows.Add(Row($"Seat {seat}: refusals", match.Refusals(seat)));
             var play = PlayMetrics.For(match, seat);
-            rows.Add(Row($"Seat {seat}: rule violations", play.RuleViolations));
-            rows.Add(Row($"Seat {seat}: resignations", play.Resignations));
+            rows.Add(Row($"Seat {seat}: rule violations", KindCount(match, play.RuleViolations)));
+            rows.Add(Row($"Seat {seat}: resignations", KindCount(match, play.Resignations)));
             rows.Add(Row($"Seat {seat}: exhausted turns", play.ExhaustedTurns));
             rows.AddRange(StrengthRows(seat, play));
         }
@@ -83,6 +83,11 @@ internal static class MatchExport
         { FirstMistake: null } => "none",
         { FirstMistake: { } first } => first.TurnId,
     };
+
+    private static object KindCount(MatchRecord match, int count) => PlayMetrics.RecordsMoveKinds(match) ? count : NotApplicable;
+
+    private static string ResultWithRuleViolation(MatchRecord match) =>
+        !PlayMetrics.RecordsMoveKinds(match) ? NotApplicable : PlayMetrics.ResultWithRuleViolation(match) ? "yes" : "no";
 
     private static object Count(int? value) => value is { } v ? v : NotApplicable;
 

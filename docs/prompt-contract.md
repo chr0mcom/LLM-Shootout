@@ -203,6 +203,7 @@ After the game every seat is asked in one call, with the same model and settings
 **Sees:** the rules, the history as it saw it, its own moves, its own thoughts, and the result (both scores).
 **Never sees:** the opponent's thoughts, facts for analysis only (the rating of a move, the record of a rule violation), the mark that a result was reached with a rule violation, and private facts of the opponent.
 The rules are shown again, so a forbidden action that the rules text describes is described there too.
+The result line words the outcome and the labels in the language of the match with the game templates `result.outcome.<value>` and `result.label.<value>` (for example "Sieg von A" and "Niederlage"); a value that the game does not word is shown as it is.
 
 The answer is one JSON object with a key per question, plus `<key>_reason` for questions that ask for a reason.
 Answers are typed and validated (`integer` must be a JSON number inside the range, `boolean` a JSON boolean,

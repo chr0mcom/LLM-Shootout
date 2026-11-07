@@ -170,11 +170,11 @@ public sealed class Debriefer(PlayerGateway calls, TimeProvider time, int maxRet
 
         return s.Prompts.Arena(
             "debrief.outcome",
-            ("outcome", result.Outcome),
+            ("outcome", s.Prompts.GameWord("result.outcome", result.Outcome)),
             ("own_score", result.Seats[seat].Score.ToString("0.##", CultureInfo.InvariantCulture)),
-            ("own_label", result.Seats[seat].Label),
+            ("own_label", s.Prompts.GameWord("result.label", result.Seats[seat].Label)),
             ("opp_score", result.Seats[seat.Opponent].Score.ToString("0.##", CultureInfo.InvariantCulture)),
-            ("opp_label", result.Seats[seat.Opponent].Label));
+            ("opp_label", s.Prompts.GameWord("result.label", result.Seats[seat.Opponent].Label)));
     }
 
     private static string Describe(Session s, DebriefingQuestion q)

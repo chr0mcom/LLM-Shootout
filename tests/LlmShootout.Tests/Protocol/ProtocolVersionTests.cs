@@ -1,5 +1,6 @@
 using LlmShootout.Arena.Games;
 using LlmShootout.Arena.Protocol;
+using LlmShootout.Arena.Reports;
 
 namespace LlmShootout.Tests.Protocol;
 
@@ -68,5 +69,34 @@ public sealed class ProtocolVersionTests : IDisposable
         var read = Assert.IsType<TurnEvent>(Assert.Single(ProtocolReader.ReadAll(_directory)));
 
         Assert.Equal("guess-1", read.TurnId);
+        Assert.Equal(ProtocolVersion.Oldest, read.SchemaVersion);
+    }
+
+    [Fact]
+    public void A_protocol_without_any_version_is_summarized_like_a_version_1_protocol()
+    {
+        var fixture = File.ReadAllText(Path.Combine(Snapshot.RepositoryRoot, "tests", "LlmShootout.Tests", "Protocol", "Legacy", "events-v1.jsonl"));
+        File.WriteAllText(Path.Combine(_directory, ProtocolFiles.Events), fixture.Replace(",\"schemaVersion\":1", string.Empty, StringComparison.Ordinal));
+
+        var match = MatchRecord.Load(_directory);
+
+        Assert.All(match.Events, e => Assert.Equal(1, e.SchemaVersion));
+        Assert.False(PlayMetrics.RecordsMoveKinds(match));
+        var summary = MatchReportWriter.Summarize(match);
+        Assert.All(summary.Seats.Values, seat => Assert.Null(seat.RuleViolations));
+    }
+
+    [Theory]
+    [InlineData("0", "invalid protocol version 0")]
+    [InlineData("-1", "invalid protocol version -1")]
+    [InlineData("\"2\"", "not a whole number")]
+    public void A_version_below_1_or_not_a_number_is_refused(string version, string expected)
+    {
+        var line = ProtocolJson.ToLine(Turn(null)).Replace($"\"schemaVersion\":{ProtocolVersion.Current}", $"\"schemaVersion\":{version}", StringComparison.Ordinal);
+        File.WriteAllText(Path.Combine(_directory, ProtocolFiles.Events), line + "\n");
+
+        var failure = Assert.Throws<InvalidDataException>(() => ProtocolReader.ReadAll(_directory));
+
+        Assert.Contains(expected, failure.Message, StringComparison.Ordinal);
     }
 }

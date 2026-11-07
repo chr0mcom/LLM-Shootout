@@ -10,7 +10,8 @@ namespace LlmShootout.Games.Nim;
 /// </summary>
 /// <remarks>
 /// The value of a position does not depend on the order of the heaps, so the memo is keyed by the sorted heaps, four bits per
-/// heap (a heap holds at most 15 stones). There are at most 15,504 such positions with five heaps.
+/// heap (a heap holds at most <see cref="NimOptions.MaxStones"/> = 15 stones). The key of more than <see cref="NimOptions.MaxHeaps"/> heaps could
+/// collide, so the public methods refuse such positions. There are at most 15,504 positions with five heaps.
 /// </remarks>
 public sealed class NimOracle
 {
@@ -34,9 +35,10 @@ public sealed class NimOracle
     public static NimOracle For(bool misere, int? maxTake) => Shared.GetOrAdd((misere, maxTake), key => new NimOracle(key.Misere, key.MaxTake));
 
     /// <summary>True if the player to move can force a win from these heaps.</summary>
+    /// <exception cref="ArgumentException">There are more than <see cref="NimOptions.MaxHeaps"/> heaps, or a heap has less than 0 or more than <see cref="NimOptions.MaxStones"/> stones.</exception>
     public bool Wins(IReadOnlyList<int> heaps)
     {
-        ArgumentNullException.ThrowIfNull(heaps);
+        ValidatePosition(heaps);
         return Solve([.. heaps]);
     }
 
@@ -44,9 +46,10 @@ public sealed class NimOracle
     /// All regular moves that lead to a position that is lost for the opponent, ordered by heap and then by count. The heap is the
     /// real index, also when several heaps have the same size. Empty in a lost position.
     /// </summary>
+    /// <exception cref="ArgumentException">There are more than <see cref="NimOptions.MaxHeaps"/> heaps, or a heap has less than 0 or more than <see cref="NimOptions.MaxStones"/> stones.</exception>
     public IReadOnlyList<NimMove> WinningMoves(IReadOnlyList<int> heaps)
     {
-        ArgumentNullException.ThrowIfNull(heaps);
+        ValidatePosition(heaps);
         return [.. NimMove.Legal(heaps, _maxTake).Where(move => !Solve(After(heaps, move)))];
     }
 
@@ -59,6 +62,20 @@ public sealed class NimOracle
         ArgumentNullException.ThrowIfNull(heaps);
         var largest = heaps.Max();
         return new NimMove(heaps.ToList().IndexOf(largest) + 1, 1);
+    }
+
+    private static void ValidatePosition(IReadOnlyList<int> heaps)
+    {
+        ArgumentNullException.ThrowIfNull(heaps);
+        if (heaps.Count > NimOptions.MaxHeaps)
+        {
+            throw new ArgumentException($"The oracle solves positions of at most {NimOptions.MaxHeaps} heaps, but got {heaps.Count}.", nameof(heaps));
+        }
+
+        if (heaps.Any(stones => stones is < 0 or > NimOptions.MaxStones))
+        {
+            throw new ArgumentException($"A heap must hold 0 to {NimOptions.MaxStones} stones.", nameof(heaps));
+        }
     }
 
     private bool Solve(int[] heaps)

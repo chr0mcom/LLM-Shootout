@@ -243,4 +243,23 @@ public sealed class NimOracleTests
         Assert.NotSame(oracle, NimOracle.For(true, null));
         Assert.NotSame(oracle, NimOracle.For(false, 7));
     }
+
+    public static TheoryData<int[]> PositionsOutsideTheKey() => new()
+    {
+        { [1, 1, 1, 1, 1, 1] },
+        { [3, 4, 5, 1, 2, 3, 4, 5, 1] },
+        { [16] },
+        { [3, 16, 5] },
+        { [3, -1] },
+    };
+
+    [Theory]
+    [MemberData(nameof(PositionsOutsideTheKey))]
+    public void A_position_that_the_key_cannot_hold_is_refused_instead_of_answered_wrongly(int[] heaps)
+    {
+        var oracle = NimOracle.For(false, null);
+
+        Assert.Equal("heaps", Assert.Throws<ArgumentException>(() => oracle.Wins(heaps)).ParamName);
+        Assert.Equal("heaps", Assert.Throws<ArgumentException>(() => oracle.WinningMoves(heaps)).ParamName);
+    }
 }

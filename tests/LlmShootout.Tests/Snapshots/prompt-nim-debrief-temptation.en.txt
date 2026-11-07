@@ -31,7 +31,7 @@ Move move-3: 1:1
 - t
 
 ### Result
-Outcome: b_wins. You: 0 (loss). Your opponent: 1 (win).
+Outcome: B wins. You: 0 (loss). Your opponent: 1 (win).
 
 ### Questions
 Answer all questions.

@@ -28,7 +28,7 @@ Zug move-3: 2:1
 - t
 
 ### Ergebnis
-Ausgang: a_wins. Du: 1 (win). Dein Gegner: 0 (loss).
+Ausgang: Sieg von A. Du: 1 (Sieg). Dein Gegner: 0 (Niederlage).
 
 ### Fragen
 Beantworte alle Fragen.

@@ -40,6 +40,8 @@ message that names both versions. Readers must ignore unknown fields. `ProtocolV
 | 1 | First format. |
 | 2 | The self-assessment of a turn: `estimate` in `turn` events (and in `model_call.parsed`), and the kind of an accepted move: `moveKind` in `turn` events, plus the analysis fact `rule_violation`. Version 1 events have none; a missing `moveKind` reads as a regular move. |
 
+A line without `schemaVersion` counts as version 1. A version below 1 is refused.
+
 Naming: property names are camelCase; enum values are written by name (`Turn`, `Everyone`, `A`); keys of
 dictionaries are written unchanged (`A`, `B`, `rules_followed`, `nim`).
 
@@ -205,8 +207,8 @@ than its opponent), false otherwise, and `null` if it broke a rule but the proto
 
 `resultWithRuleViolation` is true if the game ended and either seat made an accepted but forbidden move before the end. It is false for
 a match that was aborted before a result. The mark exists only in `match.json` and in the report: it is never part of a prompt or of
-the context of the debriefing, which sees the outcome and the labels of the game exactly as the game reports them. A protocol of version 1
-has no kinds of move, so its counts of violations and resignations are 0 and the report leaves those rows out.
+the context of the debriefing, which sees the outcome and the labels of the game as the game words them. A protocol of version 1
+has no kinds of move, so `ruleViolations`, `resignations` and `resultWithRuleViolation` are `null` in `match.json` and "n/a" in the workbook (not applicable, never 0), and the report leaves those rows out.
 
 ## report.md
 

@@ -1,6 +1,7 @@
 using LlmShootout.Arena.Protocol;
 using LlmShootout.Arena.Reports;
 using LlmShootout.Tests.TestGames;
+using LlmShootout.Web.Matches;
 
 namespace LlmShootout.Tests.Protocol;
 
@@ -64,6 +65,33 @@ public sealed class LegacyProtocolTests : IDisposable
         Assert.DoesNotContain("| Rule violations |", report, StringComparison.Ordinal);
         Assert.DoesNotContain("| Resignations |", report, StringComparison.Ordinal);
         Assert.DoesNotContain("No rule violations were recorded", report, StringComparison.Ordinal);
-        Assert.False(summary.ResultWithRuleViolation);
+        Assert.Null(summary.ResultWithRuleViolation);
+    }
+
+    [Fact]
+    public void The_summary_of_an_old_protocol_has_no_figure_for_what_it_does_not_record()
+    {
+        var match = LoadVersion1();
+
+        var summary = MatchReportWriter.Summarize(match);
+        var json = SummaryJson.Write(summary);
+
+        Assert.All(summary.Seats.Values, seat => Assert.Equal((null, null), (seat.RuleViolations, seat.Resignations)));
+        Assert.Contains("\"ruleViolations\": null", json, StringComparison.Ordinal);
+        Assert.Contains("\"resignations\": null", json, StringComparison.Ordinal);
+        Assert.Contains("\"resultWithRuleViolation\": null", json, StringComparison.Ordinal);
+        Assert.Contains("\"exhaustedTurns\": 0", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_overview_sheet_of_an_old_protocol_shows_n_a_instead_of_zero()
+    {
+        var overview = MatchExport.Overview(LoadVersion1());
+
+        string? Cell(string item) => overview.Rows.Single(row => Equals(row[0], item))[1]?.ToString();
+        Assert.Equal("n/a", Cell("Result with rule violation"));
+        Assert.Equal("n/a", Cell("Seat A: rule violations"));
+        Assert.Equal("n/a", Cell("Seat B: resignations"));
+        Assert.Equal("0", Cell("Seat A: exhausted turns"));
     }
 }

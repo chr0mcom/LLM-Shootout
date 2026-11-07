@@ -28,7 +28,7 @@ Move move-3: 2:1
 - t
 
 ### Result
-Outcome: a_wins. You: 1 (win). Your opponent: 0 (loss).
+Outcome: A wins. You: 1 (win). Your opponent: 0 (loss).
 
 ### Questions
 Answer all questions.

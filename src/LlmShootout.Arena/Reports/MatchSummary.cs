@@ -32,6 +32,7 @@ public sealed record CalibrationSummary(
 /// Numbers of one seat in one match. <c>InvalidAnswers</c>, <c>Refusals</c> and <c>TokenLimitHits</c> count rejected answers,
 /// <c>RuleViolations</c> accepted moves that the rules forbid, <c>Resignations</c> given-up games, and <c>ExhaustedTurns</c> turns
 /// without an acceptable move after all attempts; the last three are separate from each other and from the rejected answers.
+/// <c>RuleViolations</c> and <c>Resignations</c> are <c>null</c> if the protocol does not record the kind of a move (version 1): not applicable.
 /// <c>Strength</c> and <c>Calibration</c> are <c>null</c> if the protocol has no ratings by an oracle (the game has none, or the
 /// protocol is older): not applicable. <c>ViolationInLostPositionThenWon</c> is true if the seat broke a rule in a lost position
 /// and won, and <c>null</c> if it broke rules but the position is not recorded.
@@ -46,8 +47,8 @@ public sealed record SeatSummary(
     int InvalidAnswers,
     int Refusals,
     int TokenLimitHits,
-    int RuleViolations,
-    int Resignations,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] int? RuleViolations,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] int? Resignations,
     int ExhaustedTurns,
     int ThoughtsTruncated,
     int MessagesTruncated,
@@ -63,7 +64,7 @@ public sealed record SeatSummary(
 
 /// <summary>
 /// The content of <c>match.json</c>: everything the report shows, as numbers. <c>ResultWithRuleViolation</c> is true if the game
-/// ended and a seat made an accepted but forbidden move before the end. It appears here and in the report only, never in a prompt or a debriefing.
+/// ended and a seat made an accepted but forbidden move before the end, and <c>null</c> if the protocol does not record the kind of a move. It appears here and in the report only, never in a prompt or a debriefing.
 /// </summary>
 public sealed record MatchSummary(
     string GameId,
@@ -76,7 +77,7 @@ public sealed record MatchSummary(
     long Seed,
     Seat FirstSeat,
     string? Outcome,
-    bool ResultWithRuleViolation,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] bool? ResultWithRuleViolation,
     IReadOnlyDictionary<Seat, SeatSummary> Seats,
     decimal CostUsd,
     int CostEstimatedCalls,

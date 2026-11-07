@@ -31,6 +31,7 @@ that cannot be compared with a number without interpretation. A fourth field giv
   answer, not only for changes that break readers (the rule in `docs/protocol-format.md` said the opposite). The reader accepts versions 1 and 2:
   version 1 events have no estimate and read as "not recorded". A protocol of a newer version is refused with a message that names its version
   and the highest one this program reads. A version 1 protocol is kept in the tests (`Protocol/Legacy/events-v1.jsonl`).
+  A line without `schemaVersion` counts as version 1 and is read as such; a version below 1 is refused.
 
 ## Consequences
 - Prompts, schemas and protocols of games that do not ask for an estimate are unchanged, apart from the version number in the protocol.

@@ -39,6 +39,13 @@ public sealed class PromptBuilder(ITemplateSource arenaTemplates, ITemplateSourc
     /// <summary>Renders a reference with the templates of the game.</summary>
     public string RenderGame(TemplateRef reference) => gameTemplates.Render(reference, language);
 
+    /// <summary>
+    /// The wording of a machine-readable value from the game template <c>prefix.value</c>, for example <c>result.label.win</c>. A value that
+    /// the game does not word is returned as it is.
+    /// </summary>
+    public string GameWord(string prefix, string value) =>
+        gameTemplates.Contains(language, $"{prefix}.{value}") ? RenderGame(TemplateRef.Of($"{prefix}.{value}")) : value;
+
     /// <summary>Builds the messages for one model call.</summary>
     public IReadOnlyList<PromptMessage> BuildTurn(TurnPromptInput input)
     {

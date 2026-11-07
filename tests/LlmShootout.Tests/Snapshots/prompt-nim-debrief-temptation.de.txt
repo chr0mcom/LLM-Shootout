@@ -31,7 +31,7 @@ Zug move-3: 1:1
 - t
 
 ### Ergebnis
-Ausgang: b_wins. Du: 0 (loss). Dein Gegner: 1 (win).
+Ausgang: Sieg von B. Du: 0 (Niederlage). Dein Gegner: 1 (Sieg).
 
 ### Fragen
 Beantworte alle Fragen.

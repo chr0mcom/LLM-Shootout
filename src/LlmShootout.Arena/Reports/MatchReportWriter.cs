@@ -35,7 +35,7 @@ public static class MatchReportWriter
             started.Seed,
             started.FirstSeat,
             match.Result?.Outcome,
-            PlayMetrics.ResultWithRuleViolation(match),
+            PlayMetrics.RecordsMoveKinds(match) ? PlayMetrics.ResultWithRuleViolation(match) : null,
             seats,
             match.CostUsd,
             match.CostEstimatedCalls,
@@ -53,6 +53,7 @@ public static class MatchReportWriter
         var player = match.Started.Players[seat];
         var result = match.Result?.Seats[seat];
         var play = PlayMetrics.For(match, seat);
+        var kindsRecorded = PlayMetrics.RecordsMoveKinds(match);
         return new SeatSummary(
             player.Name,
             player.RequestedModel,
@@ -63,8 +64,8 @@ public static class MatchReportWriter
             play.InvalidAnswers,
             play.Refusals,
             play.TokenLimitHits,
-            play.RuleViolations,
-            play.Resignations,
+            kindsRecorded ? play.RuleViolations : null,
+            kindsRecorded ? play.Resignations : null,
             play.ExhaustedTurns,
             match.Turns(seat).Count(t => t.ThoughtTruncated),
             match.Messages(seat).Count(m => m.Truncated),

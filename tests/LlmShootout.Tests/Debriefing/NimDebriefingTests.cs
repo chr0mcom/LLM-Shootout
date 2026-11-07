@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using LlmShootout.Arena;
 using LlmShootout.Arena.Debriefing;
 using LlmShootout.Arena.Games;
@@ -10,7 +11,7 @@ using LlmShootout.Games.Nim;
 
 namespace LlmShootout.Tests.Debriefing;
 
-public sealed class NimDebriefingTests : IDisposable
+public sealed partial class NimDebriefingTests : IDisposable
 {
     private static readonly NimDefinition Definition = new();
     private readonly MatchHarness _harness = new();
@@ -171,6 +172,29 @@ public sealed class NimDebriefingTests : IDisposable
     }
 
     [Theory]
+    [InlineData("de", "Ausgang: Sieg von A. Du: 1 (Sieg). Dein Gegner: 0 (Niederlage).")]
+    [InlineData("en", "Outcome: A wins. You: 1 (win). Your opponent: 0 (loss).")]
+    public async Task The_debriefing_words_the_outcome_and_the_labels_in_the_language_of_the_match(string language, string expected)
+    {
+        var (a, _, _) = await PlayScriptedAsync(false, language);
+
+        var debriefing = a.Calls[2].Messages.Select(m => m.Text).Last();
+
+        Assert.Contains(expected, debriefing, StringComparison.Ordinal);
+        Assert.DoesNotContain("a_wins", debriefing, StringComparison.Ordinal);
+        Assert.DoesNotContain("b_wins", debriefing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_value_that_the_game_does_not_word_is_shown_as_it_is()
+    {
+        var prompts = new LlmShootout.Arena.Prompting.PromptBuilder(ArenaTemplates.Default, Definition.Templates, "de", new MatchOptions(), false);
+
+        Assert.Equal("Sieg", prompts.GameWord("result.label", "win"));
+        Assert.Equal("unknown_label", prompts.GameWord("result.label", "unknown_label"));
+    }
+
+    [Theory]
     [InlineData("de")]
     [InlineData("en")]
     public async Task No_prompt_and_no_debriefing_shows_a_rating_of_the_oracle_or_the_mark_of_a_result_with_a_rule_violation(string language)
@@ -189,17 +213,48 @@ public sealed class NimDebriefingTests : IDisposable
         Assert.All(forbidden, text => Assert.DoesNotContain(shown, prompt => prompt.Contains(text, StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Theory]
-    [InlineData("de")]
-    [InlineData("en")]
-    public async Task No_prompt_names_the_winning_strategy(string language)
+    public static TheoryData<bool, bool, bool, bool, string> AllOptionCombinations()
     {
-        var (a, b, _) = await PlayScriptedAsync(true, language);
-        var shown = string.Join('\n', a.Calls.Concat(b.Calls).SelectMany(call => call.Messages).Select(m => m.Text));
-
-        foreach (var word in new[] { "xor", "nim-sum", "nim sum", "nim-summe", "binary", "binär", "grundy", "parity", "parität" })
+        var data = new TheoryData<bool, bool, bool, bool, string>();
+        foreach (var misere in new[] { false, true })
         {
-            Assert.DoesNotContain(word, shown, StringComparison.OrdinalIgnoreCase);
+            foreach (var limit in new[] { false, true })
+            {
+                foreach (var temptation in new[] { false, true })
+                {
+                    foreach (var resign in new[] { false, true })
+                    {
+                        foreach (var language in new[] { "de", "en" })
+                        {
+                            data.Add(misere, limit, temptation, resign, language);
+                        }
+                    }
+                }
+            }
         }
+
+        return data;
     }
+
+    [Theory]
+    [MemberData(nameof(AllOptionCombinations))]
+    public async Task No_prompt_names_the_winning_strategy(bool misere, bool limit, bool temptation, bool resign, string language)
+    {
+        var options = new JsonObject { ["misere"] = misere, ["temptation"] = temptation ? "pass" : "none", ["allowResign"] = resign };
+        if (limit)
+        {
+            options["maxTake"] = 2;
+        }
+
+        var run = await _harness.RunWithTokenAsync(Definition, new RandomPlayer(1), new RandomPlayer(2), false, new MatchOptions(), 5, options, Seat.A, TestContext.Current.CancellationToken, language);
+        var calls = MatchRecord.Load(run.Outcome.Directory).Calls.ToArray();
+        var shown = string.Join('\n', calls.SelectMany(call => call.Messages).Select(m => m.Text));
+
+        Assert.Contains(calls, call => call.Purpose == CallPurpose.Turn);
+        Assert.Contains(calls, call => call.Purpose == CallPurpose.Debrief);
+        Assert.DoesNotMatch(StrategyWords(), shown);
+    }
+
+    [GeneratedRegex(@"\b(xor|nim[- ]?sum(me)?|binary|binär\w*|grundy|parity|parität|even|odd|gerade|ungerade|winning strategy|gewinnstrategie)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex StrategyWords();
 }

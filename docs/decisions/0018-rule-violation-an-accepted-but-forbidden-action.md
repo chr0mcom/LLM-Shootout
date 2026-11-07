@@ -51,4 +51,4 @@ does not check it). To study it, the game has to offer the action, the arena has
 - Reports and `match.json` count violations, resignations and exhausted turns per player independently of each other, and the report section
   "Rule compliance" shows the answer to the debriefing question `rules_followed` next to the counted behavior. The report section replaces the
   three rows of rejected answers in the table of figures.
-- A protocol of version 1 has no kinds of move; its report leaves out the rows for violations and resignations instead of showing zeros.
+- A protocol of version 1 has no kinds of move; its report leaves out the rows for violations and resignations instead of showing zeros, and `match.json` and the workbook show them as `null` and "n/a".
