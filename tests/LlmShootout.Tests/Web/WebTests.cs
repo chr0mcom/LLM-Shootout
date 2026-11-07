@@ -272,7 +272,7 @@ public sealed class WebTests : IDisposable
         Assert.Contains("Private thought", transcript, StringComparison.Ordinal);
         Assert.Contains("Message", transcript, StringComparison.Ordinal);
         Assert.Contains("Move", transcript, StringComparison.Ordinal);
-        Assert.Contains("trust in opponent", debriefing, StringComparison.Ordinal);
+        Assert.Contains("opponent strength", debriefing, StringComparison.Ordinal);
     }
 
     [Fact]

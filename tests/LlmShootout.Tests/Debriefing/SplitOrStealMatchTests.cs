@@ -17,25 +17,17 @@ public sealed class SplitOrStealMatchTests : IDisposable
 
     public void Dispose() => _harness.Dispose();
 
-    public static string DebriefJson(bool communication = true, string truthful = "true", int trust = 4)
-    {
-        var json = new JsonObject
+    public static string DebriefJson(int strength = 4) =>
+        new JsonObject
         {
-            ["strategy"] = "I wanted fair play.",
-            ["opponent_strategy"] = "Seemed cooperative.",
-            ["trust_in_opponent"] = trust,
-            ["tried_to_deceive"] = false,
-            ["tried_to_deceive_reason"] = "No need.",
+            ["strategy"] = "I wanted a safe result.",
+            ["decisive_move"] = "The last move.",
+            ["own_mistake"] = "none",
+            ["opponent_strength"] = strength,
+            ["rules_followed"] = true,
+            ["rules_followed_reason"] = "I kept to the rules.",
             ["next_time"] = "Same.",
-        };
-        if (communication)
-        {
-            json["announced_truthfully"] = truthful == "true";
-            json["announced_truthfully_reason"] = "I said what I did.";
-        }
-
-        return json.ToJsonString();
-    }
+        }.ToJsonString();
 
     private static ScriptedPlayer Player(string name, string slug, string decision, string thought, string[] messages, string? debrief)
     {
@@ -59,14 +51,14 @@ public sealed class SplitOrStealMatchTests : IDisposable
         string? debriefA = "",
         string? debriefB = "")
     {
-        var a = Player("a", "vendor-a/model-a", "split", "SECRET-A", communication ? Said("A") : [], debriefA == "" ? DebriefJson(communication) : debriefA);
-        var b = Player("b", "vendor-b/model-b", "steal", "SECRET-B", communication ? Said("B") : [], debriefB == "" ? DebriefJson(communication) : debriefB);
+        var a = Player("a", "vendor-a/model-a", "split", "SECRET-A", communication ? Said("A") : [], debriefA == "" ? DebriefJson() : debriefA);
+        var b = Player("b", "vendor-b/model-b", "steal", "SECRET-B", communication ? Said("B") : [], debriefB == "" ? DebriefJson() : debriefB);
         var (outcome, events) = await _harness.RunAsync(_definition, a, b, communication, new MatchOptions(), debrief: true);
         return (outcome, events, a, b);
     }
 
     [Fact]
-    public async Task A_full_match_with_communication_asks_all_questions()
+    public async Task A_full_match_asks_the_standard_questions()
     {
         var (outcome, events, _, _) = await PlayAsync();
 
@@ -75,18 +67,8 @@ public sealed class SplitOrStealMatchTests : IDisposable
         Assert.Equal([Seat.A, Seat.B], debriefs.Select(d => d.Seat));
         Assert.All(debriefs, d => Assert.True(d.Valid));
         Assert.Equal(
-            ["announced_truthfully", "announced_truthfully_reason", "next_time", "opponent_strategy", "strategy", "tried_to_deceive", "tried_to_deceive_reason", "trust_in_opponent"],
+            ["decisive_move", "next_time", "opponent_strength", "own_mistake", "rules_followed", "rules_followed_reason", "strategy"],
             debriefs[0].Answers.Keys.Order(StringComparer.Ordinal));
-    }
-
-    [Fact]
-    public async Task Without_communication_the_game_asks_no_extra_question()
-    {
-        var (_, events, _, _) = await PlayAsync(communication: false);
-
-        var keys = events.OfType<DebriefEvent>().First().Answers.Keys;
-        Assert.DoesNotContain("announced_truthfully", keys);
-        Assert.Contains("tried_to_deceive", keys);
     }
 
     [Fact]
@@ -108,13 +90,13 @@ public sealed class SplitOrStealMatchTests : IDisposable
     [Fact]
     public async Task The_correction_hint_names_the_key_and_the_range_and_a_second_try_can_succeed()
     {
-        var a = Player("a", "vendor-a/model-a", "split", "t", Said("A"), DebriefJson(trust: 9)).Reply(DebriefJson());
+        var a = Player("a", "vendor-a/model-a", "split", "t", Said("A"), DebriefJson(strength: 9)).Reply(DebriefJson());
         var b = Player("b", "vendor-b/model-b", "steal", "t", Said("B"), DebriefJson());
 
         var (_, events) = await _harness.RunAsync(_definition, a, b, true, new MatchOptions(), debrief: true);
 
         var retry = a.Calls[^1].Messages;
-        Assert.Contains("trust_in_opponent", retry[^1].Text, StringComparison.Ordinal);
+        Assert.Contains("opponent_strength", retry[^1].Text, StringComparison.Ordinal);
         Assert.Contains("from 1 to 5", retry[^1].Text, StringComparison.Ordinal);
         var debrief = events.OfType<DebriefEvent>().First(d => d.Seat == Seat.A);
         Assert.True(debrief.Valid);
@@ -159,6 +141,18 @@ public sealed class SplitOrStealMatchTests : IDisposable
     }
 
     [Fact]
+    public async Task Players_without_a_model_answer_the_debriefing_consistently_with_their_play()
+    {
+        var (_, events) = await _harness.RunAsync(_definition, new RandomPlayer(1), new RandomPlayer(2), true, new MatchOptions(), debrief: true);
+
+        foreach (var debrief in events.OfType<DebriefEvent>())
+        {
+            Assert.Equal("true", debrief.Answers["rules_followed"]);
+            Assert.Equal("3", debrief.Answers["opponent_strength"]);
+        }
+    }
+
+    [Fact]
     public async Task Repeating_the_debriefing_writes_a_separate_file_and_leaves_the_protocol_untouched()
     {
         var (outcome, _) = await _harness.RunAsync(_definition, new RandomPlayer(1), new RandomPlayer(2), true, new MatchOptions());
@@ -180,8 +174,8 @@ public sealed class SplitOrStealMatchTests : IDisposable
     public async Task Budget_exhaustion_during_the_debriefing_aborts_with_cost_limit_but_keeps_the_result()
     {
         using var harness = new MatchHarness(maxCostUsd: 0.05m);
-        var a = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a")).Reply(MatchHarness.Answer(move: "split"), info: MatchHarness.Info(0.03m)).Reply(DebriefJson(false));
-        var b = new ScriptedPlayer("b", new ModelIdentity("vendor-b/model-b")).Reply(MatchHarness.Answer(move: "steal"), info: MatchHarness.Info(0.03m)).Reply(DebriefJson(false));
+        var a = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a")).Reply(MatchHarness.Answer(move: "split"), info: MatchHarness.Info(0.03m)).Reply(DebriefJson());
+        var b = new ScriptedPlayer("b", new ModelIdentity("vendor-b/model-b")).Reply(MatchHarness.Answer(move: "steal"), info: MatchHarness.Info(0.03m)).Reply(DebriefJson());
 
         var (outcome, events) = await harness.RunAsync(_definition, a, b, false, new MatchOptions(), debrief: true);
 

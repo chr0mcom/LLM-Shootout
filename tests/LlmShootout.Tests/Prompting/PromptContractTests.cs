@@ -40,16 +40,16 @@ public sealed class PromptContractTests : IDisposable
     }
 
     [Fact]
-    public async Task With_hidden_identity_no_prompt_of_the_whole_match_names_the_opponent_model_including_hints_and_debriefing()
+    public async Task No_prompt_of_the_whole_match_names_the_opponent_model_including_hints_and_debriefing()
     {
         var a = new ScriptedPlayer("a", new ModelIdentity("vendor-a/model-a"))
             .Reply("nonsense")
             .Reply(MatchHarness.Answer(move: "split"))
-            .Reply(Debriefing.SplitOrStealMatchTests.DebriefJson(communication: false));
+            .Reply(Debriefing.SplitOrStealMatchTests.DebriefJson());
         var b = new ScriptedPlayer("b", new ModelIdentity("vendor-b/model-b"))
             .Reply("I cannot do that.")
             .Reply(MatchHarness.Answer(move: "steal"))
-            .Reply(Debriefing.SplitOrStealMatchTests.DebriefJson(communication: false));
+            .Reply(Debriefing.SplitOrStealMatchTests.DebriefJson());
 
         var (outcome, events) = await _harness.RunAsync(new LlmShootout.Games.SplitOrSteal.SplitOrStealDefinition(), a, b, false, new MatchOptions(), debrief: true);
 

@@ -68,7 +68,7 @@ public sealed class Debriefer(PlayerGateway gateway, TimeProvider time, int maxR
 
         while (attempts <= maxRetries)
         {
-            var request = new PlayerCall(CallPurpose.Debrief, [.. messages], schema, ++attempts, rng => DebriefAnswers.Sample(s.Questions, rng, s.Prompts.Arena("debrief.sample.text")));
+            var request = new PlayerCall(CallPurpose.Debrief, [.. messages], schema, ++attempts, _ => DebriefAnswers.Sample(s.Questions, s.Prompts.Arena("debrief.sample.text")));
             var (reply, checkedAnswers, found) = await AskOnceAsync(s, seat, player, request, writer, cancellationToken);
             (answers, problems) = (checkedAnswers, found);
             if (reply is null)

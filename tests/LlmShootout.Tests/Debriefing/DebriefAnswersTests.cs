@@ -39,4 +39,43 @@ public sealed class DebriefAnswersTests
 
         Assert.Equal(key, Assert.Single(violations).Key);
     }
+
+    [Fact]
+    public void The_sample_answer_is_deterministic_neutral_and_valid()
+    {
+        var first = LlmShootout.Arena.Debriefing.DebriefAnswers.Sample(Questions, "No statement.");
+        var second = LlmShootout.Arena.Debriefing.DebriefAnswers.Sample(Questions, "No statement.");
+
+        Assert.Equal(first, second);
+        var (answers, violations) = Check(first);
+        Assert.Empty(violations);
+        Assert.Equal(("3", "false", "red", "No statement."), (answers["scale"], answers["flag"], answers["pick"], answers["free"]));
+        Assert.Equal("No statement.", answers["flag_reason"]);
+    }
+
+    [Fact]
+    public void A_question_can_name_the_sample_answer_of_players_without_a_model()
+    {
+        LlmShootout.Arena.Debriefing.DebriefingQuestion[] questions =
+        [
+            new("rules_followed", LlmShootout.Arena.Debriefing.QuestionKind.Boolean, new LlmShootout.Arena.Games.TemplateRef("x"), WithReason: true, SampleAnswer: "true"),
+        ];
+
+        var json = System.Text.Json.Nodes.JsonNode.Parse(LlmShootout.Arena.Debriefing.DebriefAnswers.Sample(questions, "No statement."))!.AsObject();
+
+        Assert.True(json["rules_followed"]!.GetValue<bool>());
+    }
+
+    [Fact]
+    public void The_standard_questions_ask_about_play_and_rules_and_not_about_the_opponent_as_a_person()
+    {
+        var standard = LlmShootout.Arena.Debriefing.StandardQuestions.For([]);
+
+        Assert.Equal(["strategy", "decisive_move", "own_mistake", "opponent_strength", "rules_followed", "next_time"], standard.Select(q => q.Key));
+        var strength = standard.Single(q => q.Key == "opponent_strength");
+        Assert.Equal((1, 5), (strength.Min, strength.Max));
+        Assert.True(standard.Single(q => q.Key == "rules_followed").WithReason);
+        var sample = System.Text.Json.Nodes.JsonNode.Parse(LlmShootout.Arena.Debriefing.DebriefAnswers.Sample(standard, "No statement."))!.AsObject();
+        Assert.Empty(LlmShootout.Arena.Debriefing.DebriefAnswers.Validate(standard, sample).Violations);
+    }
 }

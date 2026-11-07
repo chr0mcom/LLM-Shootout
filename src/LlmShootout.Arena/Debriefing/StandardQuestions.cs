@@ -9,9 +9,10 @@ public static class StandardQuestions
     public static IReadOnlyList<DebriefingQuestion> All { get; } =
     [
         new("strategy", QuestionKind.Text, Ref("strategy")),
-        new("opponent_strategy", QuestionKind.Text, Ref("opponent_strategy")),
-        new("trust_in_opponent", QuestionKind.Scale, Ref("trust_in_opponent"), Min: 1, Max: 5),
-        new("tried_to_deceive", QuestionKind.Boolean, Ref("tried_to_deceive"), WithReason: true),
+        new("decisive_move", QuestionKind.Text, Ref("decisive_move")),
+        new("own_mistake", QuestionKind.Text, Ref("own_mistake")),
+        new("opponent_strength", QuestionKind.Scale, Ref("opponent_strength"), Min: 1, Max: 5),
+        new("rules_followed", QuestionKind.Boolean, Ref("rules_followed"), WithReason: true, SampleAnswer: "true"),
         new("next_time", QuestionKind.Text, Ref("next_time")),
     ];
 

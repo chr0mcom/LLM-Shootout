@@ -26,6 +26,7 @@ public enum QuestionKind
 /// <param name="Max">Highest value of a scale.</param>
 /// <param name="Choices">Allowed answers of a choice question.</param>
 /// <param name="WithReason">True if the answer also needs a short reason (key plus <c>_reason</c>).</param>
+/// <param name="SampleAnswer">The answer of a player without a model, as a JSON literal such as <c>true</c>. Null for the neutral default of the type.</param>
 public sealed record DebriefingQuestion(
     string Key,
     QuestionKind Kind,
@@ -33,4 +34,5 @@ public sealed record DebriefingQuestion(
     int Min = 1,
     int Max = 5,
     IReadOnlyList<string>? Choices = null,
-    bool WithReason = false);
+    bool WithReason = false,
+    string? SampleAnswer = null);

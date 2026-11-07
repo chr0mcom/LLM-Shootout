@@ -8,7 +8,7 @@ namespace LlmShootout.Arena.Protocol;
 /// <summary>
 /// Source-generated JSON for the protocol: camelCase property names, enums as text, no nulls, and readable umlauts
 /// (the files are quoted in articles, so <c>ä</c> is written as <c>ä</c>, not as <c>\u00E4</c>). Dictionary keys such as
-/// seats (<c>A</c>, <c>B</c>) and answer keys (<c>trust_in_opponent</c>) are written unchanged.
+/// seats (<c>A</c>, <c>B</c>) and answer keys (<c>rules_followed</c>) are written unchanged.
 /// </summary>
 [JsonSerializable(typeof(MatchEvent))]
 [JsonSerializable(typeof(JsonObject))]

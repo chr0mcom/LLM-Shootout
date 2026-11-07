@@ -24,4 +24,4 @@ readable class.
 ## Consequences
 The limit is checked between calls, not within one; a single expensive call can overshoot the limit once.
 
-Amended 2026-11-07: the gateway serves turns and the debriefing; the judge calls are gone (see [0012](0012-judge-infrastructure-removed.md)).
+Amended 2026-11-07: the single door serves turns and the debriefing; the judge calls are gone (see [0012](0012-judge-infrastructure-removed.md)).

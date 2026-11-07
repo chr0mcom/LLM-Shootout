@@ -31,7 +31,7 @@ event changes in a way that breaks readers (a field is renamed, removed, or chan
 fields do not change the version. Readers must ignore unknown fields. `ProtocolVersion.Current` is the constant in code.
 
 Naming: property names are camelCase; enum values are written by name (`Turn`, `Everyone`, `A`); keys of
-dictionaries are written unchanged (`A`, `B`, `trust_in_opponent`, `split-or-steal`).
+dictionaries are written unchanged (`A`, `B`, `rules_followed`, `split-or-steal`).
 
 ## Events
 

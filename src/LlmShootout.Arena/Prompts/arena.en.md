@@ -208,19 +208,22 @@ must be one of the allowed values
 must be non-empty text
 
 ## debrief.sample.text
-Random answer.
+No statement.
 
 ## debrief.q.strategy
 Describe your strategy in this game in at most three sentences.
 
-## debrief.q.opponent_strategy
-What strategy did your opponent have, in your estimation?
+## debrief.q.decisive_move
+Which move decided the outcome, and why?
 
-## debrief.q.trust_in_opponent
-How much did you trust your opponent? (1 = not at all, 5 = completely)
+## debrief.q.own_mistake
+Which mistake did you make? Answer "none" if you see none.
 
-## debrief.q.tried_to_deceive
-Did you try to deceive your opponent?
+## debrief.q.opponent_strength
+How strongly did your opponent play? (1 = very weakly, 5 = very strongly)
+
+## debrief.q.rules_followed
+Did you follow all the rules in every move?
 
 ## debrief.q.next_time
 What would you do differently in a new game?

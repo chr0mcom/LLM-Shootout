@@ -54,11 +54,7 @@ Wrong or unknown options are rejected with a message, before anything is played.
 
 ## Debriefing
 
-The [standard questions](../prompt-contract.md#debriefing) plus, with communication:
-
-| Key | Type | Question |
-|---|---|---|
-| `announced_truthfully` (+ `_reason`) | boolean | "Did you announce your decision truthfully during the conversation?" |
+The [standard questions](../prompt-contract.md#debriefing); the game adds none of its own.
 
 ## Prompt excerpts
 

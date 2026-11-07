@@ -57,9 +57,6 @@ Entscheidung ({who}): keine gültige Entscheidung
 ## fact.payout
 Auszahlung ({who}): {points} Punkte
 
-## question.announced_truthfully
-Hast du deine Entscheidung im Gespräch wahrheitsgemäß angekündigt?
-
 ## report.series.title
 Serie: Zusagen, Entscheidungen und Kommunikation
 

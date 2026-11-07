@@ -185,7 +185,7 @@ public sealed class SplitOrStealTests
     {
         Assert.Same(GameCatalog.All[0], GameCatalog.Find("SPLIT-OR-STEAL"));
         Assert.Null(GameCatalog.Find("chess"));
-        Assert.Equal(["announced_truthfully"], Definition.ExtraQuestions(new GameSetup(1, true, "de")).Select(q => q.Key));
+        Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, true, "de")));
         Assert.Empty(Definition.ExtraQuestions(new GameSetup(1, false, "de")));
     }
 }

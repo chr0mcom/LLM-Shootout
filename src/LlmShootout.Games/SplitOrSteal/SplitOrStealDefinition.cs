@@ -43,18 +43,5 @@ public sealed class SplitOrStealDefinition : IGameDefinition
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<DebriefingQuestion> ExtraQuestions(GameSetup setup)
-    {
-        ArgumentNullException.ThrowIfNull(setup);
-        return setup.Communication
-            ?
-            [
-                new DebriefingQuestion(
-                    "announced_truthfully",
-                    QuestionKind.Boolean,
-                    new TemplateRef("question.announced_truthfully"),
-                    WithReason: true),
-            ]
-            : [];
-    }
+    public IReadOnlyList<DebriefingQuestion> ExtraQuestions(GameSetup setup) => [];
 }

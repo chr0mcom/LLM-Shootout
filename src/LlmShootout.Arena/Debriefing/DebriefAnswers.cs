@@ -1,11 +1,10 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using LlmShootout.Arena.Randomness;
 
 namespace LlmShootout.Arena.Debriefing;
 
-/// <summary>Builds the schema and sample answers of a questionnaire and validates answers against the question types.</summary>
+/// <summary>Builds the schema and the sample answers of a questionnaire and validates answers against the question types.</summary>
 public static class DebriefAnswers
 {
     /// <summary>JSON schema of the answer: one required key per question, plus <c>_reason</c> keys.</summary>
@@ -27,19 +26,17 @@ public static class DebriefAnswers
         return new JsonObject { ["type"] = "object", ["additionalProperties"] = false, ["required"] = required, ["properties"] = properties };
     }
 
-    /// <summary>A valid answer for every question, drawn with the given generator. For random and scripted players.</summary>
-    public static string Sample(IReadOnlyList<DebriefingQuestion> questions, SeededRng rng, string sampleText)
+    /// <summary>
+    /// A valid answer for every question, for players without a model. It is deterministic and does not claim anything the
+    /// player did not do: a scale gets its middle value, a boolean <c>false</c>, a choice its first value, text the neutral
+    /// <paramref name="sampleText"/>. A question can name its own answer (<see cref="DebriefingQuestion.SampleAnswer"/>).
+    /// </summary>
+    public static string Sample(IReadOnlyList<DebriefingQuestion> questions, string sampleText)
     {
         var answer = new JsonObject();
         foreach (var q in questions)
         {
-            answer[q.Key] = q.Kind switch
-            {
-                QuestionKind.Scale => q.Min + rng.NextInt(q.Max - q.Min + 1),
-                QuestionKind.Boolean => rng.NextBool(0.5),
-                QuestionKind.Choice => q.Choices![rng.NextInt(q.Choices.Count)],
-                _ => sampleText,
-            };
+            answer[q.Key] = SampleValue(q, sampleText);
             if (q.WithReason)
             {
                 answer[q.Key + "_reason"] = sampleText;
@@ -48,6 +45,16 @@ public static class DebriefAnswers
 
         return answer.ToJsonString();
     }
+
+    private static JsonNode? SampleValue(DebriefingQuestion q, string sampleText) => q.SampleAnswer is { } literal
+        ? JsonNode.Parse(literal)
+        : q.Kind switch
+        {
+            QuestionKind.Scale => q.Min + ((q.Max - q.Min) / 2),
+            QuestionKind.Boolean => false,
+            QuestionKind.Choice => q.Choices![0],
+            _ => sampleText,
+        };
 
     /// <summary>
     /// Checks an answer object. Returns the answers as text (<c>true</c>, <c>3</c>, free text) and the violations

@@ -86,11 +86,10 @@ Diese Gedanken hat der Gegner nie gesehen. Der Wortlaut steht unverändert im Pr
 
 | Frage | Sitz A | Sitz B |
 |---|---|---|
-| `strategy` | Zufällige Antwort. | Zufällige Antwort. |
-| `opponent_strategy` | Zufällige Antwort. | Zufällige Antwort. |
-| `trust_in_opponent` | 3 | 2 |
-| `tried_to_deceive` | false | true |
-| `tried_to_deceive_reason` | Zufällige Antwort. | Zufällige Antwort. |
-| `next_time` | Zufällige Antwort. | Zufällige Antwort. |
-| `announced_truthfully` | false | false |
-| `announced_truthfully_reason` | Zufällige Antwort. | Zufällige Antwort. |
+| `strategy` | Keine Angabe. | Keine Angabe. |
+| `decisive_move` | Keine Angabe. | Keine Angabe. |
+| `own_mistake` | Keine Angabe. | Keine Angabe. |
+| `opponent_strength` | 3 | 3 |
+| `rules_followed` | true | true |
+| `rules_followed_reason` | Keine Angabe. | Keine Angabe. |
+| `next_time` | Keine Angabe. | Keine Angabe. |

@@ -57,9 +57,6 @@ Decision ({who}): no valid decision
 ## fact.payout
 Payout ({who}): {points} points
 
-## question.announced_truthfully
-Did you announce your decision truthfully during the conversation?
-
 ## report.series.title
 Series: promises, decisions and communication
 

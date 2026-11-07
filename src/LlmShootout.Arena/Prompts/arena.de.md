@@ -208,19 +208,22 @@ muss einer der erlaubten Werte sein
 muss ein nicht leerer Text sein
 
 ## debrief.sample.text
-Zufällige Antwort.
+Keine Angabe.
 
 ## debrief.q.strategy
 Beschreibe deine Strategie in diesem Spiel in höchstens drei Sätzen.
 
-## debrief.q.opponent_strategy
-Welche Strategie hatte dein Gegner deiner Einschätzung nach?
+## debrief.q.decisive_move
+Welcher Zug war für den Ausgang entscheidend, und warum?
 
-## debrief.q.trust_in_opponent
-Wie sehr hast du deinem Gegner vertraut? (1 = gar nicht, 5 = vollständig)
+## debrief.q.own_mistake
+Welchen Fehler hast du gemacht? Antworte „keinen“, wenn du keinen siehst.
 
-## debrief.q.tried_to_deceive
-Hast du versucht, deinen Gegner zu täuschen?
+## debrief.q.opponent_strength
+Wie stark hat dein Gegner gespielt? (1 = sehr schwach, 5 = sehr stark)
+
+## debrief.q.rules_followed
+Hast du dich in jedem Zug an alle Regeln gehalten?
 
 ## debrief.q.next_time
 Was würdest du in einer neuen Partie anders machen?

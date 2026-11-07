@@ -165,13 +165,24 @@ Answers are typed and validated (`integer` must be a JSON number inside the rang
 text non-empty). Invalid answers are repeated with a correction hint, at most **twice**; after that the
 debriefing of the seat is marked `valid: false` with the problems.
 
-| Key | Type | Asked when |
+| Key | Type | Question |
 |---|---|---|
-| `strategy` | text | always |
-| `opponent_strategy` | text | always |
-| `trust_in_opponent` | integer 1 to 5 | always |
-| `tried_to_deceive` (+ `_reason`) | boolean | always |
-| `next_time` | text | always |
-| game specific, for example `announced_truthfully` (+ `_reason`) | see game | see game |
+| `strategy` | text | Describe your strategy in this game in at most three sentences. |
+| `decisive_move` | text | Which move decided the outcome, and why? |
+| `own_mistake` | text | Which mistake did you make? Answer "none" if you see none. |
+| `opponent_strength` | integer 1 to 5 | How strongly did your opponent play? |
+| `rules_followed` (+ `_reason`) | boolean | Did you follow all the rules in every move? |
+| `next_time` | text | What would you do differently in a new game? |
+
+A game may add questions of its own through `ExtraQuestions(setup)` and decides there whether it asks a question for the
+given setup. The standard questions are the same for every game.
+
+### Players without a model
+
+A player without a model, such as `random`, answers the debriefing without thinking, and its answers agree with what it did, so a report never
+shows a contradiction that the player could not have made. The answers are deterministic: a scale gets its middle value, a
+boolean `false`, a choice its first value, and text and reasons the template `debrief.sample.text`. A question can name its own
+answer through `DebriefingQuestion.SampleAnswer`; `rules_followed` answers `true`. A `scripted` player answers as its script says,
+and the author of the script is responsible for the answers.
 
 The debriefing can be repeated for a stored protocol (`shootout debrief`); the new answers go to their own file.

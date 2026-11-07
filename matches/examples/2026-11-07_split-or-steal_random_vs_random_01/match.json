@@ -1,7 +1,7 @@
 {
   "gameId": "split-or-steal",
-  "startedAt": "2026-11-07T11:49:29.2024101+00:00",
-  "durationSeconds": 0.1899152,
+  "startedAt": "2026-11-07T11:52:59.5091151+00:00",
+  "durationSeconds": 0.1981979,
   "aborted": false,
   "communication": true,
   "language": "en",
@@ -51,9 +51,9 @@
   "costUnknownCalls": 0,
   "modelCalls": 10,
   "appVersion": "1.0.0",
-  "gitCommit": "beb80b843138",
+  "gitCommit": "65ad25d5929f",
   "templateHashes": {
-    "arena": "07DD8BBA801171FC",
-    "split-or-steal": "516F47075E0D7E4D"
+    "arena": "664ECE15C2C3565C",
+    "split-or-steal": "ADAA9C02B2F99417"
   }
 }
